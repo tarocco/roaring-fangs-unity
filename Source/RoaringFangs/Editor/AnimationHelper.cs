@@ -73,38 +73,45 @@ namespace RoaringFangs.Editor
         /// </summary>
         private static void HandleUpdate()
         {
-            AnimationClip clip = AnimationWindowUtils.GetCurrentActiveAnimationClip();
-            if (clip != null)
+            try
             {
-                var bindings = AnimationUtility.GetCurveBindings(clip);
-                for (int i = 0; i < bindings.Length; i++)
+                AnimationClip clip = AnimationWindowUtils.GetCurrentActiveAnimationClip();
+                if (clip != null)
                 {
-                    EditorCurveBinding binding = bindings[i];
-                    // Repair paths
-                    string path_fixed = FixPath(binding.path);
-                    if (path_fixed != binding.path)
+                    var bindings = AnimationUtility.GetCurveBindings(clip);
+                    for (int i = 0; i < bindings.Length; i++)
                     {
-                        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
-                        AnimationUtility.SetEditorCurve(clip, binding, null);
-                        binding.path = path_fixed;
-                        AnimationUtility.SetEditorCurve(clip, binding, curve);
-                        Debug.Log("Repaired property path: " + binding.path + FTFY + path_fixed);
-                    }
-                    // Round IsActive property value to 0 or 1
-                    if (binding.propertyName == "m_IsActive")
-                    {
-                        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
-                        Keyframe[] keys = curve.keys;
-                        for (int j = 0; j < curve.length; j++)
+                        EditorCurveBinding binding = bindings[i];
+                        // Repair paths
+                        string path_fixed = FixPath(binding.path);
+                        if (path_fixed != binding.path)
                         {
-                            Keyframe k = keys[j];
-                            k.value = k.value >= 0.5f ? 1f : 0f;
-                            keys[j] = k;
+                            AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+                            AnimationUtility.SetEditorCurve(clip, binding, null);
+                            binding.path = path_fixed;
+                            AnimationUtility.SetEditorCurve(clip, binding, curve);
+                            Debug.Log("Repaired property path: " + binding.path + FTFY + path_fixed);
                         }
-                        curve.keys = keys;
-                        AnimationUtility.SetEditorCurve(clip, binding, curve);
+                        // Round IsActive property value to 0 or 1
+                        if (binding.propertyName == "m_IsActive")
+                        {
+                            AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+                            Keyframe[] keys = curve.keys;
+                            for (int j = 0; j < curve.length; j++)
+                            {
+                                Keyframe k = keys[j];
+                                k.value = k.value >= 0.5f ? 1f : 0f;
+                                keys[j] = k;
+                            }
+                            curve.keys = keys;
+                            AnimationUtility.SetEditorCurve(clip, binding, curve);
+                        }
                     }
                 }
+            }
+            catch(NullReferenceException ex)
+            {
+                // Suppress until I figure out a way to not spam users (esp. animators)
             }
         }
         private static void HandleHierarchyObjectPathChanged(object sender, EditorHelper.HierarchyObjectPathChangedEventArgs args)

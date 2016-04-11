@@ -27,7 +27,7 @@ using System.Collections;
 
 namespace RoaringFangs.Motion
 {
-    public class BouncyMove : TimeScaleIndependentUpdate, IHasTarget, IHasTargetPosition<Vector3>
+    public class BouncyMove : MonoBehaviour, IHasTarget, IHasTargetPosition<Vector3>
     {
         public Transform _Target;
         public Transform Target { get { return _Target; } set { _Target = value; } }
@@ -75,15 +75,13 @@ namespace RoaringFangs.Motion
             _TargetPosition = transform.localPosition;
         }
         float _dt;
-        protected override void Update()
+        void Update()
         {
-            base.Update();
-
             // TimeSubStep must be reasonably greater than 0
             // or else it will create an infinite loop or lag
             TimeSubStep = Mathf.Max(TimeSubStep, TimeSubStepEpsilon);
 
-            _dt += deltaTime; // TimeScaleIndependentUpdate
+            _dt += Time.deltaTime;
             if (StaggerIndex % Stagger == 0)
             {
                 // TODO: Model this as a differential equation and use RK4 solver

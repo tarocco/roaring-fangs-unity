@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+#if UNITY_TEST
 using System;
 using System.IO;
 using System.Collections.Generic;
@@ -68,3 +69,4 @@ namespace RoaringFangs.Formats.Tests
         }
     }
 }
+#endif

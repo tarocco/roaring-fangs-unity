@@ -27,13 +27,23 @@ using System.Collections;
 
 using System.Linq;
 
+#if FLUFFYUNDERWARE_CURVY
+using FluffyUnderware.Curvy;
+#else
+using RoaringFangs.Adaptors.FluffyUnderware.Curvy;
+#endif
+
 namespace RoaringFangs.CameraBehavior
 {
     [RequireComponent(typeof(Rigidbody))]
     public class PhysCam : MonoBehaviour
     {
         public GameObject Target;
-        public FluffyUnderware.Curvy.CurvySpline GuideCameraDirection;
+#if FLUFFYUNDERWARE_CURVY
+        public CurvySpline GuideCameraDirection;
+#else
+        public ICurvySpline GuideCameraDirection;
+#endif
 
         public GameObject CameraParent;
         public Camera Camera;
