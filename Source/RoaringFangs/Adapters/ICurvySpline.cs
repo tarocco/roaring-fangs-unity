@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-namespace RoaringFangs.Adaptors.FluffyUnderware.Curvy
+namespace RoaringFangs.Adapters.FluffyUnderware.Curvy
 {
     public interface ICurvySpline
     {

@@ -30,7 +30,7 @@ using System.Linq;
 #if FLUFFYUNDERWARE_CURVY
 using FluffyUnderware.Curvy;
 #else
-using RoaringFangs.Adaptors.FluffyUnderware.Curvy;
+using RoaringFangs.Adapters.FluffyUnderware.Curvy;
 #endif
 
 namespace RoaringFangs.CameraBehavior
