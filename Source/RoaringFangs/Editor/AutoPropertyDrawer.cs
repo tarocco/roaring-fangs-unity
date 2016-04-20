@@ -50,7 +50,7 @@ namespace RoaringFangs.Editor
             // Whether the serialized property was directly modified (unaffected by undo!)
             bool modified = property.serializedObject.ApplyModifiedProperties();
             // Whether the field value has changed by any means (including undo operations or anything else!)
-            bool different = !previous_field_value.Equals(PreviousFieldValue);
+            bool different = !Equals(previous_field_value, PreviousFieldValue);
             if (modified || different)
             {
                 var current_value = fieldInfo.GetValue(target);
