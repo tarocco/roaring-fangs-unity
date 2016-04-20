@@ -49,7 +49,20 @@ namespace RoaringFangs.Editor
         private static int ParallelCounter = 0;
 
         private static IEnumerator HierarchyChangedTask;
-        private static IEnumerator ParallelTasksForever = GetParallelTasksForever().GetEnumerator();
+        private static IEnumerator _ParallelTasksForever;
+        private static IEnumerator ParallelTasksForever
+        {
+            get
+            {
+                if(_ParallelTasksForever == null)
+                    _ParallelTasksForever = GetParallelTasksForever().GetEnumerator();
+                return _ParallelTasksForever;
+            }
+            set
+            {
+                _ParallelTasksForever = value;
+            }
+        }
 
         private static IEnumerable GetParallelTasksForever()
         {
@@ -147,20 +160,33 @@ namespace RoaringFangs.Editor
             // Unwrap the parallel tasks loop
             // This is essentially a coroutine
             // TODO: move batch loop into each task's enumerator for finer control over batch size on a task-type basis
-            for (int i = 0; i < ParallelTaskOperationsPerUpdate; i++)
+            if (ParallelTasksForever != null)
             {
-                ParallelTasksForever.MoveNext();
-                if (ParallelTasksForever.Current != null)
+                for (int i = 0; i < ParallelTaskOperationsPerUpdate; i++)
                 {
-                    if (ParallelCounter > ParallelTaskOperationShowDialog)
-                        EditorUtility.DisplayProgressBar("Busy", "Parallel tasks are being performed", 1f);
-                    ParallelCounter++;
-                }
-                else
-                {
-                    EditorUtility.ClearProgressBar();
-                    ParallelCounter = 0;
-                    break;
+                    try
+                    {
+                        ParallelTasksForever.MoveNext();
+                    }
+                    catch(Exception ex)
+                    {
+                        ParallelTasksForever = null;
+                        string message = "Exception thrown in parallel tasks. Aborting.";
+                        Debug.LogError(message);
+                        throw new InvalidOperationException(message, ex);
+                    }
+                    if (ParallelTasksForever.Current != null)
+                    {
+                        if (ParallelCounter > ParallelTaskOperationShowDialog)
+                            EditorUtility.DisplayProgressBar("Busy", "Parallel tasks are being performed", 1f);
+                        ParallelCounter++;
+                    }
+                    else
+                    {
+                        EditorUtility.ClearProgressBar();
+                        ParallelCounter = 0;
+                        break;
+                    }
                 }
             }
         }

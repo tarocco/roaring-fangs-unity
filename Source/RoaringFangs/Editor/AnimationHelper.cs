@@ -119,31 +119,35 @@ namespace RoaringFangs.Editor
             if (EnableStickyProperties)
             {
                 object window = AnimationWindowUtils.GetAnimationWindow();
-                object editor = AnimationWindowUtils.GetAnimationEditor(window);
-                object state = AnimationWindowUtils.GetAnimationWindowState(editor);
-                AnimationClip clip = AnimationWindowUtils.GetActiveAnimationClip(state);
-                GameObject root = AnimationWindowUtils.GetRootGameObject(state);
-                if (clip != null && root != null)
+                // If the window is not null (i.e. if it has been made visible at least once)
+                if (window != null)
                 {
-                    string root_path = AnimationUtility.CalculateTransformPath(root.transform, null);
-                    int trim_old_path = Math.Min(args.OldPath.Length, root_path.Length + 1);
-                    int trim_new_path = Math.Min(args.NewPath.Length, root_path.Length + 1);
-                    string old_path_local = args.OldPath.Substring(trim_old_path);
-                    string new_path_local = args.NewPath.Substring(trim_new_path);
-                    var bindings = AnimationUtility.GetCurveBindings(clip);
-                    for (int i = 0; i < bindings.Length; i++)
+                    object editor = AnimationWindowUtils.GetAnimationEditor(window);
+                    object state = AnimationWindowUtils.GetAnimationWindowState(editor);
+                    AnimationClip clip = AnimationWindowUtils.GetActiveAnimationClip(state);
+                    GameObject root = AnimationWindowUtils.GetRootGameObject(state);
+                    if (clip != null && root != null)
                     {
-                        EditorCurveBinding binding = bindings[i];
-                        if (binding.path == old_path_local)
+                        string root_path = AnimationUtility.CalculateTransformPath(root.transform, null);
+                        int trim_old_path = Math.Min(args.OldPath.Length, root_path.Length + 1);
+                        int trim_new_path = Math.Min(args.NewPath.Length, root_path.Length + 1);
+                        string old_path_local = args.OldPath.Substring(trim_old_path);
+                        string new_path_local = args.NewPath.Substring(trim_new_path);
+                        var bindings = AnimationUtility.GetCurveBindings(clip);
+                        for (int i = 0; i < bindings.Length; i++)
                         {
-                            // Remove curve from original binding (un-bind) and add updated binding (re-bind)
-                            var curve = AnimationUtility.GetEditorCurve(clip, binding);
-                            AnimationUtility.SetEditorCurve(clip, binding, null);
-                            binding.path = new_path_local;
-                            AnimationUtility.SetEditorCurve(clip, binding, curve);
-                            EditorApplication.RepaintAnimationWindow();
-                            Debug.Log("Updated property path: " + old_path_local + FTFY + new_path_local);
-                            break;
+                            EditorCurveBinding binding = bindings[i];
+                            if (binding.path == old_path_local)
+                            {
+                                // Remove curve from original binding (un-bind) and add updated binding (re-bind)
+                                var curve = AnimationUtility.GetEditorCurve(clip, binding);
+                                AnimationUtility.SetEditorCurve(clip, binding, null);
+                                binding.path = new_path_local;
+                                AnimationUtility.SetEditorCurve(clip, binding, curve);
+                                EditorApplication.RepaintAnimationWindow();
+                                Debug.Log("Updated property path: " + old_path_local + FTFY + new_path_local);
+                                break;
+                            }
                         }
                     }
                 }
