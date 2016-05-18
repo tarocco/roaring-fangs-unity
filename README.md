@@ -1,4 +1,4 @@
-Roaring Fangs' General Purpose Library for Unity
+Roaring Fangs General Purpose Library for Unity
 =====
 License
 -----
@@ -37,7 +37,7 @@ Optionally fork your own copy before you start.
 
   `git subtree add --prefix Assets/Packages/RoaringFangs git@github.com:Tarocco/roaring-fangs-unity.git master`
   
-3. Add `ROARING_FANGS_UNITY` to the Scripting Define Symbols in your Unity project. Separate define symbols with semicolos.
+3. Add `ROARING_FANGS_UNITY` to the Scripting Define Symbols in your Unity project. Separate define symbols with semicolons.
 
   Select
   
