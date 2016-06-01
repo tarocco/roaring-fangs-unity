@@ -32,13 +32,7 @@ namespace RoaringFangs.Utility
     {
         [SerializeField]
         private GameObject _Prefab;
-        [SerializeField]
         private GameObject _Instance;
-        public GameObject Instance
-        {
-            get { return _Instance; }
-            private set { _Instance = value; }
-        }
         [SerializeField]
         private bool _DontDestroy = true;
         public bool DontDestroy
@@ -52,9 +46,9 @@ namespace RoaringFangs.Utility
             SingletonHelper[] helpers = FindObjectsOfType<SingletonHelper>();
             if (helpers.All(s => s == this || s.name != name))
             {
-                Instance = (GameObject)GameObject.Instantiate(_Prefab);
+                _Instance = (GameObject)GameObject.Instantiate(_Prefab);
                 if(_DontDestroy)
-                    DontDestroyOnLoad(Instance);
+                    DontDestroyOnLoad(_Instance);
             }
         }
     }
