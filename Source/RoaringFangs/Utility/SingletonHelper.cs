@@ -40,16 +40,26 @@ namespace RoaringFangs.Utility
             get { return _DontDestroy; }
             set { _DontDestroy = value; }
         }
-        [SerializeField]
+
+        private static bool _singletonInstantiated;
         void Awake()
         {
-            SingletonHelper[] helpers = FindObjectsOfType<SingletonHelper>();
-            if (helpers.All(s => s == this || s.name != name))
-            {
+            //var helpers = FindObjectsOfType<SingletonHelper>();
+
+            // if every helper is this helper, or every helper's same doesn't match this helper's name, then instantiate
+            // u wot m8
+            // I'm just gonna leave it there because I don't get it
+            //if (helpers.All(s => s == this || s.name != name))
+            //{
+                if (_singletonInstantiated)
+                    return;
+
                 _Instance = (GameObject)GameObject.Instantiate(_Prefab);
                 if(_DontDestroy)
                     DontDestroyOnLoad(_Instance);
-            }
+
+                _singletonInstantiated = true;
+            //}
         }
     }
 }
