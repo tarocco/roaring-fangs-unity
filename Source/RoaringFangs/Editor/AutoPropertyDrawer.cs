@@ -106,7 +106,7 @@ namespace RoaringFangs.Editor
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            property.serializedObject.Update();
+            //property.serializedObject.Update();
             // Get the target object
             var target = property.serializedObject.targetObject;
             // Get the AutoPropertyDrawer associated with the field
@@ -125,7 +125,7 @@ namespace RoaringFangs.Editor
             bool modified = property.serializedObject.ApplyModifiedProperties();
             // Whether the field value has changed by any means (including undo operations or anything else!)
             bool different = !Equals(previous_field_value, PreviousFieldValue);
-            if (modified || different)
+            if (different)
             {
                 // Get the value of the field after modifying
                 var current_value = fieldInfo.GetValue(target);
