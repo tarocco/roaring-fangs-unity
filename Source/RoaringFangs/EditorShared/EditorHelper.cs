@@ -29,6 +29,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+using System.Linq;
+
 using RoaringFangs.Utility;
 
 namespace RoaringFangs.Editor
@@ -84,7 +86,10 @@ namespace RoaringFangs.Editor
                 yield return @object;
                 var descendants = TransformUtils.GetAllDescendants(@object.transform);
                 foreach (Transform t in descendants)
-                    yield return t.gameObject;
+                {
+                    if(t != null)
+                        yield return t.gameObject;
+                }
             }
         }
         private struct WeakReferenceAndPath
