@@ -162,6 +162,10 @@ namespace RoaringFangs.Editor
         }
         private static void HandleUpdate()
         {
+            // Return early if playing and no existing tasks remain
+            // Queued tasks will be ignored while playing
+            if (EditorApplication.isPlayingOrWillChangePlaymode && ParallelCounter == 0)
+                return;
             // Unwrap the parallel tasks loop
             // This is essentially a coroutine
             // TODO: move batch loop into each task's enumerator for finer control over batch size on a task-type basis
@@ -197,6 +201,8 @@ namespace RoaringFangs.Editor
         }
         private static void HandleHierarchyWindowChanged()
         {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+                return;
             // Restart the DoHierarchyWindowChanged task
             HierarchyChangedTask = DoHierarchyWindowChanged().GetEnumerator();
         }
