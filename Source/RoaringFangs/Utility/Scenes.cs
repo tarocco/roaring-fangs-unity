@@ -49,7 +49,9 @@ namespace RoaringFangs.Utility
                     break;
                     */
                 case LoadMode.MergeWithActive:
-                    SceneManager.LoadScene(scene_name, LoadSceneMode.Additive);
+                    scene_loaded = SceneManager.GetSceneByName(scene_name);
+                    if (!scene_loaded.isLoaded)
+                        SceneManager.LoadScene(scene_name, LoadSceneMode.Additive);
                     scene_loaded = SceneManager.GetSceneByName(scene_name);
                     SceneManager.MergeScenes(scene_loaded, SceneManager.GetActiveScene());
                     break;
@@ -81,7 +83,9 @@ namespace RoaringFangs.Utility
                     operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
                     break;
                 case LoadMode.MergeWithActive:
-                    operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
+                    scene_loaded = SceneManager.GetSceneByName(scene_name);
+                    if (!scene_loaded.isLoaded)
+                        operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
                     break;
             }
             yield return operation;
