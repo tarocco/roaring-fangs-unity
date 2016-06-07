@@ -55,7 +55,7 @@ namespace RoaringFangs.CameraBehavior
         void Start()
         {
             Rigidbody = GetComponent<Rigidbody>();
-            transform.position = Target.transform.position;
+            //transform.position = Target.transform.position;
         }
         void FixedUpdate()
         {
