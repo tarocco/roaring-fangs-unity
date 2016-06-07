@@ -25,70 +25,41 @@ namespace RoaringFangs.Utility
 
         public SceneLoadCompleteEvent SceneLoadComplete = new SceneLoadCompleteEvent();
 
-        public enum LoadMode
-        {
-            Add,
-            CheckAdd,
-            UnloadAdd,
-        }
         public string SceneName;
-        public LoadMode Mode = LoadMode.CheckAdd;
+        public Scenes.LoadMode Mode = Scenes.LoadMode.CheckAdd;
         public bool Async = true;
+        public bool LoadAtStart = true;
+
         void Start()
         {
+            if (LoadAtStart)
+                DoLoad();
+        }
+
+        private void DoLoad()
+        {
             if (Async)
-                StartCoroutine(LoadAsync(SceneName, Mode).GetEnumerator());
+                StartCoroutine(DoLoadAsync().GetEnumerator());
             else
-                Load(SceneName, Mode);
+            {
+                Scenes.Load(SceneName, Mode);
+                Scene loaded = SceneManager.GetSceneByName(SceneName);
+                SceneLoadComplete.Invoke(this, new SceneLoadCompleteEventArgs(loaded));
+            }
         }
 
-        protected void Load(string scene_name, LoadMode mode)
+        private IEnumerable DoLoadAsync()
         {
-            switch (mode)
-            {
-                default:
-                case LoadMode.Add:
-                    SceneManager.LoadScene(scene_name, LoadSceneMode.Additive);
-                    break;
-                case LoadMode.CheckAdd:
-                    if (!SceneManager.GetSceneByName(scene_name).isLoaded)
-                        SceneManager.LoadScene(scene_name, LoadSceneMode.Additive);
-                    // else throw an exception (should it?)
-                    break;
-                case LoadMode.UnloadAdd:
-                    SceneManager.UnloadScene(scene_name);
-                    SceneManager.LoadScene(scene_name, LoadSceneMode.Additive);
-                    break;
-            }
-            Scene loaded = SceneManager.GetSceneByName(scene_name);
+            var operations = Scenes.LoadAsync(SceneName, Mode);
+            foreach (var y in operations)
+                yield return y;
+            Scene loaded = SceneManager.GetSceneByName(SceneName);
             SceneLoadComplete.Invoke(this, new SceneLoadCompleteEventArgs(loaded));
         }
 
-        protected IEnumerable LoadAsync(string scene_name, LoadMode mode)
+        public void OnLoadThisSceneNext(object sender, SceneLoadCompleteEventArgs args)
         {
-            // This is here because of a Mono bug...
-            YieldInstruction operation = null;
-            switch (mode)
-            {
-                default:
-                case LoadMode.Add:
-                    operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
-                    break;
-                case LoadMode.CheckAdd:
-                    if (!SceneManager.GetSceneByName(scene_name).isLoaded)
-                        operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
-                    // TODO: else throw an exception (should it?)
-                    break;
-                case LoadMode.UnloadAdd:
-                    SceneManager.UnloadScene(scene_name);
-                    operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
-                    break;
-            }
-            yield return operation;
-            Scene loaded = SceneManager.GetSceneByName(scene_name);
-            SceneLoadComplete.Invoke(this, new SceneLoadCompleteEventArgs(loaded));
+            DoLoad();
         }
     }
 }
-
-
