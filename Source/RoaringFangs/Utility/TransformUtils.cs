@@ -23,6 +23,7 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -68,6 +69,107 @@ namespace RoaringFangs.Utility
                     foreach (Transform d in GetAllDescendants(t2))
                         yield return d;
                 }
+            }
+        }
+
+        #region Interfaces
+        public interface IHasDepth
+        {
+            int Depth { get; }
+        }
+        public interface IHasPath
+        {
+            string Path { get; }
+        }
+        public interface IHasTransform
+        {
+            Transform Transform { get; }
+        }
+        public interface ITransformD : IHasTransform, IHasDepth
+        {
+        }
+        public interface ITransformDP : IHasTransform, IHasDepth, IHasPath
+        {
+        }
+        #endregion
+
+        [Serializable]
+        public struct TransformD : ITransformD
+        {
+            [SerializeField]
+            private Transform _Transform;
+            public Transform Transform
+            {
+                get { return _Transform; }
+                private set { _Transform = value; }
+            }
+            [SerializeField]
+            private int _Depth;
+            public int Depth
+            {
+                get { return _Depth; }
+                set { _Depth = value; }
+            }
+
+            public TransformD(Transform transform, int depth)
+            {
+                _Transform = transform;
+                _Depth = depth;
+            }
+        }
+        [Serializable]
+        public struct TransformDP : ITransformDP
+        {
+            [SerializeField]
+            private Transform _Transform;
+            public Transform Transform
+            {
+                get { return _Transform; }
+                private set { _Transform = value; }
+            }
+            [SerializeField]
+            private string _Path;
+            public string Path
+            {
+                get { return _Path; }
+                private set { _Path = value; }
+            }
+            [SerializeField]
+            private int _Depth;
+            public int Depth
+            {
+                get { return _Depth; }
+                set { _Depth = value; }
+            }
+
+            public TransformDP(Transform transform, int depth, string path)
+            {
+                _Transform = transform;
+                _Depth = depth;
+                _Path = path;
+            }
+        }
+        public static string GetTransformPath(Transform root, Transform current)
+        {
+            if (current.parent == null || current.parent == root)
+                return current.name;
+            return GetTransformPath(root, current.parent) + "/" + current.name;
+        }
+
+        public static IEnumerable<ITransformDP> GetAllDescendantsWithPaths(Transform root, Transform t)
+        {
+            foreach (ITransformDP tdp in GetAllDescendantsWithPaths(root, t, 0, GetTransformPath(root, t)))
+                yield return tdp;
+        }
+
+        private static IEnumerable<ITransformDP> GetAllDescendantsWithPaths(Transform root, Transform t, int depth, string path)
+        {
+            yield return new TransformDP(t, depth, path);
+            path += "/";
+            foreach (Transform t2 in t)
+            {
+                foreach (TransformDP tp in GetAllDescendantsWithPaths(root, t2, depth + 1, path + t2.name))
+                    yield return tp;
             }
         }
 
@@ -128,9 +230,10 @@ namespace RoaringFangs.Utility
         {
             foreach (Transform t in transforms)
             {
-                var component = t.GetComponent<T>();
-                if (component != null)
-                    yield return component;
+                var components = t.GetComponents<T>();
+                if (components != null)
+                    foreach (T component in components)
+                        yield return component;
             }
         }
 
@@ -140,23 +243,42 @@ namespace RoaringFangs.Utility
             {
                 if (include_all || t.gameObject.activeSelf)
                 {
-                    T component = t.GetComponent<T>();
-                    if (component != null)
-                        yield return component;
+                    var components = t.GetComponents<T>();
+                    if (components != null)
+                        foreach (T component in components)
+                            yield return component;
                     foreach (T c in GetComponentsInDescendants<T>(t, include_all))
                         yield return c;
                 }
             }
         }
 
-        public class WithDepth<T>
+        public static T GetComponentInParent<T>(Transform transform, bool include_all = false) where T : Component
+        {
+            if (include_all || transform.gameObject.activeSelf)
+            {
+                T component = transform.GetComponent<T>();
+                if (component != null)
+                    return component;
+                else if (transform.parent != null)
+                    return GetComponentInParent<T>(transform.parent, include_all);
+            }
+            return null;
+        }
+
+        public class WithDepth<T> : IHasDepth
         {
             public readonly T Self;
-            public readonly int Depth;
+            private int _Depth;
+            public int Depth
+            {
+                get { return _Depth; }
+                private set { _Depth = value; }
+            }
             public WithDepth(T self, int depth)
             {
                 Self = self;
-                Depth = depth;
+                _Depth = depth;
             }
         }
         public static IEnumerable<WithDepth<T>> GetComponentsInDescendantsWithDepth<T>(Transform root, bool include_all = false) where T : Component
@@ -176,6 +298,19 @@ namespace RoaringFangs.Utility
                         yield return new WithDepth<T>(c, depth + 1);
                 }
             }
+        }
+        public static IEnumerable<GameObject> FindAll(params string[] paths)
+        {
+            foreach (string path in paths)
+                yield return GameObject.Find(path);
+        }
+        public static bool IsDescendant(Transform parent, Transform descendant)
+        {
+            if (descendant.parent == parent)
+                return true;
+            if (descendant.parent == null)
+                return false;
+            return IsDescendant(parent, descendant.parent);
         }
         #endregion
     }
