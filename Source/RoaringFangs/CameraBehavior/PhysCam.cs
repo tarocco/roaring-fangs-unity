@@ -73,18 +73,14 @@ namespace RoaringFangs.CameraBehavior
         }
         void LateUpdate()
         {
-            Quaternion rotation = Quaternion.identity;
-
-            float tf_nearest;
-            //tf_nearest = GuideCameraDirection.GetNearestPointTF(Target.transform.position);
-            tf_nearest = GuideCameraDirection.GetNearestPointTF(transform.position);
-            //Vector3 position_nearest = GuideCameraDirection.Interpolate(tf_nearest);
-            //Vector3 direction_nearest = position_nearest - Target.transform.position;
-
-            Vector3 tangent = GuideCameraDirection.GetTangent(tf_nearest);
-            Vector3 normal = Vector3.Cross(tangent, Vector3.up);
-            rotation = Quaternion.LookRotation(normal, Vector3.up);
-            CameraParent.transform.localRotation = rotation;
+            if (GuideCameraDirection)
+            {
+                float tf_nearest = GuideCameraDirection.GetNearestPointTF(transform.position);
+                Vector3 tangent = GuideCameraDirection.GetTangent(tf_nearest);
+                Vector3 normal = Vector3.Cross(tangent, Vector3.up);
+                Quaternion rotation = Quaternion.LookRotation(normal, Vector3.up);
+                CameraParent.transform.localRotation = rotation;
+            }
         }
     }
 }
