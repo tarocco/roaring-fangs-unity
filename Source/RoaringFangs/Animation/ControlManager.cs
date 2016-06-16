@@ -43,23 +43,42 @@ namespace RoaringFangs.Animation
         {
             get
             {
+                // If the subject is not set
                 if (_Subject == null)
                 {
-                    if (!String.IsNullOrEmpty(SubjectPath))
+                    // If the subject path is set, find the subject by its path and set the backing field reference
+                    if(!String.IsNullOrEmpty(_SubjectPath))
                     {
-                        string parent_path;
-                        if (transform.parent != null)
-                            parent_path = TransformUtils.GetTransformPath(null, transform.parent);
+                        
+                        // Subject path is an absolute path
+                        if (_SubjectPath.StartsWith("/"))
+                        {
+                            // Find in scene root
+                            _Subject = GameObject.Find(_SubjectPath);
+                        }
                         else
-                            parent_path = "";
-                        string abs_path;
-                        if (_SubjectPath.StartsWith("../"))
-                            abs_path = parent_path + _SubjectPath.Substring(2);
-                        else if (_SubjectPath.StartsWith("/"))
-                            abs_path = _SubjectPath;
-                        else
-                            abs_path = parent_path + _SubjectPath;
-                        _Subject = GameObject.Find(abs_path);
+                        {
+                            // Subject path is in parent-relative (right now only handling 1 level)
+                            if (_SubjectPath.StartsWith("../"))
+                            {
+                                string subject_path_rel_to_parent = _SubjectPath.Substring(3);
+                                if (transform.parent != null)
+                                {
+                                    // Find in parent transform
+                                    _Subject = transform.parent.Find(subject_path_rel_to_parent).gameObject;
+                                }
+                                else
+                                {
+                                    // Find in scene root
+                                    _Subject = GameObject.Find(subject_path_rel_to_parent);
+                                }
+                            }
+                            // Subject path is relative
+                            else
+                            {
+                                _Subject = transform.Find(_SubjectPath).gameObject;
+                            }
+                        }
                     }
                 }
                 return _Subject;
@@ -97,9 +116,9 @@ namespace RoaringFangs.Animation
             {
                 if (value != _SubjectPath)
                 {
+                    _SubjectPath = value;
                     if (String.IsNullOrEmpty(value))
                         Subject = null;
-                    _SubjectPath = value;
                 }
             }
         }
@@ -145,17 +164,21 @@ namespace RoaringFangs.Animation
             }
             private set
             {
+                // Ifsetting the cached subject descendants
                 if (value != null)
                 {
                     // Create a concrete struct array from the abstract (interface) enumerable
                     _CachedSubjectDescendantsAndPaths = value
                         .Select(t => new TransformUtils.TransformDP(t.Transform, t.Depth, t.Path))
                         .ToArray();
+                    // Notify control groups with descendants
                     NotifyControlGroupsOfSubjectDescendants(value);
                 }
+                // else if clearing them and they aren't already cleared
                 else if(_CachedSubjectDescendantsAndPaths != null)
                 {
                     _CachedSubjectDescendantsAndPaths = null;
+                    // Notify control groups to clear
                     NotifyControlGroupsOfSubjectDescendants(null);
                 }
                 
@@ -214,10 +237,14 @@ namespace RoaringFangs.Animation
             if (_FirstEnable)
             {
 #if UNITY_EDITOR
-                if (!UnityEditor.EditorApplication.isPlaying)
+                if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
                 {
                     CollectSubjectDescendants();
                     RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged += HandleHierarchyObjectPathChanged;
+                }
+                else
+                {
+                    RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
                 }
 #endif
                 _FirstEnable = false;
