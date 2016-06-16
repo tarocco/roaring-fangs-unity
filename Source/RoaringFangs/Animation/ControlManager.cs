@@ -134,8 +134,6 @@ namespace RoaringFangs.Animation
                 // Lazy initialization
                 if (_CachedSubjectDescendantsAndPaths == null)
                 {
-                    Debug.Log("CACHE LAZY INIT");
-
                     CachedSubjectDescendantsAndPaths = CollectSubjectDescendants();
                 }
                 // Double null check for quality assurance
@@ -144,17 +142,11 @@ namespace RoaringFangs.Animation
                     foreach (var tdp in _CachedSubjectDescendantsAndPaths)
                         yield return tdp;
                 }
-                else
-                {
-                    Debug.Log("CACHE IS NULL AFTER LAZY INIT");
-                }
             }
             private set
             {
                 if (value != null)
                 {
-                    Debug.Log("CachedSubjectDescendantsAndPaths SETTER TO SOMETHING");
-
                     // Create a concrete struct array from the abstract (interface) enumerable
                     _CachedSubjectDescendantsAndPaths = value
                         .Select(t => new TransformUtils.TransformDP(t.Transform, t.Depth, t.Path))
@@ -163,8 +155,6 @@ namespace RoaringFangs.Animation
                 }
                 else if(_CachedSubjectDescendantsAndPaths != null)
                 {
-                    Debug.Log("CachedSubjectDescendantsAndPaths SETTER TO NULL");
-
                     _CachedSubjectDescendantsAndPaths = null;
                     NotifyControlGroupsOfSubjectDescendants(null);
                 }
@@ -232,6 +222,13 @@ namespace RoaringFangs.Animation
 #endif
                 _FirstEnable = false;
             }
+        }
+
+        void OnDisable()
+        {
+#if UNITY_EDITOR
+            RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
+#endif
         }
 
         private void HandleHierarchyObjectPathChanged(object sender, RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChangedEventArgs args)
