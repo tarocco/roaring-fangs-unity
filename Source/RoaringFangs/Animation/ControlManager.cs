@@ -224,6 +224,7 @@ namespace RoaringFangs.Animation
             }
         }
 
+        // bug you also forgot to add this unsubscribe thing, that caused exceptions
         void OnDisable()
         {
 #if UNITY_EDITOR
@@ -241,6 +242,7 @@ namespace RoaringFangs.Animation
                 // Lazily invalidate the cached subject descentants and paths
                 //CachedSubjectDescendantsAndPaths = null;
                 // bug how about reinitialize instead of invalidating ? this is what caused the issue
+                // lazy initialization didn't seem to work
                 CachedSubjectDescendantsAndPaths = CollectSubjectDescendants();
             }
         }
@@ -262,28 +264,24 @@ namespace RoaringFangs.Animation
             //Debug.Log(groups.Length);
 
 
-            // todo seems like first initial update on scene load is correct, but all next updates are wrong
-            // http://puu.sh/puCIK/de02e1d16a.jpg
-            var groupCount = 0;
+            //var groupCount = 0;
             var targets_array = new List<TargetRule>();
             foreach (var group in groups) // replaced that non-debuggable linq statement to foreach loop
             {
-                var groupTargetCount = 0;
+                //var groupTargetCount = 0;
 
                 if (group.Targets != null)
                 {
                     foreach (var target in group.Targets)
                     {
-                        ++groupTargetCount;
+                        //++groupTargetCount;
                         targets_array.Add(new TargetRule(target.Transform, target.Depth, group.gameObject.activeSelf));
                     }
                 }
 
-                Debug.Log("groupNumber " + groupCount++ + " targetCount = " + groupTargetCount);
+                //Debug.Log("groupNumber " + groupCount++ + " targetCount = " + groupTargetCount);
             }
 
-            // bug yep, it always returns 0 until scene restart, getting closer to the actual issue
-            //Debug.Log(targets_array.Count);
 
             foreach (var target in targets_array)
             {
