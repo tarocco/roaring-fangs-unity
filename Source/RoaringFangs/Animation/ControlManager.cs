@@ -239,12 +239,17 @@ namespace RoaringFangs.Animation
         void Update()
         {
             var target_data_previous = new Dictionary<Transform, TargetInfo>();
-            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBehavior>(transform, true);
+            //var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBehavior>(transform, true);
+            // all those yields and enumerables are cool and everything, but i'd like to be safe at least for debugging
+            var groups = transform.GetComponentsInChildren<TargetGroupBehavior>(true);
             IEnumerable<TargetRule> targets = groups
                 .Where(g => g.Targets != null)
                 .SelectMany(g => g.Targets
                     .Select(t => new TargetRule(t.Transform, t.Depth, g.gameObject.activeSelf)));
             var targets_array = targets.ToArray();
+
+            // bug yep, it always returns 0 until scene restart, getting closer to the actual issue
+            Debug.Log(targets_array.Length);
 
             foreach (var target in targets_array)
             {
