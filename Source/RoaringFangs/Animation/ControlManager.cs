@@ -249,7 +249,7 @@ namespace RoaringFangs.Animation
 
         void Update()
         {
-            var target_data_previous = new Dictionary<Transform, TargetInfo>();
+            
             //var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBehavior>(transform, true);
             // all those yields and enumerables are cool and everything, but i'd like to be safe at least for debugging
             var groups = transform.GetComponentsInChildren<TargetGroupBehavior>(true);
@@ -283,6 +283,7 @@ namespace RoaringFangs.Animation
             }
 
 
+            //var target_data_previous = new Dictionary<Transform, TargetInfo>();
             foreach (var target in targets_array)
             {
                 if (target.Transform != null)
@@ -298,11 +299,34 @@ namespace RoaringFangs.Animation
                         target.Transform.gameObject.SetActive(target.Info.Active);
                     }
                     // Add to previous target data dictionary
-                    target_data_previous[target.Transform] = target.Info;
+                    TargetDataPrevious[target.Transform] = target.Info;
                 }
             }
             // Update previous value dictionary
-            TargetDataPrevious = target_data_previous;
+            //TargetDataPrevious = target_data_previous; // dafuk are you doing m8, dictionary is not a struct
+
+
+            //var target_data_previous = new Dictionary<Transform, TargetInfo>();
+            //foreach (var target in targets_array)
+            //{
+            //    if (target.Transform != null)
+            //    {
+            //        TargetInfo target_info_previous;
+            //        bool have_previous = TargetDataPrevious.TryGetValue(target.Transform, out target_info_previous);
+            //        bool active_update = !have_previous ||
+            //            target.Info.Active != target_info_previous.Active ||
+            //            target.Info.Depth != target_info_previous.Depth;
+            //        if (active_update)
+            //        {
+            //            // Update the target game object
+            //            target.Transform.gameObject.SetActive(target.Info.Active);
+            //        }
+            //        // Add to previous target data dictionary
+            //        target_data_previous[target.Transform] = target.Info;
+            //    }
+            //}
+            //// Update previous value dictionary
+            //TargetDataPrevious = target_data_previous;
         }
 #if UNITY_EDITOR
         [MenuItem("Sprites And Bones/Animation/Control Manager", false, 0)]
