@@ -134,6 +134,8 @@ namespace RoaringFangs.Animation
                 // Lazy initialization
                 if (_CachedSubjectDescendantsAndPaths == null)
                 {
+                    Debug.Log("CACHE LAZY INIT");
+
                     CachedSubjectDescendantsAndPaths = CollectSubjectDescendants();
                 }
                 // Double null check for quality assurance
@@ -142,11 +144,17 @@ namespace RoaringFangs.Animation
                     foreach (var tdp in _CachedSubjectDescendantsAndPaths)
                         yield return tdp;
                 }
+                else
+                {
+                    Debug.Log("CACHE IS NULL AFTER LAZY INIT");
+                }
             }
             private set
             {
                 if (value != null)
                 {
+                    Debug.Log("CachedSubjectDescendantsAndPaths SETTER TO SOMETHING");
+
                     // Create a concrete struct array from the abstract (interface) enumerable
                     _CachedSubjectDescendantsAndPaths = value
                         .Select(t => new TransformUtils.TransformDP(t.Transform, t.Depth, t.Path))
@@ -155,6 +163,8 @@ namespace RoaringFangs.Animation
                 }
                 else if(_CachedSubjectDescendantsAndPaths != null)
                 {
+                    Debug.Log("CachedSubjectDescendantsAndPaths SETTER TO NULL");
+
                     _CachedSubjectDescendantsAndPaths = null;
                     NotifyControlGroupsOfSubjectDescendants(null);
                 }
@@ -232,7 +242,9 @@ namespace RoaringFangs.Animation
                 (!String.IsNullOrEmpty(args.OldPath) && args.OldPath.StartsWith(SubjectPathAbs)))))
             {
                 // Lazily invalidate the cached subject descentants and paths
-                CachedSubjectDescendantsAndPaths = null;
+                //CachedSubjectDescendantsAndPaths = null;
+                // bug how about reinitialize instead of invalidating ? this is what caused the issue
+                CachedSubjectDescendantsAndPaths = CollectSubjectDescendants();
             }
         }
 

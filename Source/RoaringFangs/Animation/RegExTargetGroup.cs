@@ -91,6 +91,8 @@ namespace RoaringFangs.Animation
         #endregion
         private static IEnumerable<TransformUtils.ITransformD> FindMatchingTransformsD(IEnumerable<TransformUtils.ITransformDP> descendants, string regex_pattern)
         {
+            Debug.Log("HELLO ?");
+
             Regex regex = new Regex(regex_pattern);
             var descendants_array = descendants.ToArray();
             foreach (var tp in descendants_array)
@@ -101,10 +103,14 @@ namespace RoaringFangs.Animation
                     var groups = match.Groups;
                     if (groups.Count == 1)
                     {
+                        Debug.Log("ANYTHING ?");
+
                         yield return new TransformUtils.TransformD(tp.Transform, tp.Depth);
                     }
                     else if (groups.Count > 1)
                     {
+                        Debug.Log("ANYTHING ?");
+
                         var group1 = groups[1];
                         var grouped_parent_path = tp.Path.Substring(0, group1.Index + group1.Length);
                         //Debug.Log("Grouped: " + grouped_parent_path);
@@ -126,9 +132,15 @@ namespace RoaringFangs.Animation
         private void SetTargets(IEnumerable<TransformUtils.ITransformD> value)
         {
             if (value != null)
+            {
+                Debug.Log("SETTARGETS TO SOMETHING");
                 _Targets = value.Select(t => new TransformUtils.TransformD(t.Transform, t.Depth)).ToArray();
+            }
             else
+            {
+                Debug.Log("SETTARGETS TO NULL");
                 _Targets = null;
+            }
         }
         #endregion
         #region Other Methods
@@ -136,11 +148,15 @@ namespace RoaringFangs.Animation
         {
             if (subject_descendants_and_paths != null)
             {
+                Debug.Log("ONSUBJECTCHANGED TO SOMETHING");
+
                 SubjectDescendantsAndPaths = subject_descendants_and_paths.ToArray();
                 SetTargets(CollectTargets());
             }
             else
             {
+                Debug.Log("ONSUBJECTCHANGED TO NULL");
+
                 SubjectDescendantsAndPaths = null;
                 SetTargets(null);
             }
