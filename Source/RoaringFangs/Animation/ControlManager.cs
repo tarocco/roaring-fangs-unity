@@ -247,12 +247,13 @@ namespace RoaringFangs.Animation
 #endif
 		}
 
+		#if UNITY_EDITOR
 		private void HandleHierarchyObjectPathChanged (object sender, RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChangedEventArgs args)
 		{
 			// If the change had anything to do with the subject
 			if (!String.IsNullOrEmpty (SubjectPathAbs) &&
-			             ((!String.IsNullOrEmpty (args.NewPath) && args.NewPath.StartsWith (SubjectPathAbs) ||
-			             (!String.IsNullOrEmpty (args.OldPath) && args.OldPath.StartsWith (SubjectPathAbs))))) {
+			    ((!String.IsNullOrEmpty (args.NewPath) && args.NewPath.StartsWith (SubjectPathAbs) ||
+			    (!String.IsNullOrEmpty (args.OldPath) && args.OldPath.StartsWith (SubjectPathAbs))))) {
 				// Lazily invalidate the cached subject descentants and paths
 				//CachedSubjectDescendantsAndPaths = null;
 				// bug how about reinitialize instead of invalidating ? this is what caused the issue
@@ -260,6 +261,7 @@ namespace RoaringFangs.Animation
 				CachedSubjectDescendantsAndPaths = CollectSubjectDescendants ();
 			}
 		}
+		#endif
 
 		void Update ()
 		{
@@ -299,8 +301,8 @@ namespace RoaringFangs.Animation
 					TargetInfo target_info_previous;
 					bool have_previous = TargetDataPrevious.TryGetValue (target.Transform, out target_info_previous);
 					bool active_update = !have_previous ||
-					                                    target.Info.Active != target_info_previous.Active ||
-					                                    target.Info.Depth != target_info_previous.Depth;
+					                     target.Info.Active != target_info_previous.Active ||
+					                     target.Info.Depth != target_info_previous.Depth;
 					if (active_update || true) {
 						// Update the target game object
 						target.Transform.gameObject.SetActive (target.Info.Active);
