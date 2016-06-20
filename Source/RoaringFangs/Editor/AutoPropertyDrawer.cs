@@ -56,6 +56,10 @@ namespace RoaringFangs.Editor
             EditorGUI.DelayedTextField(position, property, label);
             return false;
         }
+        private static bool PropertyFieldIncludingChildren(Rect position, SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.PropertyField(position, property, label, true);
+        }
         #endregion
 
         /// <summary>
@@ -80,7 +84,7 @@ namespace RoaringFangs.Editor
                 case SerializedPropertyType.String:
                     return DelayedTextField;
                 default:
-                    return EditorGUI.PropertyField;
+                    return PropertyFieldIncludingChildren;
             }
         }
 
@@ -106,7 +110,6 @@ namespace RoaringFangs.Editor
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            //property.serializedObject.Update();
             // Get the target object
             var target = property.serializedObject.targetObject;
             // Get the AutoPropertyDrawer associated with the field
@@ -118,7 +121,8 @@ namespace RoaringFangs.Editor
             // Lazily initialize snd cache the property field drawer
             DrawPropertyField = DrawPropertyField ?? GetPropertyFieldDrawer(position, property, label, auto.Delayed);
             // Draw the property field
-            EditorGUI.BeginProperty(position, label, property);
+            position.height = position.height + GetPropertyHeight(property, label);
+            label = EditorGUI.BeginProperty(position, label, property);
             DrawPropertyField(position, property, label);
             EditorGUI.EndProperty();
             // Whether the serialized property was directly modified (unaffected by undo!)
@@ -141,6 +145,11 @@ namespace RoaringFangs.Editor
                 // Update the previous field value to be the current value
                 PreviousFieldValue = current_value;
             }
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.GetPropertyHeight(property, label, true);
         }
     }
 }

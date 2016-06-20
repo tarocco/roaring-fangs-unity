@@ -242,10 +242,6 @@ namespace RoaringFangs.Animation
                     CollectSubjectDescendants();
                     RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged += HandleHierarchyObjectPathChanged;
                 }
-                else
-                {
-                    RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
-                }
 #endif
                 _FirstEnable = false;
             }
