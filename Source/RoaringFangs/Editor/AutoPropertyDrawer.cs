@@ -121,7 +121,6 @@ namespace RoaringFangs.Editor
             // Lazily initialize snd cache the property field drawer
             DrawPropertyField = DrawPropertyField ?? GetPropertyFieldDrawer(position, property, label, auto.Delayed);
             // Draw the property field
-            position.height = position.height + GetPropertyHeight(property, label);
             label = EditorGUI.BeginProperty(position, label, property);
             DrawPropertyField(position, property, label);
             EditorGUI.EndProperty();
