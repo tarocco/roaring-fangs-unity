@@ -63,6 +63,7 @@ namespace RoaringFangs.Formats.MIDI
             NotesOnOffFilter.pInclude(
                 typeof(Midi.Events.ChannelEvents.NoteOnEvent),
                 typeof(Midi.Events.ChannelEvents.NoteOffEvent));
+            //typeof(Midi.Events.MetaEvents.EndOfTrackEvent)); // todo should probably have separate meta event, or rename the filter
             TrackNameFilter.pInclude(
                 typeof(Midi.Events.MetaEvents.SequenceOrTrackNameEvent));
         }
