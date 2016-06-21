@@ -23,43 +23,27 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+using UnityEditor;
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 
-namespace RoaringFangs.Utility
+using RoaringFangs.Utility;
+
+namespace RoaringFangs.Animation.Editor
 {
-    public class SingletonHelper : MonoBehaviour
+    [CustomEditor(typeof(ControlManager))]
+    public class ControlManagerEditor : UnityEditor.Editor
     {
-        [SerializeField]
-        private GameObject _Prefab;
-        private GameObject _Instance;
-        [SerializeField]
-        private bool _DontDestroy = true;
-        public bool DontDestroy
+        public override void OnInspectorGUI()
         {
-            get { return _DontDestroy; }
-            set { _DontDestroy = value; }
-        }
-
-        private static bool _singletonInstantiated;
-        void Awake()
-        {
-            //var helpers = FindObjectsOfType<SingletonHelper>();
-
-            // if every helper is this helper, or every helper's same doesn't match this helper's name, then instantiate
-            // u wot m8
-            // I'm just gonna leave it there because I don't get it
-            //if (helpers.All(s => s == this || s.name != name))
-            //{
-                if (_singletonInstantiated)
-                    return;
-
-                _Instance = (GameObject)GameObject.Instantiate(_Prefab);
-                if(_DontDestroy)
-                    DontDestroyOnLoad(_Instance);
-
-                _singletonInstantiated = true;
-            //}
+            DrawPropertiesExcluding(serializedObject);
+            ControlManager self = (ControlManager)target;
+            serializedObject.Update();
+            self.SubjectPath = EditorGUILayout.DelayedTextField("Subject Path", self.SubjectPath);
+            self.Subject = (GameObject)EditorGUILayout.ObjectField("Subject", self.Subject, typeof(GameObject), true);
+            serializedObject.ApplyModifiedProperties();
         }
     }
 }

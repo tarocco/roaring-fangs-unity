@@ -23,43 +23,43 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using System.Collections;
-using System.Linq;
 
 namespace RoaringFangs.Utility
 {
-    public class SingletonHelper : MonoBehaviour
-    {
-        [SerializeField]
-        private GameObject _Prefab;
-        private GameObject _Instance;
-        [SerializeField]
-        private bool _DontDestroy = true;
-        public bool DontDestroy
+	public static class Coroutines
+	{
+#if UNITY_EDITOR
+        private static void ForceUpdate(Transform target)
         {
-            get { return _DontDestroy; }
-            set { _DontDestroy = value; }
+            target.position += new Vector3(0f, 0f, 0.01f);
+            target.position -= new Vector3(0f, 0f, 0.01f);
         }
-
-        private static bool _singletonInstantiated;
-        void Awake()
+        private static IEnumerator CoroutineWithForceUpdate(MonoBehaviour target, IEnumerator work)
         {
-            //var helpers = FindObjectsOfType<SingletonHelper>();
-
-            // if every helper is this helper, or every helper's same doesn't match this helper's name, then instantiate
-            // u wot m8
-            // I'm just gonna leave it there because I don't get it
-            //if (helpers.All(s => s == this || s.name != name))
-            //{
-                if (_singletonInstantiated)
-                    return;
-
-                _Instance = (GameObject)GameObject.Instantiate(_Prefab);
-                if(_DontDestroy)
-                    DontDestroyOnLoad(_Instance);
-
-                _singletonInstantiated = true;
-            //}
+            EditorApplication.CallbackFunction force_update = () => ForceUpdate(target.transform);
+            EditorApplication.update += force_update;
+            try
+            {
+                while (work.MoveNext())
+                    yield return work.Current;
+            }
+            finally
+            {
+                EditorApplication.update -= force_update;
+            }
+        }
+#endif
+        public static UnityEngine.Coroutine Start(MonoBehaviour target, IEnumerator work)
+        {
+#if UNITY_EDITOR
+            return target.StartCoroutine(CoroutineWithForceUpdate(target, work));
+#else
+            return target.StartCoroutine(work);
+#endif
         }
     }
 }

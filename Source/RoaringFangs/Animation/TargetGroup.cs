@@ -24,42 +24,23 @@ THE SOFTWARE.
 
 using UnityEngine;
 using System.Collections;
-using System.Linq;
+using System.Collections.Generic;
 
-namespace RoaringFangs.Utility
+using RoaringFangs.Utility;
+
+namespace RoaringFangs.Animation
 {
-    public class SingletonHelper : MonoBehaviour
+    public class TargetGroup : TargetGroupBehavior
     {
         [SerializeField]
-        private GameObject _Prefab;
-        private GameObject _Instance;
-        [SerializeField]
-        private bool _DontDestroy = true;
-        public bool DontDestroy
+        private TransformUtils.ITransformD[] _Targets;
+        public override IEnumerable<TransformUtils.ITransformD> Targets
         {
-            get { return _DontDestroy; }
-            set { _DontDestroy = value; }
+            get { return _Targets; }
         }
-
-        private static bool _singletonInstantiated;
-        void Awake()
+        public override void OnSubjectChanged(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
         {
-            //var helpers = FindObjectsOfType<SingletonHelper>();
-
-            // if every helper is this helper, or every helper's same doesn't match this helper's name, then instantiate
-            // u wot m8
-            // I'm just gonna leave it there because I don't get it
-            //if (helpers.All(s => s == this || s.name != name))
-            //{
-                if (_singletonInstantiated)
-                    return;
-
-                _Instance = (GameObject)GameObject.Instantiate(_Prefab);
-                if(_DontDestroy)
-                    DontDestroyOnLoad(_Instance);
-
-                _singletonInstantiated = true;
-            //}
+            // TODO
         }
     }
 }
