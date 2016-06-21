@@ -77,7 +77,8 @@ namespace RoaringFangs.Animation
                                 }
                             }
                             // Subject path is relative
-                            else {
+                            else
+                            {
                                 _Subject = transform.Find(_SubjectPath).gameObject;
                             }
                         }
@@ -102,7 +103,7 @@ namespace RoaringFangs.Animation
                         SubjectPathAbs = null;
                     }
                     CachedSubjectDescendantsAndPaths = CollectSubjectDescendants();
-                    NotifyControlGroupsOfSubjectDescendants();
+                    //NotifyControlGroupsOfSubjectDescendants();
                 }
             }
         }
@@ -154,7 +155,6 @@ namespace RoaringFangs.Animation
 
         #region Cached Subject Descendants
 
-        [SerializeField, HideInInspector]
         private TransformUtils.TransformDP[] _CachedSubjectDescendantsAndPaths;
 
         public IEnumerable<TransformUtils.ITransformDP> CachedSubjectDescendantsAndPaths
@@ -249,27 +249,21 @@ namespace RoaringFangs.Animation
 
         #endregion
 
-        private bool _FirstEnable = true;
-
         void OnEnable()
         {
-            if (_FirstEnable)
-            {
 #if UNITY_EDITOR
-                if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
-                {
-                    CollectSubjectDescendants();
-                    RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged += HandleHierarchyObjectPathChanged;
-                }
-                else {
-                    RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
-                }
-#endif
-                _FirstEnable = false;
+            if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                CollectSubjectDescendants();
+                RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged += HandleHierarchyObjectPathChanged;
             }
+            else
+            {
+                RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
+            }
+#endif
         }
 
-        // bug you also forgot to add this unsubscribe thing, that caused exceptions
         void OnDisable()
         {
 #if UNITY_EDITOR
@@ -280,80 +274,66 @@ namespace RoaringFangs.Animation
 #if UNITY_EDITOR
         private void HandleHierarchyObjectPathChanged(object sender, RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChangedEventArgs args)
         {
-            // If the change had anything to do with the subject
-            if (!String.IsNullOrEmpty(SubjectPathAbs) &&
-                ((!String.IsNullOrEmpty(args.NewPath) && args.NewPath.StartsWith(SubjectPathAbs) ||
-                (!String.IsNullOrEmpty(args.OldPath) && args.OldPath.StartsWith(SubjectPathAbs)))))
+            // If the change had anything to do with the subject, notify control groups of the changes to the subject descendants
+            if (!String.IsNullOrEmpty(SubjectPathAbs))
             {
-                // Lazily invalidate the cached subject descentants and paths
-                //CachedSubjectDescendantsAndPaths = null;
-                // bug how about reinitialize instead of invalidating ? this is what caused the issue
-                // lazy initialization didn't seem to work
-                CachedSubjectDescendantsAndPaths = CollectSubjectDescendants();
+                if (IsSubPath(SubjectPathAbs, args.NewPath) ||
+                    IsSubPath(SubjectPathAbs, args.OldPath))
+                {
+                    CachedSubjectDescendantsAndPaths = CollectSubjectDescendants();
+                    NotifyControlGroupsOfSubjectDescendants();
+                }
             }
+        }
+
+        private static bool IsSubPath(string base_path, string sub_path)
+        {
+            return !String.IsNullOrEmpty(sub_path) && sub_path.StartsWith(base_path);
         }
 #endif
 
         void Update()
         {
-            //var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBehavior>(transform, true);
-            // all those yields and enumerables are cool and everything, but i'd like to be safe at least for debugging
-            var groups = transform.GetComponentsInChildren<TargetGroupBehavior>(true);
-
-            //IEnumerable<TargetRule> targets = groups
-            //    .Where(g => g.Targets != null)
-            //    .SelectMany(g => g.Targets
-            //        .Select(t => new TargetRule(t.Transform, t.Depth, g.gameObject.activeSelf)));
-            //var targets_array = targets.ToArray();
-
-            // all good, always correct value
-            //Debug.Log(groups.Length);
-
-
-            //var groupCount = 0;
-            var targets_array = new List<TargetRule>();
-            foreach (var group in groups)
-            { // replaced that non-debuggable linq statement to foreach loop
-              //var groupTargetCount = 0;
-
-                if (group.Targets != null)
-                {
-                    foreach (var target in group.Targets)
-                    {
-                        //++groupTargetCount;
-                        targets_array.Add(new TargetRule(target.Transform, target.Depth, group.gameObject.activeSelf));
-                    }
-                }
-
-                //Debug.Log("groupNumber " + groupCount++ + " targetCount = " + groupTargetCount);
-            }
-
-
+            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBehavior>(transform, true);
+            // For each groups array, select valid target lists in all of the target groups and create
+            // rules on whether to show or hide the targets based on the control group's active state
+            IEnumerable<TargetRule> targets = groups
+                .Where(g => g.Targets != null)
+                .SelectMany(g => g.Targets
+                    .Select(t => new TargetRule(t.Transform, t.Depth, g.gameObject.activeInHierarchy)));
+            // Buffer the selection into an array
+            var targets_array = targets.ToArray();
+            // Create a dictionary to collect valid target data to compare against in the next update
             var target_data_previous = new Dictionary<Transform, TargetInfo>();
             foreach (var target in targets_array)
             {
+                // If the target transform is valid (not deleted)
                 if (target.Transform != null)
                 {
+                    // Retrieve previous target info state
                     TargetInfo target_info_previous;
+                    // Reflesh flag includes new targets, change in active property and change in hierarchy depth
+
+                    // Remark: changes in active state are directly compared with the target's game object so that
+                    // following target rules know to make changes to the active state
+
                     bool have_previous = TargetDataPrevious.TryGetValue(target.Transform, out target_info_previous);
-                    bool active_update = !have_previous ||
-                                         target.Info.Active != target_info_previous.Active ||
-                                         target.Info.Depth != target_info_previous.Depth;
-                    if (active_update || true)
-                    {
-                        // Update the target game object
+                    bool refresh = !have_previous ||
+                        target.Info.Depth != target_info_previous.Depth ||
+                        target.Info.Active != target.Transform.gameObject.activeSelf;
+                    // If there was a change to warrant an update to the active state of the object, update the target game object
+                    if (refresh)
                         target.Transform.gameObject.SetActive(target.Info.Active);
-                    }
-                    // Add to previous target data dictionary
-                    TargetDataPrevious[target.Transform] = target.Info;
+                    // Collect valid target data
+                    target_data_previous[target.Transform] = target.Info;
                 }
             }
-            // Update previous value dictionary
+            // Replace previous value dictionary with still-valid targets
             TargetDataPrevious = target_data_previous;
         }
 #if UNITY_EDITOR
-        [MenuItem("Sprites And Bones/Animation/Control Manager", false, 0)]
-        [MenuItem("GameObject/Sprites And Bones/Control Manager", false, 0)]
+        [MenuItem("Roaring Fangs/Animation/Control Manager", false, 0)]
+        [MenuItem("GameObject/Roaring Fangs/Control Manager", false, 0)]
         public static ControlManager Create()
         {
             GameObject manager_object = new GameObject("Control Manager");
