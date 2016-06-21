@@ -23,6 +23,10 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -69,5 +73,29 @@ namespace RoaringFangs.Animation
                 }
             }
         }
+#if UNITY_EDITOR
+        [MenuItem("Roaring Fangs/Animation/Mutex Helper", false, 0)]
+        [MenuItem("GameObject/Roaring Fangs/Mutex Helper", false, 0)]
+        [MenuItem("CONTEXT/ControlManager/Mutex Helper", false, 25)]
+        public static MutexHelper Create()
+        {
+            GameObject selected = Selection.activeGameObject;
+            ControlManager manager;
+            if (selected != null)
+                manager = selected.GetComponentInParent<ControlManager>();
+            else
+                manager = null;
+            if (manager == null)
+                throw new Exception("You must select a control for this target group.");
+
+            GameObject mutex_helper_object = new GameObject("New Mutex Helper");
+            Undo.RegisterCreatedObjectUndo(mutex_helper_object, "New Mutex Helper");
+            MutexHelper mutex_helper = mutex_helper_object.AddComponent<MutexHelper>();
+
+            Undo.SetTransformParent(mutex_helper_object.transform, selected.transform, "New Mutex Helper");
+            Selection.activeGameObject = mutex_helper_object;
+            return mutex_helper;
+        }
+#endif
     }
 }
