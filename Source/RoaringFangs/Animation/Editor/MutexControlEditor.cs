@@ -40,18 +40,18 @@ namespace RoaringFangs.Animation.Editor
         {
             serializedObject.Update();
             MutexHelper self = (MutexHelper)target;
-            TargetGroupBehavior[] groups = self.Controls.ToArray();
+            TargetGroupBase[] groups = self.Controls.OfType<TargetGroupBase>().ToArray();
             string[] group_names = groups.Select(g => g.name).ToArray();
             int index_selected = Math.Max(0, Array.IndexOf(groups, self.Selected));
             index_selected = EditorGUILayout.Popup(index_selected, group_names);
-            TargetGroupBehavior selected;
+            ITargetGroup selected;
             if (index_selected < groups.Length)
-                selected = groups[index_selected];
+                selected = groups[index_selected] as ITargetGroup;
             else
                 selected = null;
             if (self.Selected != selected)
             {
-                Undo.RecordObjects(self.Controls.Select(c=>c.gameObject).ToArray(), "Select Target Group");
+                Undo.RecordObjects(groups.Select(g=>g.gameObject).ToArray(), "Select Target Group");
                 self.Selected = selected;
             }
 

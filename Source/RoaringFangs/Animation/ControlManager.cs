@@ -102,7 +102,7 @@ namespace RoaringFangs.Animation
                         _SubjectPath = null;
                         SubjectPathAbs = null;
                     }
-                    CachedSubjectDescendantsAndPaths = CollectSubjectDescendants();
+                    CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
                     //NotifyControlGroupsOfSubjectDescendants();
                 }
             }
@@ -164,7 +164,7 @@ namespace RoaringFangs.Animation
                 // Lazy initialization
                 if (_CachedSubjectDescendantsAndPaths == null)
                 {
-                    CachedSubjectDescendantsAndPaths = CollectSubjectDescendants();
+                    CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
                 }
                 // Double null check for quality assurance
                 if (_CachedSubjectDescendantsAndPaths != null)
@@ -203,12 +203,14 @@ namespace RoaringFangs.Animation
 
         private void NotifyControlGroupsOfSubjectDescendants(IEnumerable<TransformUtils.ITransformDP> cached_subject_descendants_and_paths)
         {
-            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBehavior>(transform, true);
+            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true).OfType<ITargetGroup>();
             foreach (var group in groups)
+            {
                 group.OnSubjectChanged(cached_subject_descendants_and_paths);
+            }
         }
 
-        protected IEnumerable<TransformUtils.ITransformDP> CollectSubjectDescendants()
+        protected IEnumerable<TransformUtils.ITransformDP> GetSubjectDescendants()
         {
             if (Application.isPlaying)
                 Debug.LogWarning("CollectSubjectDescendants called at runtime!");
@@ -224,12 +226,9 @@ namespace RoaringFangs.Animation
         private struct TargetInfo
         {
             public readonly int Depth;
-            public readonly bool Active;
-
-            public TargetInfo(int depth, bool active)
+            public TargetInfo(int depth)
             {
                 Depth = depth;
-                Active = active;
             }
         }
 
@@ -238,10 +237,10 @@ namespace RoaringFangs.Animation
             public readonly Transform Transform;
             public readonly TargetInfo Info;
 
-            public TargetRule(Transform transform, int depth, bool active)
+            public TargetRule(Transform transform, int depth)
             {
                 Transform = transform;
-                Info = new TargetInfo(depth, active);
+                Info = new TargetInfo(depth);
             }
         }
 
@@ -254,7 +253,7 @@ namespace RoaringFangs.Animation
 #if UNITY_EDITOR
             if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
             {
-                CollectSubjectDescendants();
+                CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
                 RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged += HandleHierarchyObjectPathChanged;
             }
             else
@@ -280,7 +279,7 @@ namespace RoaringFangs.Animation
                 if (IsSubPath(SubjectPathAbs, args.NewPath) ||
                     IsSubPath(SubjectPathAbs, args.OldPath))
                 {
-                    CachedSubjectDescendantsAndPaths = CollectSubjectDescendants();
+                    CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
                     NotifyControlGroupsOfSubjectDescendants();
                 }
             }
@@ -294,38 +293,44 @@ namespace RoaringFangs.Animation
 
         void Update()
         {
-            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBehavior>(transform, true);
+            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true).OfType<ITargetGroup>();
             // For each groups array, select valid target lists in all of the target groups and create
             // rules on whether to show or hide the targets based on the control group's active state
+            IEnumerable<KeyValuePair<ITargetGroup, IEnumerable<TargetRule>>> grouped_targets = groups
+                .Where(g => g.Targets != null)
+                    .Select(g => new KeyValuePair<ITargetGroup, IEnumerable<TargetRule>>(g, g.Targets
+                            .Select(t => new TargetRule(t.Transform, t.Depth))));
+            /*
             IEnumerable<TargetRule> targets = groups
                 .Where(g => g.Targets != null)
                 .SelectMany(g => g.Targets
-                    .Select(t => new TargetRule(t.Transform, t.Depth, g.gameObject.activeInHierarchy)));
+                    .Select(t => new TargetRule(t.Transform, t.Depth, (g as TargetGroupBase).gameObject.activeInHierarchy)));
+
             // Buffer the selection into an array
             var targets_array = targets.ToArray();
+            */
             // Create a dictionary to collect valid target data to compare against in the next update
             var target_data_previous = new Dictionary<Transform, TargetInfo>();
-            foreach (var target in targets_array)
+
+            foreach (var grouped_target in grouped_targets)
             {
-                // If the target transform is valid (not deleted)
-                if (target.Transform != null)
+                // Get the group and targets from the grouping object
+                var group = grouped_target.Key;
+                var targets = grouped_target.Value;
+                // Buffer the selection into an array
+                var targets_array = targets.ToArray();
+                foreach (var target in targets_array)
                 {
-                    // Retrieve previous target info state
-                    TargetInfo target_info_previous;
-                    // Reflesh flag includes new targets, change in active property and change in hierarchy depth
-
-                    // Remark: changes in active state are directly compared with the target's game object so that
-                    // following target rules know to make changes to the active state
-
-                    bool have_previous = TargetDataPrevious.TryGetValue(target.Transform, out target_info_previous);
-                    bool refresh = !have_previous ||
-                        target.Info.Depth != target_info_previous.Depth ||
-                        target.Info.Active != target.Transform.gameObject.activeSelf;
-                    // If there was a change to warrant an update to the active state of the object, update the target game object
-                    if (refresh)
-                        target.Transform.gameObject.SetActive(target.Info.Active);
-                    // Collect valid target data
-                    target_data_previous[target.Transform] = target.Info;
+                    // If the target transform is valid (not deleted)
+                    if (target.Transform != null)
+                    {
+                        var func = TargetGroupModesFunctor.GetModeFunction(group.Mode);
+                        // Active is set to mode function of current activeSelf and group active
+                        bool active = func(target.Transform.gameObject.activeSelf, group.Active);
+                        target.Transform.gameObject.SetActive(active);
+                        // Collect valid target data
+                        target_data_previous[target.Transform] = target.Info;
+                    }
                 }
             }
             // Replace previous value dictionary with still-valid targets

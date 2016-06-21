@@ -26,41 +26,50 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-using RoaringFangs.Attributes;
 using RoaringFangs.Utility;
 using System;
 
 namespace RoaringFangs.Animation
 {
-    public class TargetGroup : TargetGroupBase, ITargetGroup
+    public enum TargetGroupMode
     {
-        [SerializeField, AutoProperty]
-        private TargetGroupMode _Mode;
-        public TargetGroupMode Mode
+        Set,
+        AND,
+        OR,
+        XOR,
+    }
+    public static class TargetGroupModesFunctor
+    {
+        public static Func<bool, bool, bool> GetModeFunction(TargetGroupMode mode)
         {
-            get
+            switch (mode)
             {
-                return _Mode;
+                default:
+                case TargetGroupMode.Set:
+                    return Right;
+                case TargetGroupMode.AND:
+                    return And;
+                case TargetGroupMode.OR:
+                    return Or;
+                case TargetGroupMode.XOR:
+                    return Xor;
             }
         }
-
-        [SerializeField]
-        private TransformUtils.ITransformD[] _Targets;
-        public IEnumerable<TransformUtils.ITransformD> Targets
+        private static bool Right(bool left, bool right)
         {
-            get { return _Targets; }
+            return right;
         }
-
-        public void OnSubjectChanged(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
+        private static bool And(bool left, bool right)
         {
-            try
-            {
-                throw new NotImplementedException();
-            }
-            catch(Exception ex)
-            {
-                Debug.LogWarning(ex);
-            }
+            return left && right;
+        }
+        private static bool Or(bool left, bool right)
+        {
+            return left || right;
+        }
+        private static bool Xor(bool left, bool right)
+        {
+            return left ^ right;
         }
     }
 }

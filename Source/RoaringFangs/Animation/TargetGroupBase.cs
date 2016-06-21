@@ -26,13 +26,18 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+using RoaringFangs.Attributes;
 using RoaringFangs.Utility;
+using System;
 
 namespace RoaringFangs.Animation
 {
-    public abstract class TargetGroupBehavior : MonoBehaviour, ITargetGroup
+    public abstract class TargetGroupBase : MonoBehaviour
     {
-        public abstract IEnumerable<TransformUtils.ITransformD> Targets { get; }
-        public abstract void OnSubjectChanged(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths);
+        public bool Active
+        {
+            get { return gameObject.activeSelf; }
+            set { gameObject.SetActive(value); }
+        }
     }
 }

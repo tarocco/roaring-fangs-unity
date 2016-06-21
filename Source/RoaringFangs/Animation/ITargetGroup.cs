@@ -32,6 +32,9 @@ namespace RoaringFangs.Animation
 {
     public interface ITargetGroup
     {
+        bool Active { get; set; }
+        TargetGroupMode Mode { get; }
         IEnumerable<TransformUtils.ITransformD> Targets { get; }
+        void OnSubjectChanged(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths);
     }
 }

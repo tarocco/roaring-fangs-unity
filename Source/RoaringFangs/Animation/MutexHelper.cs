@@ -38,27 +38,27 @@ namespace RoaringFangs.Animation
     [ExecuteInEditMode]
     public class MutexHelper : MonoBehaviour
     {
-        public IEnumerable<TargetGroupBehavior> Controls
+        public IEnumerable<ITargetGroup> Controls
         {
             get
             {
                 foreach (Transform t in transform)
                 {
-                    TargetGroupBehavior ac = t.GetComponent<TargetGroupBehavior>();
+                    ITargetGroup ac = t.GetComponent<ITargetGroup>();
                     if (ac != null)
                         yield return ac;
                 }
             }
         }
 
-        public TargetGroupBehavior Selected
+        public ITargetGroup Selected
         {
             get
             {
                 foreach(Transform t in transform)
                 {
-                    TargetGroupBehavior ac = t.GetComponent<TargetGroupBehavior>();
-                    if (ac != null && ac.gameObject.activeSelf)
+                    ITargetGroup ac = t.GetComponent<ITargetGroup>();
+                    if (ac != null && ac.Active)
                         return ac;
                 }
                 return null;
@@ -67,9 +67,9 @@ namespace RoaringFangs.Animation
             {
                 foreach (Transform t in transform)
                 {
-                    TargetGroupBehavior ac = t.GetComponent<TargetGroupBehavior>();
+                    ITargetGroup ac = t.GetComponent<ITargetGroup>();
                     if (ac != null)
-                        ac.gameObject.SetActive(ac == value);
+                        ac.Active = ac == value;
                 }
             }
         }
