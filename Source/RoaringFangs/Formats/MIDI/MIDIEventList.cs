@@ -172,6 +172,7 @@ namespace RoaringFangs.Formats.MIDI
                         var corresponding_helper = last_helper_per_note_number[note_off.note_number];
                         if (corresponding_helper != null)
                         {
+							Debug.Log(corresponding_helper.TimeBeats);
                             float duration = time - corresponding_helper.TimeBeats;
                             corresponding_helper.DurationBeats = duration;
                             event_helper.DurationBeats = duration;
@@ -185,6 +186,7 @@ namespace RoaringFangs.Formats.MIDI
                         // Store it as the last note-on event for this note number
                         var note_on = m_e_h.Element as Midi.Events.ChannelEvents.NoteOnEvent;
                         last_helper_per_note_number[note_on.note_number] = event_helper;
+						last_helper_per_note_number[note_on.note_number].TimeBeats = Quantization(event_helper.TimeBeats, 16);
                     }
                 }
                 if(MIDIEventFilter.TrackNameFilter.Accepts(m_e_h.Element))
@@ -201,5 +203,22 @@ namespace RoaringFangs.Formats.MIDI
                 }
             }
         }
+		
+		//Quick Quantization function without rounding function
+		//Basically "round 'n' to the nearest increment of '1/b'"
+		private float Quantization(float n, int b)
+		{
+			float q = n*b;
+			float r = q%1;
+			int s = (int)(r*2);
+			
+			int q2 = (int)q;
+			
+			q2 = q2 + s;
+			
+			q = (float)q2;
+			
+			return q/b;
+		}
     }
 }
