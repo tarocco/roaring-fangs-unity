@@ -172,7 +172,6 @@ namespace RoaringFangs.Formats.MIDI
                         var corresponding_helper = last_helper_per_note_number[note_off.note_number];
                         if (corresponding_helper != null)
                         {
-							Debug.Log(corresponding_helper.TimeBeats);
                             float duration = time - corresponding_helper.TimeBeats;
                             corresponding_helper.DurationBeats = duration;
                             event_helper.DurationBeats = duration;
