@@ -35,12 +35,13 @@ using System.Linq;
 using System.Reflection;
 
 using RoaringFangs.Utility;
-
 using RoaringFangs.Attributes;
+using RoaringFangs.Editor;
 
 namespace RoaringFangs.Animation
 {
-    public class RegExTargetGroup : TargetGroupBase, ITargetGroup
+    [InitializeOnLoad]
+    public class RegExTargetGroup : TargetGroupBase, ITargetGroup, IHasHierarchyIcons
     {
         #region Properties
         [SerializeField, AutoProperty]
@@ -48,7 +49,13 @@ namespace RoaringFangs.Animation
         public TargetGroupMode Mode
         {
             get { return _Mode; }
-            set { _Mode = value; }
+            set
+            {
+                _Mode = value;
+#if UNITY_EDITOR
+                EditorUtility.SetDirty(gameObject);
+#endif
+            }
         }
 
         [SerializeField, AutoProperty(Delayed = true)]
@@ -58,10 +65,24 @@ namespace RoaringFangs.Animation
             get { return _Pattern; }
             set
             {
-                _Pattern = value;
-                var descendants = GetDescendantsFromParentManager();
-                OnFindMatchingTargetsInDescendants(descendants);
+                try
+                {
+                    _Regex = new Regex(value);
+                    _Pattern = value;
+                    var descendants = GetDescendantsFromParentManager();
+                    OnFindMatchingTargetsInDescendants(descendants);
+                }
+                catch (ArgumentException ex)
+                {
+                    Debug.LogWarning("Invalid regular expression pattern: " + value);
+                }
             }
+        }
+
+        private Regex _Regex;
+        private Regex Regex
+        {
+            get { return _Regex ?? (_Regex = new Regex(Pattern)); }
         }
         #endregion
 
@@ -94,9 +115,8 @@ namespace RoaringFangs.Animation
 
         #region Targets
         private static IEnumerable<TransformUtils.ITransformD> FindMatchingTransformsD(
-            IEnumerable<TransformUtils.ITransformDP> descendants, string regex_pattern)
+            IEnumerable<TransformUtils.ITransformDP> descendants, Regex regex)
         {
-            Regex regex = new Regex(regex_pattern);
             var descendants_array = descendants.ToArray();
             foreach (var tp in descendants_array)
             {
@@ -126,7 +146,7 @@ namespace RoaringFangs.Animation
         private IEnumerable<TransformUtils.ITransformD> FindTargetsInDescendants(
             IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
         {
-            return FindMatchingTransformsD(subject_descendants_and_paths, Pattern);
+            return FindMatchingTransformsD(subject_descendants_and_paths, Regex);
         }
         #endregion
 
@@ -143,17 +163,17 @@ namespace RoaringFangs.Animation
             IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
         {
             if (subject_descendants_and_paths != null)
-                Targets = FindMatchingTransformsD(subject_descendants_and_paths, Pattern);
+                Targets = FindMatchingTransformsD(subject_descendants_and_paths, Regex);
             else
                 Targets = null;
         }
         #endregion
 
-        #region Editor Menus
+
 
 #if UNITY_EDITOR
-        private static Type HierarchyWindow = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
-
+        #region Editor Menus
+        private static readonly Type HierarchyWindow = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
         [MenuItem("Roaring Fangs/Animation/RegEx Target Group", false, 0)]
         [MenuItem("GameObject/Roaring Fangs/RegEx Target Group", false, 0)]
         [MenuItem("CONTEXT/ControlManager/RegEx Target Group", false, 25)]
@@ -184,7 +204,14 @@ namespace RoaringFangs.Animation
             }
             return regex_target_group;
         }
-#endif
         #endregion
+
+        public void OnDrawHierarchyIcons(Rect icon_position)
+        {
+            UnityEngine.GUI.color = Active ? Color.white : Color.gray;
+            UnityEngine.GUI.Label(icon_position, GetIcon(Mode));
+        }
+#endif
+
     }
 }

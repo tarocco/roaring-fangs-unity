@@ -23,15 +23,22 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 
 using RoaringFangs.Attributes;
 using RoaringFangs.Utility;
+using RoaringFangs.Editor;
 using System;
+using System.Linq;
 
 namespace RoaringFangs.Animation
 {
+    [ExecuteInEditMode]
+    [InitializeOnLoad]
     public abstract class TargetGroupBase : MonoBehaviour
     {
         public bool Active
@@ -39,5 +46,44 @@ namespace RoaringFangs.Animation
             get { return gameObject.activeSelf; }
             set { gameObject.SetActive(value); }
         }
+
+        protected virtual void OnEnable()
+        {
+#if UNITY_EDITOR
+            FindIcons();
+#endif
+        }
+
+#if UNITY_EDITOR
+        public static Texture2D HISet { get; protected set; }
+        public static Texture2D HIAND { get; protected set; }
+        public static Texture2D HIOR { get; protected set; }
+        public static Texture2D HIXOR { get; protected set; }
+
+        protected static Texture2D GetIcon(TargetGroupMode mode)
+        {
+            switch (mode)
+            {
+                default:
+                case TargetGroupMode.Set:
+                    return HISet;
+                case TargetGroupMode.AND:
+                    return HIAND;
+                case TargetGroupMode.OR:
+                    return HIOR;
+                case TargetGroupMode.XOR:
+                    return HIXOR;
+            }
+        }
+
+        public static void FindIcons()
+        {
+            var icons = HierarchyIcons.GetIcons("TargetGroup", HierarchyIcons.KeyMode.LowerCase);
+            HISet = icons.GetOrDefault("mode.set.png");
+            HIAND = icons.GetOrDefault("mode.and.png");
+            HIOR = icons.GetOrDefault("mode.or.png");
+            HIXOR = icons.GetOrDefault("mode.xor.png");
+        }
+#endif
     }
 }

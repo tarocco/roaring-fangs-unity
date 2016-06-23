@@ -31,11 +31,38 @@ using System;
 
 namespace RoaringFangs.Animation
 {
-    public enum TargetGroupMode
+    public static class TargetGroupModeFunctor
     {
-        Set,
-        AND,
-        OR,
-        XOR,
+        public static Func<bool, bool, bool> GetModeFunction(TargetGroupMode mode)
+        {
+            switch (mode)
+            {
+                default:
+                case TargetGroupMode.Set:
+                    return Right;
+                case TargetGroupMode.AND:
+                    return And;
+                case TargetGroupMode.OR:
+                    return Or;
+                case TargetGroupMode.XOR:
+                    return Xor;
+            }
+        }
+        private static bool Right(bool left, bool right)
+        {
+            return right;
+        }
+        private static bool And(bool left, bool right)
+        {
+            return left && right;
+        }
+        private static bool Or(bool left, bool right)
+        {
+            return left || right;
+        }
+        private static bool Xor(bool left, bool right)
+        {
+            return left ^ right;
+        }
     }
 }

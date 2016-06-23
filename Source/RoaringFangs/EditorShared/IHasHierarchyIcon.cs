@@ -23,19 +23,20 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+using UnityEditor;
 
-using RoaringFangs.Utility;
 using System;
+using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-namespace RoaringFangs.Animation
+namespace RoaringFangs.Editor
 {
-    public enum TargetGroupMode
+    public interface IHasHierarchyIcons
     {
-        Set,
-        AND,
-        OR,
-        XOR,
+#if UNITY_EDITOR
+        void OnDrawHierarchyIcons(Rect icon_position);
+#endif
     }
 }

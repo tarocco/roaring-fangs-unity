@@ -59,5 +59,12 @@ namespace RoaringFangs.Utility
                 counter++;
             return counter;
         }
+        public static TValue GetOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key)
+        {
+            TValue value;
+            if (self.TryGetValue(key, out value))
+                return value;
+            return default(TValue);
+        }
     }
 }

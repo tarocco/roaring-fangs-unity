@@ -33,12 +33,15 @@ using System.Collections.Generic;
 using System.Linq;
 
 using RoaringFangs.Utility;
+using RoaringFangs.Editor;
 
 namespace RoaringFangs.Animation
 {
     [ExecuteInEditMode]
-    public class ControlManager : MonoBehaviour
+    [InitializeOnLoad]
+    public class ControlManager : MonoBehaviour, IHasHierarchyIcons
     {
+        public static Texture2D HIControlManager { get; protected set; }
         #region Subject
 
         [HideInInspector]
@@ -263,6 +266,7 @@ namespace RoaringFangs.Animation
             {
                 RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
             }
+            FindIcons();
 #endif
         }
 
@@ -327,7 +331,7 @@ namespace RoaringFangs.Animation
                     // If the target transform is valid (not deleted)
                     if (target.Transform != null)
                     {
-                        var func = TargetGroupModesFunctor.GetModeFunction(group.Mode);
+                        var func = TargetGroupModeFunctor.GetModeFunction(group.Mode);
                         // Active is set to mode function of current activeSelf and group active
                         bool active = func(target.Transform.gameObject.activeSelf, group.Active);
                         target.Transform.gameObject.SetActive(active);
@@ -355,6 +359,16 @@ namespace RoaringFangs.Animation
             }
             return manager;
         }
+
+        public void OnDrawHierarchyIcons(Rect icon_position)
+        {
+            UnityEngine.GUI.Label(icon_position, HIControlManager);
+        }
 #endif
+        public static void FindIcons()
+        {
+            var icons = HierarchyIcons.GetIcons("ControlManager", HierarchyIcons.KeyMode.LowerCase);
+            HIControlManager = icons.GetOrDefault("controlmanager.png");
+        }
     }
 }
