@@ -61,7 +61,8 @@ namespace RoaringFangs.Animation
                             // Find in scene root
                             _Subject = GameObject.Find(_SubjectPath);
                         }
-                        else {
+                        else
+                        {
                             // Subject path is in parent-relative (right now only handling 1 level)
                             if (_SubjectPath.StartsWith("../"))
                             {
@@ -71,7 +72,8 @@ namespace RoaringFangs.Animation
                                     // Find in parent transform
                                     _Subject = transform.parent.Find(subject_path_rel_to_parent).gameObject;
                                 }
-                                else {
+                                else
+                                {
                                     // Find in scene root
                                     _Subject = GameObject.Find(subject_path_rel_to_parent);
                                 }
@@ -98,7 +100,8 @@ namespace RoaringFangs.Animation
                         _SubjectPath = "../" + TransformUtils.GetTransformPath(transform.parent, value.transform);
                         SubjectPathAbs = TransformUtils.GetTransformPath(null, value.transform);
                     }
-                    else {
+                    else
+                    {
                         _SubjectPath = null;
                         SubjectPathAbs = null;
                     }
@@ -169,9 +172,9 @@ namespace RoaringFangs.Animation
                 // Double null check for quality assurance
                 if (_CachedSubjectDescendantsAndPaths != null)
                 {
-                    foreach (var tdp in _CachedSubjectDescendantsAndPaths)
-                        yield return tdp;
+                    return _CachedSubjectDescendantsAndPaths.Cast<TransformUtils.ITransformDP>().ToArray();
                 }
+                return null;
             }
             private set
             {
@@ -206,7 +209,7 @@ namespace RoaringFangs.Animation
             var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true).OfType<ITargetGroup>();
             foreach (var group in groups)
             {
-                group.OnSubjectChanged(cached_subject_descendants_and_paths);
+                group.OnFindMatchingTargetsInDescendants(cached_subject_descendants_and_paths);
             }
         }
 

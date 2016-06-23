@@ -51,7 +51,7 @@ namespace RoaringFangs.Animation
             get { return _Targets; }
         }
 
-        public void OnSubjectChanged(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
+        public void OnFindMatchingTargetsInDescendants(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
         {
             try
             {

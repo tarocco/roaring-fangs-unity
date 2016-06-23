@@ -40,61 +40,39 @@ using RoaringFangs.Attributes;
 
 namespace RoaringFangs.Animation
 {
-    public class RegExTargetGroup : TargetGroupBehavior
+    public class RegExTargetGroup : TargetGroupBase, ITargetGroup
     {
         #region Properties
+        [SerializeField, AutoProperty]
+        private TargetGroupMode _Mode;
+        public TargetGroupMode Mode
+        {
+            get { return _Mode; }
+            set { _Mode = value; }
+        }
 
         [SerializeField, AutoProperty(Delayed = true)]
         private string _Pattern;
-
         public string Pattern
         {
             get { return _Pattern; }
             set
             {
                 _Pattern = value;
-                SetTargets(CollectTargets());
+                var descendants = GetDescendantsFromParentManager();
+                OnFindMatchingTargetsInDescendants(descendants);
             }
         }
-
         #endregion
-
-        #region Subject Descendants and Paths
-
-        private IEnumerable<TransformUtils.ITransformDP> _SubjectDescendantsAndPaths;
-
-        private IEnumerable<TransformUtils.ITransformDP> SubjectDescendantsAndPaths
-        {
-            get
-            {
-                if (_SubjectDescendantsAndPaths == null)
-                {
-                    // Lazily tell the control manager to invalidate the subject descendants for all target groups
-                    var manager = TransformUtils.GetComponentInParent<ControlManager>(transform, true);
-                    if (manager)
-                        manager.NotifyControlGroupsOfSubjectDescendants();
-                }
-                return _SubjectDescendantsAndPaths;
-            }
-            set
-            {
-                _SubjectDescendantsAndPaths = value;
-            }
-        }
-
-        #endregion
-
-        #region Targets
 
         #region Cached Target Transforms
-
         [SerializeField, HideInInspector]
         private TransformUtils.TransformD[] _Targets;
 
         /// <summary>
         /// Cached and serialized targets of this target group
         /// </summary>
-        public override IEnumerable<TransformUtils.ITransformD> Targets
+        public IEnumerable<TransformUtils.ITransformD> Targets
         {
             get
             {
@@ -104,11 +82,19 @@ namespace RoaringFangs.Animation
                         yield return target;
                 }
             }
+            set
+            {
+                if (value != null)
+                    _Targets = value.Select(t => new TransformUtils.TransformD(t.Transform, t.Depth)).ToArray();
+                else
+                    _Targets = null;
+            }
         }
-
         #endregion
 
-        private static IEnumerable<TransformUtils.ITransformD> FindMatchingTransformsD(IEnumerable<TransformUtils.ITransformDP> descendants, string regex_pattern)
+        #region Targets
+        private static IEnumerable<TransformUtils.ITransformD> FindMatchingTransformsD(
+            IEnumerable<TransformUtils.ITransformDP> descendants, string regex_pattern)
         {
             Regex regex = new Regex(regex_pattern);
             var descendants_array = descendants.ToArray();
@@ -137,41 +123,30 @@ namespace RoaringFangs.Animation
                 //Debug.Log(tp.Path);
             }
         }
-
-        private IEnumerable<TransformUtils.ITransformD> CollectTargets()
+        private IEnumerable<TransformUtils.ITransformD> FindTargetsInDescendants(
+            IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
         {
-            return FindMatchingTransformsD(SubjectDescendantsAndPaths, Pattern);
+            return FindMatchingTransformsD(subject_descendants_and_paths, Pattern);
         }
-        // Can't use the Targets set accessor because superclass lacks it
-        private void SetTargets(IEnumerable<TransformUtils.ITransformD> value)
-        {
-            if (value != null)
-            {
-                _Targets = value.Select(t => new TransformUtils.TransformD(t.Transform, t.Depth)).ToArray();
-            }
-            else {
-                _Targets = null;
-            }
-        }
-
         #endregion
 
-        #region Other Methods
-
-        public override void OnSubjectChanged(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
+        #region Descendants
+        private IEnumerable<TransformUtils.ITransformDP> GetDescendantsFromParentManager()
+        {
+            var manager = GetComponentInParent<ControlManager>();
+            if (manager)
+                return manager.CachedSubjectDescendantsAndPaths;
+            else
+                throw new NullReferenceException("RegExTargetGroup has no parent ControlManager!");
+        }
+        public void OnFindMatchingTargetsInDescendants(
+            IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
         {
             if (subject_descendants_and_paths != null)
-            {
-                SubjectDescendantsAndPaths = subject_descendants_and_paths.ToArray();
-                SetTargets(CollectTargets());
-            }
-            else {
-                SubjectDescendantsAndPaths = null;
-                SetTargets(null);
-            }
+                Targets = FindMatchingTransformsD(subject_descendants_and_paths, Pattern);
+            else
+                Targets = null;
         }
-
-
         #endregion
 
         #region Editor Menus
