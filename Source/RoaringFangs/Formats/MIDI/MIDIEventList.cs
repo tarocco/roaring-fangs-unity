@@ -209,15 +209,9 @@ namespace RoaringFangs.Formats.MIDI
 		{
 			float q = n*b;
 			float r = q%1;
-			int s = (int)(r*2);
+			float s = (r*2) - (r*2)%1;
 			
-			int q2 = (int)q;
-			
-			q2 = q2 + s;
-			
-			q = (float)q2;
-			
-			return q/b;
+			return (q-r+s)/b;
 		}
     }
 }
