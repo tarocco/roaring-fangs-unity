@@ -169,13 +169,11 @@ namespace RoaringFangs.Animation
         }
         #endregion
 
-
-
 #if UNITY_EDITOR
         #region Editor Menus
         private static readonly Type HierarchyWindow = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
         [MenuItem("Roaring Fangs/Animation/RegEx Target Group", false, 0)]
-        [MenuItem("GameObject/Roaring Fangs/RegEx Target Group", false, 0)]
+        [MenuItem("GameObject/Roaring Fangs/Animation/RegEx Target Group", false, 0)]
         [MenuItem("CONTEXT/ControlManager/RegEx Target Group", false, 25)]
         public static RegExTargetGroup Create()
         {
@@ -212,6 +210,5 @@ namespace RoaringFangs.Animation
             UnityEngine.GUI.Label(icon_position, GetIcon(Mode));
         }
 #endif
-
     }
 }

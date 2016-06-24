@@ -33,7 +33,7 @@ using System.Reflection;
 
 namespace RoaringFangs.Attributes
 {
-	public class AutoPropertyAttribute : PropertyAttribute
+    public class AutoPropertyAttribute : PropertyAttribute
 	{
 		private const BindingFlags DefaultFlags =
 			BindingFlags.GetProperty |
@@ -48,7 +48,6 @@ namespace RoaringFangs.Attributes
 		}
 
 		private bool _Delayed;
-
 		/// <summary>
 		/// Use delayed input for this property field. Compare to <seealso cref="DelayedAttribute"/>.
 		/// </summary>
@@ -68,5 +67,5 @@ namespace RoaringFangs.Attributes
 			this (null, null)
 		{
 		}
-	}
+    }
 }

@@ -30,6 +30,7 @@ using RoaringFangs.Attributes;
 
 namespace RoaringFangs.Editor
 {
+    [InitializeOnLoad]
     [CustomPropertyDrawer(typeof(AutoPropertyAttribute), true)]
     public class AutoPropertyDrawer : PropertyDrawer
     {
@@ -130,13 +131,15 @@ namespace RoaringFangs.Editor
             bool different = !Equals(previous_field_value, PreviousFieldValue);
             if (different)
             {
+                object previous_value;
+                if (modified)
+                    previous_value = previous_field_value; // Restore to value right before this modification
+                else
+                    previous_value = PreviousFieldValue; // Restore to value from right after last mofification
                 // Get the value of the field after modifying
                 var current_value = fieldInfo.GetValue(target);
                 // Restore the field to its previous value so that the property setter can act on changes to the backing field
-                if (modified)
-                    fieldInfo.SetValue(target, previous_field_value); // Restore to value right before this modification
-                else
-                    fieldInfo.SetValue(target, PreviousFieldValue); // Restore to value from right after last mofification
+                fieldInfo.SetValue(target, previous_value);
                 // Lazily initialize the property info
                 PropertyInfo = PropertyInfo ?? GetPropertyInfo(target, fieldInfo, auto);
                 // Invoke the setter of the property

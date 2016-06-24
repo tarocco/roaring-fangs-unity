@@ -43,84 +43,9 @@ namespace RoaringFangs.Animation
     {
         public static Texture2D HIControlManager { get; protected set; }
         #region Subject
-
-        [HideInInspector]
-        private GameObject _Subject;
-
-        public GameObject Subject
-        {
-            get
-            {
-                // If the subject is not set
-                if (_Subject == null)
-                {
-                    // If the subject path is set, find the subject by its path and set the backing field reference
-                    if (!String.IsNullOrEmpty(_SubjectPath))
-                    {
-
-                        // Subject path is an absolute path
-                        if (_SubjectPath.StartsWith("/"))
-                        {
-                            // Find in scene root
-                            _Subject = GameObject.Find(_SubjectPath);
-                        }
-                        else
-                        {
-                            // Subject path is in parent-relative (right now only handling 1 level)
-                            if (_SubjectPath.StartsWith("../"))
-                            {
-                                string subject_path_rel_to_parent = _SubjectPath.Substring(3);
-                                if (transform.parent != null)
-                                {
-                                    // Find in parent transform
-                                    _Subject = transform.parent.Find(subject_path_rel_to_parent).gameObject;
-                                }
-                                else
-                                {
-                                    // Find in scene root
-                                    _Subject = GameObject.Find(subject_path_rel_to_parent);
-                                }
-                            }
-                            // Subject path is relative
-                            else
-                            {
-                                _Subject = transform.Find(_SubjectPath).gameObject;
-                            }
-                        }
-                    }
-                }
-                return _Subject;
-            }
-            set
-            {
-                if (value != _Subject)
-                {
-                    _Subject = value;
-                    if (value != null)
-                    {
-                        // TODO: is transform.parent a good idea here for the "root" argument?
-                        // Right now this allows the subject to be a sibling, but not a parent
-                        _SubjectPath = "../" + TransformUtils.GetTransformPath(transform.parent, value.transform);
-                        SubjectPathAbs = TransformUtils.GetTransformPath(null, value.transform);
-                    }
-                    else
-                    {
-                        _SubjectPath = null;
-                        SubjectPathAbs = null;
-                    }
-                    CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
-                    //NotifyControlGroupsOfSubjectDescendants();
-                }
-            }
-        }
-
-        #endregion
-
         #region Subject Paths
-
         [SerializeField, HideInInspector]
         private string _SubjectPath;
-
         public string SubjectPath
         {
             get { return _SubjectPath; }
@@ -128,32 +53,113 @@ namespace RoaringFangs.Animation
             {
                 if (value != _SubjectPath)
                 {
-                    _SubjectPath = value;
-                    if (String.IsNullOrEmpty(value))
-                        Subject = null;
+                    if (!String.IsNullOrEmpty(value))
+                    {
+                        try
+                        {
+                            var subject_transform = TransformUtils.GetTransformAtPath(transform, value);
+                            _Subject = subject_transform.gameObject;
+                            _SubjectPathAbs = TransformUtils.GetTransformPath(null, subject_transform);
+                            _SubjectPath = value;
+                        }
+                        catch (ArgumentNullException ex)
+                        {
+                            Debug.LogWarning(ex, this);
+                        }
+                    }
+                    else
+                    {
+                        _Subject = null;
+                        _SubjectPath = null;
+                        _SubjectPathAbs = null;
+                    }
                 }
             }
         }
-
         private string _SubjectPathAbs;
-
         public string SubjectPathAbs
         {
             get
             {
-                if (String.IsNullOrEmpty(_SubjectPathAbs))
-                {
-                    var subject = Subject;
-                    if (subject != null)
-                        _SubjectPathAbs = TransformUtils.GetTransformPath(null, subject.transform);
-                    else
-                        return null;
-                }
+                if(_SubjectPathAbs == null)
+                    _SubjectPathAbs = TransformUtils.GetTransformPathRelative(transform, _SubjectPath);
                 return _SubjectPathAbs;
             }
-            private set
+            set
             {
-                _SubjectPathAbs = value;
+                if (value != _SubjectPathAbs)
+                {
+                    if (!String.IsNullOrEmpty(value))
+                    {
+                        try
+                        {
+                            var subject_transform = TransformUtils.GetTransformAtPath(null, value);
+                            _Subject = subject_transform.gameObject;
+                            _SubjectPath = TransformUtils.GetTransformPath(transform, subject_transform);
+                            _SubjectPathAbs = value;
+                        }
+                        catch (ArgumentNullException ex)
+                        {
+                            Debug.LogWarning(ex, this);
+                        }
+                    }
+                    else
+                    {
+                        _Subject = null;
+                        _SubjectPath = null;
+                        _SubjectPathAbs = null;
+                    }
+                }
+            }
+        }
+        #endregion
+        [SerializeField, HideInInspector]
+        private GameObject _Subject;
+        public GameObject Subject
+        {
+            get
+            {
+                // If the subject is not set and the subject path is set, find the subject by its path and set the backing field reference
+                if (_Subject == null && !String.IsNullOrEmpty(_SubjectPathAbs))
+                {
+                    try
+                    {
+                        _Subject = TransformUtils.GetTransformAtPath(null, _SubjectPathAbs).gameObject;
+                    }
+                    catch (ArgumentNullException ex)
+                    {
+                        Debug.LogWarning(ex, this);
+                    }
+                }
+                return _Subject;
+            }
+            set
+            {
+                if (value != null)
+                {
+                    _SubjectPath = TransformUtils.GetTransformPathRelative(transform, value.transform);
+                    _SubjectPathAbs = TransformUtils.GetTransformPathRelative(null, value.transform);
+                }
+                else
+                {
+                    try
+                    {
+                        // Only clear the subject path(s) if the subject is still there
+                        // (i.e. if setting the subject to null was deliberate)
+                        TransformUtils.GetTransformAtPath(null, _SubjectPathAbs);
+                        _SubjectPath = null;
+                        _SubjectPathAbs = null;
+                    }
+                    catch (ArgumentNullException ex)
+                    {
+                        // Pass
+                    }
+                }
+                if (value != _Subject)
+                {
+                    _Subject = value;
+                    CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
+                }
             }
         }
 
@@ -190,6 +196,7 @@ namespace RoaringFangs.Animation
                         .ToArray();
                     // Notify control groups with descendants
                     NotifyControlGroupsOfSubjectDescendants(value);
+                    Debug.Log("Cached descendants", this);
                 }
                 // else if clearing them and they aren't already cleared
                 else if (_CachedSubjectDescendantsAndPaths != null)
@@ -197,6 +204,7 @@ namespace RoaringFangs.Animation
                     _CachedSubjectDescendantsAndPaths = null;
                     // Notify control groups to clear
                     NotifyControlGroupsOfSubjectDescendants(null);
+                    Debug.Log("Cleared Descendants", this);
                 }
 
             }
@@ -278,28 +286,41 @@ namespace RoaringFangs.Animation
         }
 
 #if UNITY_EDITOR
+        private bool PathChangeHandledOnceThisUpdate = false;
         private void HandleHierarchyObjectPathChanged(object sender, RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChangedEventArgs args)
         {
             // If the change had anything to do with the subject, notify control groups of the changes to the subject descendants
             if (!String.IsNullOrEmpty(SubjectPathAbs))
             {
-                if (IsSubPath(SubjectPathAbs, args.NewPath) ||
-                    IsSubPath(SubjectPathAbs, args.OldPath))
+                // Subject root was affected
+                bool root_affected = SubjectPathAbs == args.NewPath || SubjectPathAbs == args.OldPath;
+                // Subject descendants affected
+                bool descendants_affected = Paths.IsSubPath(SubjectPathAbs, args.NewPath) || Paths.IsSubPath(SubjectPathAbs, args.OldPath);
+                if (root_affected)
                 {
-                    CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
-                    NotifyControlGroupsOfSubjectDescendants();
+                    // If the subject is not null (destroyed), set the subject
+                    if (args.GameObject != null)
+                        Subject = args.GameObject;
+                }
+                if (descendants_affected)
+                {
+                    // Handle invalidation
+                    if (!PathChangeHandledOnceThisUpdate)
+                    {
+                        CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
+                        NotifyControlGroupsOfSubjectDescendants();
+                        PathChangeHandledOnceThisUpdate = true;
+                    }
                 }
             }
-        }
-
-        private static bool IsSubPath(string base_path, string sub_path)
-        {
-            return !String.IsNullOrEmpty(sub_path) && sub_path.StartsWith(base_path);
         }
 #endif
 
         void Update()
         {
+#if UNITY_EDITOR
+            PathChangeHandledOnceThisUpdate = false;
+#endif
             var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true).OfType<ITargetGroup>();
             // For each groups array, select valid target lists in all of the target groups and create
             // rules on whether to show or hide the targets based on the control group's active state
@@ -307,15 +328,7 @@ namespace RoaringFangs.Animation
                 .Where(g => g.Targets != null)
                     .Select(g => new KeyValuePair<ITargetGroup, IEnumerable<TargetRule>>(g, g.Targets
                             .Select(t => new TargetRule(t.Transform, t.Depth))));
-            /*
-            IEnumerable<TargetRule> targets = groups
-                .Where(g => g.Targets != null)
-                .SelectMany(g => g.Targets
-                    .Select(t => new TargetRule(t.Transform, t.Depth, (g as TargetGroupBase).gameObject.activeInHierarchy)));
 
-            // Buffer the selection into an array
-            var targets_array = targets.ToArray();
-            */
             // Create a dictionary to collect valid target data to compare against in the next update
             var target_data_previous = new Dictionary<Transform, TargetInfo>();
 
@@ -345,7 +358,7 @@ namespace RoaringFangs.Animation
         }
 #if UNITY_EDITOR
         [MenuItem("Roaring Fangs/Animation/Control Manager", false, 0)]
-        [MenuItem("GameObject/Roaring Fangs/Control Manager", false, 0)]
+        [MenuItem("GameObject/Roaring Fangs/Animation/Control Manager", false, 0)]
         public static ControlManager Create()
         {
             GameObject manager_object = new GameObject("Control Manager");

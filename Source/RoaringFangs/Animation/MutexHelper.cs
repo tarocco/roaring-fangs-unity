@@ -75,7 +75,7 @@ namespace RoaringFangs.Animation
         }
 #if UNITY_EDITOR
         [MenuItem("Roaring Fangs/Animation/Mutex Helper", false, 0)]
-        [MenuItem("GameObject/Roaring Fangs/Mutex Helper", false, 0)]
+        [MenuItem("GameObject/Roaring Fangs/Animation/Mutex Helper", false, 0)]
         [MenuItem("CONTEXT/ControlManager/Mutex Helper", false, 25)]
         public static MutexHelper Create()
         {
