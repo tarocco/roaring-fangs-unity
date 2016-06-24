@@ -23,6 +23,10 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -34,27 +38,27 @@ namespace RoaringFangs.Animation
     [ExecuteInEditMode]
     public class MutexHelper : MonoBehaviour
     {
-        public IEnumerable<TargetGroupBehavior> Controls
+        public IEnumerable<ITargetGroup> Controls
         {
             get
             {
                 foreach (Transform t in transform)
                 {
-                    TargetGroupBehavior ac = t.GetComponent<TargetGroupBehavior>();
+                    ITargetGroup ac = t.GetComponent<ITargetGroup>();
                     if (ac != null)
                         yield return ac;
                 }
             }
         }
 
-        public TargetGroupBehavior Selected
+        public ITargetGroup Selected
         {
             get
             {
                 foreach(Transform t in transform)
                 {
-                    TargetGroupBehavior ac = t.GetComponent<TargetGroupBehavior>();
-                    if (ac != null && ac.gameObject.activeSelf)
+                    ITargetGroup ac = t.GetComponent<ITargetGroup>();
+                    if (ac != null && ac.Active)
                         return ac;
                 }
                 return null;
@@ -63,11 +67,35 @@ namespace RoaringFangs.Animation
             {
                 foreach (Transform t in transform)
                 {
-                    TargetGroupBehavior ac = t.GetComponent<TargetGroupBehavior>();
+                    ITargetGroup ac = t.GetComponent<ITargetGroup>();
                     if (ac != null)
-                        ac.gameObject.SetActive(ac == value);
+                        ac.Active = ac == value;
                 }
             }
         }
+#if UNITY_EDITOR
+        [MenuItem("Roaring Fangs/Animation/Mutex Helper", false, 0)]
+        [MenuItem("GameObject/Roaring Fangs/Animation/Mutex Helper", false, 0)]
+        [MenuItem("CONTEXT/ControlManager/Mutex Helper", false, 25)]
+        public static MutexHelper Create()
+        {
+            GameObject selected = Selection.activeGameObject;
+            ControlManager manager;
+            if (selected != null)
+                manager = selected.GetComponentInParent<ControlManager>();
+            else
+                manager = null;
+            if (manager == null)
+                throw new Exception("You must select a control for this target group.");
+
+            GameObject mutex_helper_object = new GameObject("New Mutex Helper");
+            Undo.RegisterCreatedObjectUndo(mutex_helper_object, "New Mutex Helper");
+            MutexHelper mutex_helper = mutex_helper_object.AddComponent<MutexHelper>();
+
+            Undo.SetTransformParent(mutex_helper_object.transform, selected.transform, "New Mutex Helper");
+            Selection.activeGameObject = mutex_helper_object;
+            return mutex_helper;
+        }
+#endif
     }
 }

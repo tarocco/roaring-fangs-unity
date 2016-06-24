@@ -30,6 +30,7 @@ using RoaringFangs.Attributes;
 
 namespace RoaringFangs.Editor
 {
+    [InitializeOnLoad]
     [CustomPropertyDrawer(typeof(AutoPropertyAttribute), true)]
     public class AutoPropertyDrawer : PropertyDrawer
     {
@@ -56,6 +57,10 @@ namespace RoaringFangs.Editor
             EditorGUI.DelayedTextField(position, property, label);
             return false;
         }
+        private static bool PropertyFieldIncludingChildren(Rect position, SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.PropertyField(position, property, label, true);
+        }
         #endregion
 
         /// <summary>
@@ -80,7 +85,7 @@ namespace RoaringFangs.Editor
                 case SerializedPropertyType.String:
                     return DelayedTextField;
                 default:
-                    return EditorGUI.PropertyField;
+                    return PropertyFieldIncludingChildren;
             }
         }
 
@@ -106,7 +111,6 @@ namespace RoaringFangs.Editor
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            //property.serializedObject.Update();
             // Get the target object
             var target = property.serializedObject.targetObject;
             // Get the AutoPropertyDrawer associated with the field
@@ -118,7 +122,7 @@ namespace RoaringFangs.Editor
             // Lazily initialize snd cache the property field drawer
             DrawPropertyField = DrawPropertyField ?? GetPropertyFieldDrawer(position, property, label, auto.Delayed);
             // Draw the property field
-            EditorGUI.BeginProperty(position, label, property);
+            label = EditorGUI.BeginProperty(position, label, property);
             DrawPropertyField(position, property, label);
             EditorGUI.EndProperty();
             // Whether the serialized property was directly modified (unaffected by undo!)
@@ -127,13 +131,15 @@ namespace RoaringFangs.Editor
             bool different = !Equals(previous_field_value, PreviousFieldValue);
             if (different)
             {
+                object previous_value;
+                if (modified)
+                    previous_value = previous_field_value; // Restore to value right before this modification
+                else
+                    previous_value = PreviousFieldValue; // Restore to value from right after last mofification
                 // Get the value of the field after modifying
                 var current_value = fieldInfo.GetValue(target);
                 // Restore the field to its previous value so that the property setter can act on changes to the backing field
-                if (modified)
-                    fieldInfo.SetValue(target, previous_field_value); // Restore to value right before this modification
-                else
-                    fieldInfo.SetValue(target, PreviousFieldValue); // Restore to value from right after last mofification
+                fieldInfo.SetValue(target, previous_value);
                 // Lazily initialize the property info
                 PropertyInfo = PropertyInfo ?? GetPropertyInfo(target, fieldInfo, auto);
                 // Invoke the setter of the property
@@ -141,6 +147,11 @@ namespace RoaringFangs.Editor
                 // Update the previous field value to be the current value
                 PreviousFieldValue = current_value;
             }
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.GetPropertyHeight(property, label, true);
         }
     }
 }

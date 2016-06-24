@@ -23,51 +23,20 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-
-#if UNITY_EDITOR
 using UnityEditor;
-#endif
 
 using System;
-using System.Reflection;
+using System.IO;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
-namespace RoaringFangs.Attributes
+namespace RoaringFangs.Editor
 {
-    public class AutoPropertyAttribute : PropertyAttribute
+    public interface IHasHierarchyIcons
     {
-        private const BindingFlags DefaultFlags =
-            BindingFlags.GetProperty |
-            BindingFlags.SetProperty |
-            BindingFlags.Public |
-            BindingFlags.NonPublic;
-        private PropertyInfo _PropertyInfo;
-
-        public PropertyInfo PropertyInfo
-        {
-            get { return _PropertyInfo; }
-            set { _PropertyInfo = value; }
-        }
-
-        private bool _Delayed;
-        /// <summary>
-        /// Use delayed input for this property field. Compare to <seealso cref="DelayedAttribute"/>.
-        /// </summary>
-        public bool Delayed
-        {
-            get { return _Delayed; }
-            set { _Delayed = value; }
-        }
-
-        public AutoPropertyAttribute(Type type, string property_name) :
-            base()
-        {
-            if (type != null)
-                PropertyInfo = type.GetProperty(property_name, DefaultFlags);
-        }
-
-        public AutoPropertyAttribute() :
-            this(null, null)
-        {
-        }
+#if UNITY_EDITOR
+        void OnDrawHierarchyIcons(Rect icon_position);
+#endif
     }
 }

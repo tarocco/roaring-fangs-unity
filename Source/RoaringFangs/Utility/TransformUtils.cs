@@ -149,11 +149,11 @@ namespace RoaringFangs.Utility
                 _Path = path;
             }
         }
-        public static string GetTransformPath(Transform root, Transform current)
+        public static string GetTransformPath(Transform parent, Transform child)
         {
-            if (current.parent == null || current.parent == root)
-                return current.name;
-            return GetTransformPath(root, current.parent) + "/" + current.name;
+            if (child.parent == null || child.parent == parent)
+                return child.name;
+            return GetTransformPath(parent, child.parent) + "/" + child.name;
         }
 
         public static IEnumerable<ITransformDP> GetAllDescendantsWithPaths(Transform root, Transform t)
@@ -311,6 +311,52 @@ namespace RoaringFangs.Utility
             if (descendant.parent == null)
                 return false;
             return IsDescendant(parent, descendant.parent);
+        }
+
+        public static Transform GetTransformAtPath(Transform from, string path)
+        {
+            if (from)
+            {
+                var path_from = GetTransformPath(null, from);
+                var path_resolved = Paths.ResolvePath(path_from, path);
+                return Find(path_resolved).transform;
+            }
+            else
+            {
+                return Find(path).transform;
+            }
+        }
+
+        private static Transform Find(string path)
+        {
+            var game_object = GameObject.Find(path);
+            if(game_object)
+                return game_object.transform;
+            else
+                throw new ArgumentNullException(path, "Game object at path not found");
+        }
+
+        public static string GetTransformPathRelative(Transform from, Transform transform)
+        {
+            string path = GetTransformPath(null, transform);
+            if (from)
+            {
+                var path_from = GetTransformPath(null, from);
+                return Paths.GetRelativePath(path_from, path);
+            }
+            else
+                return path;
+        }
+
+        public static string GetTransformPathRelative(Transform from, string path)
+        {
+            if (from)
+            {
+                var path_from = GetTransformPath(null, from);
+                return Paths.ResolvePath(path_from, path);
+            }
+            else
+                return path;
         }
         #endregion
     }

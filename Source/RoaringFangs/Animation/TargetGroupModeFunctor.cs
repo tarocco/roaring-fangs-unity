@@ -23,51 +23,46 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
 
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-
+using RoaringFangs.Utility;
 using System;
-using System.Reflection;
 
-namespace RoaringFangs.Attributes
+namespace RoaringFangs.Animation
 {
-    public class AutoPropertyAttribute : PropertyAttribute
+    public static class TargetGroupModeFunctor
     {
-        private const BindingFlags DefaultFlags =
-            BindingFlags.GetProperty |
-            BindingFlags.SetProperty |
-            BindingFlags.Public |
-            BindingFlags.NonPublic;
-        private PropertyInfo _PropertyInfo;
-
-        public PropertyInfo PropertyInfo
+        public static Func<bool, bool, bool> GetModeFunction(TargetGroupMode mode)
         {
-            get { return _PropertyInfo; }
-            set { _PropertyInfo = value; }
+            switch (mode)
+            {
+                default:
+                case TargetGroupMode.Set:
+                    return Right;
+                case TargetGroupMode.AND:
+                    return And;
+                case TargetGroupMode.OR:
+                    return Or;
+                case TargetGroupMode.XOR:
+                    return Xor;
+            }
         }
-
-        private bool _Delayed;
-        /// <summary>
-        /// Use delayed input for this property field. Compare to <seealso cref="DelayedAttribute"/>.
-        /// </summary>
-        public bool Delayed
+        private static bool Right(bool left, bool right)
         {
-            get { return _Delayed; }
-            set { _Delayed = value; }
+            return right;
         }
-
-        public AutoPropertyAttribute(Type type, string property_name) :
-            base()
+        private static bool And(bool left, bool right)
         {
-            if (type != null)
-                PropertyInfo = type.GetProperty(property_name, DefaultFlags);
+            return left && right;
         }
-
-        public AutoPropertyAttribute() :
-            this(null, null)
+        private static bool Or(bool left, bool right)
         {
+            return left || right;
+        }
+        private static bool Xor(bool left, bool right)
+        {
+            return left ^ right;
         }
     }
 }

@@ -180,7 +180,7 @@ namespace RoaringFangs.Editor
                     catch(Exception ex)
                     {
                         ParallelTasksForever = null;
-                        string message = "Exception thrown in parallel tasks. Aborting.";
+                        string message = "Unhandled exception thrown in parallel tasks";
                         Debug.LogError(message);
                         throw new InvalidOperationException(message, ex);
                     }

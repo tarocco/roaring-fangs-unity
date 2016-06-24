@@ -26,21 +26,41 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
+using RoaringFangs.Attributes;
 using RoaringFangs.Utility;
+using System;
 
 namespace RoaringFangs.Animation
 {
-    public class TargetGroup : TargetGroupBehavior
+    public class TargetGroup : TargetGroupBase, ITargetGroup
     {
+        [SerializeField, AutoProperty]
+        private TargetGroupMode _Mode;
+        public TargetGroupMode Mode
+        {
+            get
+            {
+                return _Mode;
+            }
+        }
+
         [SerializeField]
         private TransformUtils.ITransformD[] _Targets;
-        public override IEnumerable<TransformUtils.ITransformD> Targets
+        public IEnumerable<TransformUtils.ITransformD> Targets
         {
             get { return _Targets; }
         }
-        public override void OnSubjectChanged(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
+
+        public void OnFindMatchingTargetsInDescendants(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
         {
-            // TODO
+            try
+            {
+                throw new NotImplementedException();
+            }
+            catch(Exception ex)
+            {
+                Debug.LogWarning(ex);
+            }
         }
     }
 }

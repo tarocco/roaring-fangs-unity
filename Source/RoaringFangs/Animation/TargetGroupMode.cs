@@ -27,12 +27,15 @@ using System.Collections;
 using System.Collections.Generic;
 
 using RoaringFangs.Utility;
+using System;
 
 namespace RoaringFangs.Animation
 {
-    public abstract class TargetGroupBehavior : MonoBehaviour, ITargetGroup
+    public enum TargetGroupMode
     {
-        public abstract IEnumerable<TransformUtils.ITransformD> Targets { get; }
-        public abstract void OnSubjectChanged(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths);
+        Set,
+        AND,
+        OR,
+        XOR,
     }
 }

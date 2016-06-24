@@ -35,159 +35,180 @@ using System.Linq;
 using System.Reflection;
 
 using RoaringFangs.Utility;
-
 using RoaringFangs.Attributes;
+using RoaringFangs.Editor;
 
 namespace RoaringFangs.Animation
 {
-	public class RegExTargetGroup : TargetGroupBehavior
-	{
-		#region Properties
+    [InitializeOnLoad]
+    public class RegExTargetGroup : TargetGroupBase, ITargetGroup, IHasHierarchyIcons
+    {
+        #region Properties
+        [SerializeField, AutoProperty]
+        private TargetGroupMode _Mode;
+        public TargetGroupMode Mode
+        {
+            get { return _Mode; }
+            set
+            {
+                _Mode = value;
+#if UNITY_EDITOR
+                EditorUtility.SetDirty(gameObject);
+#endif
+            }
+        }
 
-		[SerializeField, AutoProperty (Delayed = true)]
-		private string _Pattern;
+        [SerializeField, AutoProperty(Delayed = true)]
+        private string _Pattern;
+        public string Pattern
+        {
+            get { return _Pattern; }
+            set
+            {
+                try
+                {
+                    _Regex = new Regex(value);
+                    _Pattern = value;
+                    var descendants = GetDescendantsFromParentManager();
+                    OnFindMatchingTargetsInDescendants(descendants);
+                }
+                catch (ArgumentException ex)
+                {
+                    Debug.LogWarning("Invalid regular expression pattern: " + value);
+                }
+            }
+        }
 
-		public string Pattern {
-			get { return _Pattern; }
-			set {
-				_Pattern = value;
-				SetTargets (CollectTargets ());
-			}
-		}
+        private Regex _Regex;
+        private Regex Regex
+        {
+            get { return _Regex ?? (_Regex = new Regex(Pattern)); }
+        }
+        #endregion
 
-		#endregion
+        #region Cached Target Transforms
+        [SerializeField, HideInInspector]
+        private TransformUtils.TransformD[] _Targets;
 
-		#region Subject Descendants and Paths
+        /// <summary>
+        /// Cached and serialized targets of this target group
+        /// </summary>
+        public IEnumerable<TransformUtils.ITransformD> Targets
+        {
+            get
+            {
+                if (_Targets != null)
+                {
+                    foreach (var target in _Targets)
+                        yield return target;
+                }
+            }
+            set
+            {
+                if (value != null)
+                    _Targets = value.Select(t => new TransformUtils.TransformD(t.Transform, t.Depth)).ToArray();
+                else
+                    _Targets = null;
+            }
+        }
+        #endregion
 
-		private IEnumerable<TransformUtils.ITransformDP> _SubjectDescendantsAndPaths;
+        #region Targets
+        private static IEnumerable<TransformUtils.ITransformD> FindMatchingTransformsD(
+            IEnumerable<TransformUtils.ITransformDP> descendants, Regex regex)
+        {
+            var descendants_array = descendants.ToArray();
+            foreach (var tp in descendants_array)
+            {
+                Match match = regex.Match(tp.Path);
+                if (match.Success)
+                {
+                    // Work on the first group after matching the whole pattern
+                    var groups = match.Groups;
+                    if (groups.Count == 1)
+                    {
+                        yield return new TransformUtils.TransformD(tp.Transform, tp.Depth);
+                    }
+                    else if (groups.Count > 1)
+                    {
+                        var group1 = groups[1];
+                        var grouped_parent_path = tp.Path.Substring(0, group1.Index + group1.Length);
+                        int parent_depth = grouped_parent_path.Count(c => c == '/');
+                        Transform parent = tp.Transform;
+                        for (int d = tp.Depth; d > parent_depth; d--)
+                            parent = parent.parent; // lol
+                        yield return new TransformUtils.TransformD(parent, parent_depth);
+                    }
+                }
+                //Debug.Log(tp.Path);
+            }
+        }
+        private IEnumerable<TransformUtils.ITransformD> FindTargetsInDescendants(
+            IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
+        {
+            return FindMatchingTransformsD(subject_descendants_and_paths, Regex);
+        }
+        #endregion
 
-		private IEnumerable<TransformUtils.ITransformDP> SubjectDescendantsAndPaths {
-			get {
-				if (_SubjectDescendantsAndPaths == null) {
-					// Lazily tell the control manager to invalidate the subject descendants
-					var manager = TransformUtils.GetComponentInParent<ControlManager> (transform, true);
-					if (manager)
-						manager.NotifyControlGroupsOfSubjectDescendants ();
-				}
-				return _SubjectDescendantsAndPaths;
-			}
-			set {
-				_SubjectDescendantsAndPaths = value;
-			}
-		}
+        #region Descendants
+        private IEnumerable<TransformUtils.ITransformDP> GetDescendantsFromParentManager()
+        {
+            var manager = GetComponentInParent<ControlManager>();
+            if (manager)
+                return manager.CachedSubjectDescendantsAndPaths;
+            else
+                throw new NullReferenceException("RegExTargetGroup has no parent ControlManager!");
+        }
+        public void OnFindMatchingTargetsInDescendants(
+            IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
+        {
+            if (subject_descendants_and_paths != null)
+                Targets = FindMatchingTransformsD(subject_descendants_and_paths, Regex);
+            else
+                Targets = null;
+        }
+        #endregion
 
-		#endregion
+#if UNITY_EDITOR
+        #region Editor Menus
+        private static readonly Type HierarchyWindow = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
+        [MenuItem("Roaring Fangs/Animation/RegEx Target Group", false, 0)]
+        [MenuItem("GameObject/Roaring Fangs/Animation/RegEx Target Group", false, 0)]
+        [MenuItem("CONTEXT/ControlManager/RegEx Target Group", false, 25)]
+        public static RegExTargetGroup Create()
+        {
+            GameObject selected = Selection.activeGameObject;
+            ControlManager manager;
+            if (selected != null)
+                manager = selected.GetComponentInParent<ControlManager>();
+            else
+                manager = null;
+            if (manager == null)
+                throw new Exception("You must select a control for this target group.");
 
-		#region Targets
+            GameObject regex_target_group_object = new GameObject("New RegEx Target Group");
+            Undo.RegisterCreatedObjectUndo(regex_target_group_object, "New Regex Target Group");
+            RegExTargetGroup regex_target_group = regex_target_group_object.AddComponent<RegExTargetGroup>();
 
-		#region Cached Target Transforms
+            Undo.SetTransformParent(regex_target_group_object.transform, selected.transform, "New RegEx Target Group");
+            Selection.activeGameObject = regex_target_group_object;
+            var hierarchy_window = EditorWindow.GetWindow(HierarchyWindow);
+            if (hierarchy_window != null)
+            {
+                hierarchy_window.Focus();
+                // TODO: figure out why this isn't working!
+                var rename_go = HierarchyWindow.GetMethod("RenameGO", BindingFlags.NonPublic | BindingFlags.Instance);
+                rename_go.Invoke(hierarchy_window, null);
+            }
+            return regex_target_group;
+        }
+        #endregion
 
-		[SerializeField, HideInInspector]
-		private TransformUtils.TransformD[] _Targets;
-
-		public override IEnumerable<TransformUtils.ITransformD> Targets {
-			get {
-				if (_Targets != null) {
-					foreach (var target in _Targets)
-						yield return target;
-				}
-			}
-		}
-
-		#endregion
-
-		private static IEnumerable<TransformUtils.ITransformD> FindMatchingTransformsD (IEnumerable<TransformUtils.ITransformDP> descendants, string regex_pattern)
-		{
-			Regex regex = new Regex (regex_pattern);
-			var descendants_array = descendants.ToArray ();
-			foreach (var tp in descendants_array) {
-				Match match = regex.Match (tp.Path);
-				if (match.Success) {
-					var groups = match.Groups;
-					if (groups.Count == 1) {
-						yield return new TransformUtils.TransformD (tp.Transform, tp.Depth);
-					} else if (groups.Count > 1) {
-						var group1 = groups [1];
-						var grouped_parent_path = tp.Path.Substring (0, group1.Index + group1.Length);
-						//Debug.Log("Grouped: " + grouped_parent_path);
-						int parent_depth = grouped_parent_path.Count (c => c == '/');
-						Transform parent = tp.Transform;
-						for (int d = tp.Depth; d > parent_depth; d--)
-							parent = parent.parent; // lol
-						yield return new TransformUtils.TransformD (parent, parent_depth);
-					}
-				}
-				//Debug.Log(tp.Path);
-			}
-		}
-
-		private IEnumerable<TransformUtils.ITransformD> CollectTargets ()
-		{
-			return FindMatchingTransformsD (SubjectDescendantsAndPaths, Pattern);
-		}
-		// Can't use the Targets set accessor because superclass lacks it
-		private void SetTargets (IEnumerable<TransformUtils.ITransformD> value)
-		{
-			if (value != null) {
-				_Targets = value.Select (t => new TransformUtils.TransformD (t.Transform, t.Depth)).ToArray ();
-			} else {
-				_Targets = null;
-			}
-		}
-
-		#endregion
-
-		#region Other Methods
-
-		public override void OnSubjectChanged (IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
-		{
-			if (subject_descendants_and_paths != null) {
-				SubjectDescendantsAndPaths = subject_descendants_and_paths.ToArray ();
-				SetTargets (CollectTargets ());
-			} else {
-				SubjectDescendantsAndPaths = null;
-				SetTargets (null);
-			}
-		}
-
-        
-		#endregion
-
-		#region Editor Menus
-
-		#if UNITY_EDITOR
-		private static Type HierarchyWindow = typeof(EditorWindow).Assembly.GetType ("UnityEditor.SceneHierarchyWindow");
-
-		[MenuItem ("Sprites And Bones/Animation/RegEx Target Group", false, 0)]
-		[MenuItem ("GameObject/Sprites And Bones/RegEx Target Group", false, 0)]
-		[MenuItem ("CONTEXT/ControlManager/RegEx Target Group", false, 25)]
-		public static RegExTargetGroup Create ()
-		{
-			GameObject selected = Selection.activeGameObject;
-			ControlManager manager;
-			if (selected != null)
-				manager = selected.GetComponent<ControlManager> ();
-			else
-				manager = null;
-			if (manager == null)
-				throw new Exception ("You must select a control for this target group.");
-
-			GameObject regex_target_group_object = new GameObject ("New RegEx Target Group");
-			Undo.RegisterCreatedObjectUndo (regex_target_group_object, "Add Regex Target Group");
-			RegExTargetGroup regex_target_group = regex_target_group_object.AddComponent<RegExTargetGroup> ();
-
-			Undo.SetTransformParent (regex_target_group_object.transform, selected.transform, "Add RegEx Target Group");
-			Selection.activeGameObject = regex_target_group_object;
-			var hierarchy_window = EditorWindow.GetWindow (HierarchyWindow);
-			if (hierarchy_window != null) {
-				hierarchy_window.Focus ();
-				// TODO: figure out why this isn't working!
-				var rename_go = HierarchyWindow.GetMethod ("RenameGO", BindingFlags.NonPublic | BindingFlags.Instance);
-				rename_go.Invoke (hierarchy_window, null);
-			}
-			return regex_target_group;
-		}
-		#endif
-		#endregion
-	}
+        public void OnDrawHierarchyIcons(Rect icon_position)
+        {
+            UnityEngine.GUI.color = Active ? Color.white : Color.gray;
+            UnityEngine.GUI.Label(icon_position, GetIcon(Mode));
+        }
+#endif
+    }
 }
