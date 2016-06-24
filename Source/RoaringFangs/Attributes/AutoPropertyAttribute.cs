@@ -34,38 +34,40 @@ using System.Reflection;
 namespace RoaringFangs.Attributes
 {
     public class AutoPropertyAttribute : PropertyAttribute
-	{
-		private const BindingFlags DefaultFlags =
-			BindingFlags.GetProperty |
-			BindingFlags.SetProperty |
-			BindingFlags.Public |
-			BindingFlags.NonPublic;
-		private PropertyInfo _PropertyInfo;
+    {
+        private const BindingFlags DefaultFlags =
+            BindingFlags.GetProperty |
+            BindingFlags.SetProperty |
+            BindingFlags.Public |
+            BindingFlags.NonPublic;
+        private PropertyInfo _PropertyInfo;
 
-		public PropertyInfo PropertyInfo {
-			get { return _PropertyInfo; }
-			set { _PropertyInfo = value; }
-		}
+        public PropertyInfo PropertyInfo
+        {
+            get { return _PropertyInfo; }
+            set { _PropertyInfo = value; }
+        }
 
-		private bool _Delayed;
-		/// <summary>
-		/// Use delayed input for this property field. Compare to <seealso cref="DelayedAttribute"/>.
-		/// </summary>
-		public bool Delayed {
-			get { return _Delayed; }
-			set { _Delayed = value; }
-		}
+        private bool _Delayed;
+        /// <summary>
+        /// Use delayed input for this property field. Compare to <seealso cref="DelayedAttribute"/>.
+        /// </summary>
+        public bool Delayed
+        {
+            get { return _Delayed; }
+            set { _Delayed = value; }
+        }
 
-		public AutoPropertyAttribute (Type type, string property_name) :
-			base ()
-		{
-			if (type != null)
-				PropertyInfo = type.GetProperty (property_name, DefaultFlags);
-		}
+        public AutoPropertyAttribute(Type type, string property_name) :
+            base()
+        {
+            if (type != null)
+                PropertyInfo = type.GetProperty(property_name, DefaultFlags);
+        }
 
-		public AutoPropertyAttribute () :
-			this (null, null)
-		{
-		}
+        public AutoPropertyAttribute() :
+            this(null, null)
+        {
+        }
     }
 }
