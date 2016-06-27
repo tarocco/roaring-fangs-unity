@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>10.0.0</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{ACF70141-FF57-4394-B7D3-846DFB6C53E7}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <RootNamespace>Midi</RootNamespace>
+    <AssemblyName>Midi</AssemblyName>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>True</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>False</Optimize>
+    <OutputPath>..\..\..\..\Assets\Assemblies\$(Platform)\$(Configuration)\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <ConsolePause>False</ConsolePause>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <DebugType>none</DebugType>
+    <Optimize>True</Optimize>
+    <OutputPath>..\..\..\..\Assets\Assemblies\$(Platform)\$(Configuration)\</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <ConsolePause>False</ConsolePause>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>..\..\..\..\Assets\Assemblies\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;</DefineConstants>
+    <DebugType>full</DebugType>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
+    <OutputPath>..\..\..\Assemblies\Release\</OutputPath>
+    <Optimize>true</Optimize>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ErrorReport>prompt</ErrorReport>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <DefineConstants>TRACE</DefineConstants>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+  <ItemGroup>
+    <Compile Include="FileParser.cs" />
+    <Compile Include="Events\SysexEvent.cs" />
+    <Compile Include="Events\MidiEvent.cs" />
+    <Compile Include="Chunks\Chunk.cs" />
+    <Compile Include="Chunks\HeaderChunk.cs" />
+    <Compile Include="Chunks\TrackChunk.cs" />
+    <Compile Include="Events\ChannelEvents\ChannelEvent.cs" />
+    <Compile Include="Events\ChannelEvents\ChannelAftertouchEvent.cs" />
+    <Compile Include="Events\ChannelEvents\ControllerEvent.cs" />
+    <Compile Include="Events\ChannelEvents\NoteAftertouchEvent.cs" />
+    <Compile Include="Events\ChannelEvents\NoteOffEvent.cs" />
+    <Compile Include="Events\ChannelEvents\NoteOnEvent.cs" />
+    <Compile Include="Events\ChannelEvents\PitchBendEvent.cs" />
+    <Compile Include="Events\ChannelEvents\ProgramChangeEvent.cs" />
+    <Compile Include="MidiData.cs" />
+    <Compile Include="Events\MetaEvents\SequenceNumberEvent.cs" />
+    <Compile Include="Events\MetaEvents\TextEvent.cs" />
+    <Compile Include="Events\MetaEvents\CopyrightNoticeEvent.cs" />
+    <Compile Include="Events\MetaEvents\SequenceOrTrackNameEvent.cs" />
+    <Compile Include="Events\MetaEvents\InstrumentNameEvent.cs" />
+    <Compile Include="Events\MetaEvents\LyricsEvent.cs" />
+    <Compile Include="Events\MetaEvents\MarkerEvent.cs" />
+    <Compile Include="Events\MetaEvents\CuePointEvent.cs" />
+    <Compile Include="Events\MetaEvents\MIDIChannelPrefixEvent.cs" />
+    <Compile Include="Events\MetaEvents\EndOfTrackEvent.cs" />
+    <Compile Include="Events\MetaEvents\SetTempoEvent.cs" />
+    <Compile Include="Events\MetaEvents\SMPTEOffsetEvent.cs" />
+    <Compile Include="Events\MetaEvents\TimeSignatureEvent.cs" />
+    <Compile Include="Events\MetaEvents\KeySignatureEvent.cs" />
+    <Compile Include="Events\MetaEvents\SequencerSpecificEvent.cs" />
+    <Compile Include="Events\MetaEvents\MetaEvent.cs" />
+    <Compile Include="Tuple.cs" />
+    <Compile Include="Util\Option\None.cs" />
+    <Compile Include="Util\Option\Option.cs" />
+    <Compile Include="Util\Option\Some.cs" />
+    <Compile Include="Util\VariableLengthUtil.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+  </ItemGroup>
+</Project>
