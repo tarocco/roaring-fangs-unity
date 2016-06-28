@@ -39,8 +39,15 @@ namespace RoaringFangs.Animation
 {
     [ExecuteInEditMode]
     [InitializeOnLoad]
+    [Serializable]
     public class ControlManager : MonoBehaviour, IHasHierarchyIcons
     {
+#if UNITY_EDITOR
+        [HideInInspector, SerializeField]
+        public bool Editor__ShowTargetGroups;
+        [HideInInspector, SerializeField]
+        public UnityEngine.Object[] Editor__TargetGroupsShown;
+#endif
         public static Texture2D HIControlManager { get; protected set; }
         #region Subject
         #region Subject Paths
