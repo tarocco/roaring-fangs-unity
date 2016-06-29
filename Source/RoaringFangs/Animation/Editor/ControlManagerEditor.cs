@@ -43,8 +43,9 @@ namespace RoaringFangs.Animation.Editor
         private GUIStyle _ShowTargetGroupsFoldoutStyle;
         private Dictionary<UnityEngine.Object, AnimBool> _ExpandedObjects;
 
-        private Dictionary<ITargetGroup, UnityEditor.Editor> _TargetGroupEditors =
-            new Dictionary<ITargetGroup, UnityEditor.Editor>();
+        private Dictionary<Component, UnityEditor.Editor> _Editors =
+            new Dictionary<Component, UnityEditor.Editor>();
+
         public void OnEnable()
         {
             ControlManager self = (ControlManager)target;
@@ -52,13 +53,50 @@ namespace RoaringFangs.Animation.Editor
             _ExpandedObjects = self.Editor__TargetGroupsShown
                 .Where(o => o != null)
                 .Select(o => o as UnityEngine.Object)
-                .ToDictionary(g => g, g => new AnimBool(true, DirtyAndRepaint));
+                .ToDictionary(g => g, g => new AnimBool(true, DirtyTargetGroupsAndRepaint));
+            RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged += HandleHierarchyObjectPathChanged;
+        }
 
+        public void OnDisable()
+        {
+            RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
         }
 
         private bool _DirtyTargetGroupsShown;
+        private bool _DirtyInclude;
 
         private HashSet<Transform> _Include;
+        private HashSet<Transform> Include
+        {
+            get
+            {
+                if (_Include == null)
+                {
+                    ControlManager self = (ControlManager)target;
+                    var target_groups = TransformUtils.GetComponentsInDescendants<ITargetGroup>(self.transform, true).ToArray();
+                    var target_groups_ancestors_enum = TransformUtils.Ancestors(target_groups.Select(g => (g as Component).transform));
+                    _Include = new HashSet<Transform>(target_groups_ancestors_enum);
+                }
+                return _Include;
+            }
+            set { _Include = value; }
+        }
+
+        private string _ControlManagerPath;
+        private string ControlManagerPath
+        {
+            get
+            {
+                if (_ControlManagerPath == null)
+                {
+                    ControlManager self = (ControlManager)target;
+                    _ControlManagerPath = TransformUtils.GetTransformPath(null, self.transform);
+                }
+                return _ControlManagerPath;
+            }
+            set { _ControlManagerPath = value; }
+        }
+        private bool _PathChangeHandledOnceThisUpdate = false;
 
         public override void OnInspectorGUI()
         {
@@ -67,13 +105,6 @@ namespace RoaringFangs.Animation.Editor
             serializedObject.Update();
             self.SubjectPath = EditorGUILayout.DelayedTextField("Subject Path", self.SubjectPath);
             self.Subject = (GameObject)EditorGUILayout.ObjectField("Subject", self.Subject, typeof(GameObject), true);
-
-            if (_Include == null)
-            {
-                var target_groups = TransformUtils.GetComponentsInDescendants<ITargetGroup>(self.transform, true).ToArray();
-                var target_groups_ancestors_enum = TransformUtils.Ancestors(target_groups.Select(g => (g as Component).transform));
-                _Include = new HashSet<Transform>(target_groups_ancestors_enum);
-            }
 
             bool? expand_collapse_all;
             using (var horiz1 = new EditorGUILayout.HorizontalScope())
@@ -91,21 +122,21 @@ namespace RoaringFangs.Animation.Editor
                 self.Editor__ShowTargetGroups = _ShowTargetGroups.target;
                 if (expand_collapse_all.HasValue)
                 {
-                    foreach (var t in _Include)
+                    foreach (var t in Include)
                     {
                         AnimBool show_children;
                         if (!_ExpandedObjects.TryGetValue(t.gameObject, out show_children))
-                            show_children = new AnimBool(!expand_collapse_all.Value, DirtyAndRepaint);
+                            show_children = new AnimBool(!expand_collapse_all.Value, DirtyTargetGroupsAndRepaint);
                         show_children.target = expand_collapse_all.Value;
                         _ExpandedObjects[t.gameObject] = show_children;
                     }
                 }
             }
-            using (var _fade1 = new EditorGUILayout.FadeGroupScope(_ShowTargetGroups.faded))
+            using (var fade = new EditorGUILayout.FadeGroupScope(_ShowTargetGroups.faded))
             {
-                if (_fade1.visible)
+                if (fade.visible)
                 {
-                    DrawTargetGroupTree(_Include, self.transform, 0, ref _DirtyTargetGroupsShown);
+                    DrawTargetGroupTree(Include, self.transform, 0, true, ref _DirtyTargetGroupsShown);
                 }
             }
             if (_DirtyTargetGroupsShown)
@@ -115,72 +146,146 @@ namespace RoaringFangs.Animation.Editor
                     .Select(e => e.Key as GameObject).ToArray();
                 _DirtyTargetGroupsShown = false;
             }
+            _PathChangeHandledOnceThisUpdate = false;
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawTargetGroupTree(HashSet<Transform> include, Transform current, int depth, ref bool dirty)
+        private void DrawTargetGroupTree(HashSet<Transform> include, Transform current, int depth, bool enable_toggles, ref bool dirty)
         {
             var children = TransformUtils.GetChildren(current);
-            foreach(var child in children)
+            foreach (var child in children)
             {
-                _DrawTargetGroupTree(include, child, depth, ref dirty);
+                _DrawTargetGroupTree(include, child, depth, enable_toggles, ref dirty);
             }
         }
 
-        private void _DrawTargetGroupTree(HashSet<Transform> include, Transform current, int depth, ref bool dirty)
+        private void _DrawTargetGroupTree(HashSet<Transform> include, Transform current, int depth, bool enable_toggles, ref bool dirty)
         {
             if (!include.Contains(current))
                 return;
 
+            var e = Event.current;
             AnimBool show_children;
             var current_game_object = current.gameObject;
             var current_target_group = current.GetComponent<ITargetGroup>();
+            var current_mutex_helper = current.GetComponent<MutexHelper>();
+            var current_component = current_target_group as Component ?? current_mutex_helper;
+
+            float single_line_height = EditorGUIUtility.singleLineHeight;
 
             if (!_ExpandedObjects.TryGetValue(current_game_object, out show_children))
             {
-                show_children = new AnimBool(false, DirtyAndRepaint);
+                show_children = new AnimBool(false, DirtyTargetGroupsAndRepaint);
                 _ExpandedObjects[current_game_object] = show_children;
                 _DirtyTargetGroupsShown = true;
             }
 
-            using (new EditorGUILayout.HorizontalScope())
+            using (var horiz1 = new EditorGUILayout.HorizontalScope())
             {
-                float toggle_width = EditorGUIUtility.singleLineHeight;
+                bool gui_previously_enabled = UnityEngine.GUI.enabled;
+                UnityEngine.GUI.enabled &= enable_toggles;
                 if (current_target_group != null)
-                    current_target_group.Active = EditorGUILayout.Toggle(current_target_group.Active, GUILayout.Width(toggle_width));
+                    current_target_group.Active = EditorGUILayout.Toggle(current_target_group.Active, GUILayout.Width(single_line_height));
                 else
-                    current_game_object.SetActive(EditorGUILayout.Toggle(current_game_object.activeSelf, GUILayout.Width(toggle_width)));
-                GUILayout.Space(0.5f * toggle_width);
+                    current_game_object.SetActive(EditorGUILayout.Toggle(current_game_object.activeSelf, GUILayout.Width(single_line_height)));
+                UnityEngine.GUI.enabled = gui_previously_enabled;
+                GUILayout.Space(0.5f * single_line_height);
                 show_children.target = EditorGUILayout.Foldout(show_children.target, current_game_object.name);
+                if(!show_children.value && current_mutex_helper)
+                {
+                    GUILayout.Space(Mathf.Lerp(0.25f, 1f, show_children.faded) * Screen.width);
+                    UnityEditor.Editor editor;
+                    _Editors.TryGetValue(current_component, out editor);
+                    CreateCachedEditor(current_component, typeof(MutexHelperEditorInline), ref editor);
+                    _Editors[current_component] = editor;
+                    editor.OnInspectorGUI();
+                }
+                #region Context Menu
+                var last_rect = GUILayoutUtility.GetLastRect();
+                if (DidMouseInRect(e, EventType.MouseUp, 1, last_rect))
+                {
+                    //Debug.Log("Right-clicked on: " + current_game_object.name);
+                    GenericMenu right_click_menu = new GenericMenu();
+                    right_click_menu.AddItem(new GUIContent("Add RegEx Target Group"), false, CreateChild<RegExTargetGroup>, current_game_object);
+                    right_click_menu.AddItem(new GUIContent("Add Mutex Helper"), false, CreateChild<MutexHelper>, current_game_object);
+                    right_click_menu.AddItem(new GUIContent("Remove"), false, Remove, current_game_object);
+                    right_click_menu.ShowAsContext();
+                    e.Use();
+                }
+                #endregion
             }
-
+            #region Contents Drawing
             //bool gui_enabled_at_start = UnityEngine.GUI.enabled;
             //UnityEngine.GUI.enabled &= current_game_object.activeSelf;
-            EditorGUI.indentLevel++;
-            if (EditorGUILayout.BeginFadeGroup(show_children.faded))
+            //EditorGUI.indentLevel++;
+            using (var horiz1 = new EditorGUILayout.HorizontalScope())
             {
-                UnityEditor.Editor editor;
-                if (current_target_group != null)
+                GUILayout.Space(single_line_height);
+                using (var vert1 = new EditorGUILayout.VerticalScope())
                 {
-                    if (!_TargetGroupEditors.TryGetValue(current_target_group, out editor))
+                    if (EditorGUILayout.BeginFadeGroup(show_children.faded))
                     {
-                        editor = CreateEditor(current_target_group as Component);
-                        _TargetGroupEditors[current_target_group] = editor;
+                        if (current_component != null)
+                        {
+                            UnityEditor.Editor editor;
+                            Type editor_type;
+                            if (current_component is MutexHelper)
+                            {
+                                editor_type = typeof(MutexHelperEditorBrief);
+                                enable_toggles = false;
+                            }
+                            else
+                            {
+                                editor_type = null;
+                                enable_toggles = true;
+                            }
+                            _Editors.TryGetValue(current_component, out editor);
+                            CreateCachedEditor(current_component, editor_type, ref editor);
+                            _Editors[current_component] = editor;
+                            if (editor_type != null)
+                                editor.OnInspectorGUI();
+                            else
+                                DrawPropertiesExcluding(editor.serializedObject, "m_Script");
+                        }
+
+                        foreach (Transform t in current)
+                        {
+                            _DrawTargetGroupTree(include, t, depth + 1, enable_toggles, ref dirty);
+                        }
                     }
-                    DrawPropertiesExcluding(editor.serializedObject, "m_Script");
-                }
-                
-                foreach (Transform t in current)
-                {
-                    _DrawTargetGroupTree(include, t, depth + 1, ref dirty);
+                    FixedEndFadeGroup(show_children.faded);
                 }
             }
-            FixedEndFadeGroup(show_children.faded);
-            EditorGUI.indentLevel--;
+            //EditorGUI.indentLevel--;
             //UnityEngine.GUI.enabled = gui_enabled_at_start;
+            #endregion
         }
 
-        private void DirtyAndRepaint()
+        private void CreateChild<T>(object data) where T : class
+        {
+            if (data is GameObject)
+                Selection.activeGameObject = data as GameObject;
+            var type = typeof(T);
+            if (type == typeof(RegExTargetGroup))
+                RegExTargetGroup.Create();
+            else if (type == typeof(MutexHelper))
+                MutexHelper.Create();
+            _Include = null;
+        }
+
+        private void Remove(object data)
+        {
+            if (data is GameObject)
+                Undo.DestroyObjectImmediate(data as GameObject);
+            _Include = null;
+        }
+
+        private static bool DidMouseInRect(Event e, EventType event_type, int button, Rect last_rect)
+        {
+            return e.type == event_type && e.button == button && last_rect.Contains(e.mousePosition);
+        }
+
+        private void DirtyTargetGroupsAndRepaint()
         {
             _DirtyTargetGroupsShown = true;
             Repaint();
@@ -192,6 +297,20 @@ namespace RoaringFangs.Animation.Editor
             if (aValue == 0f || aValue == 1f)
                 return;
             EditorGUILayout.EndFadeGroup();
+        }
+
+        private void HandleHierarchyObjectPathChanged(object sender, RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChangedEventArgs args)
+        {
+            if (_PathChangeHandledOnceThisUpdate)
+                return;
+            bool descendants_affected =
+                Paths.IsSubPath(ControlManagerPath, args.OldPath) ||
+                Paths.IsSubPath(ControlManagerPath, args.NewPath);
+            if(descendants_affected)
+            {
+                _Include = null;
+                _PathChangeHandledOnceThisUpdate = true;
+            }
         }
     }
 }
