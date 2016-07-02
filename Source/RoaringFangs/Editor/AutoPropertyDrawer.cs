@@ -24,6 +24,9 @@ THE SOFTWARE.
 
 using UnityEngine;
 using UnityEditor;
+
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 using RoaringFangs.Attributes;
@@ -36,10 +39,32 @@ namespace RoaringFangs.Editor
     {
         private delegate bool PropertyFieldHandler(Rect position, SerializedProperty property, GUIContent label);
 
-        private static readonly char[] AutoPropertyTrimChars = { '_' };
-        private PropertyInfo PropertyInfo;
-        private object PreviousFieldValue = null;
-        private PropertyFieldHandler DrawPropertyField = null;
+        private struct PropertyInfoBinding
+        {
+            public int TargetId;
+            public PropertyInfo PropertyInfo;
+        }
+
+        /// <summary>
+        /// Characters to trim from field names when searching for corresponding properties
+        /// </summary>
+        private static readonly char[] _AutoPropertyTrimChars = { '_' };
+        /// <summary>
+        /// PropertyInfo for property associated with the field with this drawer's AutoPropertyAttribute
+        /// </summary>
+        private PropertyInfo _PropertyInfo;
+        /// <summary>
+        /// Previously set value of the field with this drawer's AutoPropertyAttribute
+        /// </summary>
+        private object _PreviouslySetFieldValue = null;
+        /// <summary>
+        /// Draw method to use in OnGUI for this property
+        /// </summary>
+        private PropertyFieldHandler _DrawPropertyField = null;
+        /// <summary>
+        /// Weak reference to the last-used serialized property's serialized object's target
+        /// </summary>
+        private WeakReference _TargetWR = new WeakReference(null);
 
         #region Field Proxies
         private static bool DelayedIntField(Rect position, SerializedProperty property, GUIContent label)
@@ -67,34 +92,47 @@ namespace RoaringFangs.Editor
         /// Gets the cortrect property field drawing method for a given SerializedProperty.
         /// </summary>
         /// <param name="delayed">Whether the field should be delayed. See <seealso cref="AutoPropertyAttribute.Delayed"/>.</param>
-        private static PropertyFieldHandler GetPropertyFieldDrawer(Rect position, SerializedProperty property, GUIContent label, bool delayed)
+        private static PropertyFieldHandler GetPropertyFieldDrawer(SerializedPropertyType sp_type, bool delayed)
         {
-            SerializedPropertyType sp_type;
-            // If this field should have delayed input
             if (delayed)
-                sp_type = property.propertyType; // Type-dependent selection for delayed properties
-            else
-                sp_type = SerializedPropertyType.Generic; // Default to non-delayed property field
-                                                          // Switch to delayed field if Delayed is true
-            switch (sp_type)
             {
-                case SerializedPropertyType.Integer:
-                    return DelayedIntField;
-                case SerializedPropertyType.Float:
-                    return DelayedFloatField;
-                case SerializedPropertyType.String:
-                    return DelayedTextField;
-                default:
-                    return PropertyFieldIncludingChildren;
+                switch (sp_type)
+                {
+                    case SerializedPropertyType.Integer:
+                        return DelayedIntField;
+                    case SerializedPropertyType.Float:
+                        return DelayedFloatField;
+                    case SerializedPropertyType.String:
+                        return DelayedTextField;
+                }
             }
+            return PropertyFieldIncludingChildren;
+        }
+
+        /// <summary>
+        /// Gets the cortrect property field drawing method for a given SerializedProperty.
+        /// </summary>
+        /// <param name="delayed">Whether the field should be delayed. See <seealso cref="AutoPropertyAttribute.Delayed"/>.</param>
+        private static PropertyFieldHandler GetPropertyFieldDrawer(Type property_type, bool delayed)
+        {
+            if (delayed)
+            {
+                if (property_type == typeof(int) || property_type == typeof(long))
+                    return DelayedIntField;
+                else if (property_type == typeof(float) || property_type == typeof(double))
+                    return DelayedFloatField;
+                else if (property_type == typeof(string))
+                    return DelayedTextField;
+            }
+            return PropertyFieldIncludingChildren;
         }
 
         /// <summary>
         /// Gets the target's property info from field info and AutoPropertyAttribute
         /// </summary>
-        private static PropertyInfo GetPropertyInfo(Object target, FieldInfo field_info, AutoPropertyAttribute auto)
+        private static PropertyInfo GetPropertyInfo(FieldInfo field_info, AutoPropertyAttribute auto)
         {
-            if (auto.PropertyInfo != null)
+            if (auto != null && auto.PropertyInfo != null)
             {
                 return auto.PropertyInfo;
             }
@@ -102,56 +140,138 @@ namespace RoaringFangs.Editor
             {
                 var field_name = field_info.Name;
                 var field_type = field_info.FieldType;
-                var target_type = target.GetType();
-                var auto_property_name = field_name.TrimStart(AutoPropertyTrimChars);
-                var property_info = target_type.GetProperty(auto_property_name, field_type);
+                var field_declaring_type = field_info.DeclaringType;
+                var auto_property_name = field_name.TrimStart(_AutoPropertyTrimChars);
+                var property_info = field_declaring_type.GetProperty(auto_property_name, field_type);
                 return property_info;
             }
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            // Get the target object
-            var target = property.serializedObject.targetObject;
+            OnGUI(position, property, label, false);
+        }
+
+        private void OnGUI(Rect position, SerializedProperty property, GUIContent label, bool commit)
+        {
             // Get the AutoPropertyDrawer associated with the field
             var auto = (AutoPropertyAttribute)attribute;
+            // Lazily initialize and cache the property info
+            _PropertyInfo = _PropertyInfo ?? GetPropertyInfo(fieldInfo, auto);
+            // Lazily initialize and cache the property field drawer
+            _DrawPropertyField = _DrawPropertyField ?? GetPropertyFieldDrawer(_PropertyInfo.DeclaringType, auto.Delayed);
+            // Get the serialized object the serialized property belongs to
+            var serialized_object = property.serializedObject;
+            // Get the target object
+            var target = serialized_object.targetObject;
             // Get the value of the field before modifying
-            var previous_field_value = fieldInfo.GetValue(target);
-            // Lazily initialize and cache the previous field value
-            PreviousFieldValue = PreviousFieldValue ?? previous_field_value;
-            // Lazily initialize snd cache the property field drawer
-            DrawPropertyField = DrawPropertyField ?? GetPropertyFieldDrawer(position, property, label, auto.Delayed);
+            var field_value = fieldInfo.GetValue(target);
+            // Begin checking for changes
+            EditorGUI.BeginChangeCheck();
             // Draw the property field
             label = EditorGUI.BeginProperty(position, label, property);
-            DrawPropertyField(position, property, label);
+            _DrawPropertyField(position, property, label);
             EditorGUI.EndProperty();
-            // Whether the serialized property was directly modified (unaffected by undo!)
-            bool modified = property.serializedObject.ApplyModifiedProperties();
-            // Whether the field value has changed by any means (including undo operations or anything else!)
-            bool different = !Equals(previous_field_value, PreviousFieldValue);
-            if (different)
+            // Whether the field value has changed
+            if (EditorGUI.EndChangeCheck())
             {
-                object previous_value;
-                if (modified)
-                    previous_value = previous_field_value; // Restore to value right before this modification
-                else
-                    previous_value = PreviousFieldValue; // Restore to value from right after last mofification
-                // Get the value of the field after modifying
-                var current_value = fieldInfo.GetValue(target);
-                // Restore the field to its previous value so that the property setter can act on changes to the backing field
-                fieldInfo.SetValue(target, previous_value);
-                // Lazily initialize the property info
-                PropertyInfo = PropertyInfo ?? GetPropertyInfo(target, fieldInfo, auto);
-                // Invoke the setter of the property
-                PropertyInfo.SetValue(target, current_value, null);
-                // Update the previous field value to be the current value
-                PreviousFieldValue = current_value;
+                _PreviouslySetFieldValue = UpdatePropertyFromField(fieldInfo, _PropertyInfo, serialized_object, _PreviouslySetFieldValue, true);
+            }
+            _TargetWR.Target = target;
+            UpdateLateBindings(target);
+        }
+
+        private static object UpdatePropertyFromField(
+            FieldInfo field_info,
+            PropertyInfo property_info,
+            SerializedObject serialized_object,
+            object previously_set_field_value,
+            bool with_undo)
+        {
+            // Target of the serialized object
+            UnityEngine.Object target = serialized_object.targetObject;
+            // Get the value of the field before modifying
+            var field_value_before_apply = field_info.GetValue(target);
+            // Whether the serialized property was directly modified
+            bool modified;
+            if (with_undo)
+                modified = serialized_object.ApplyModifiedProperties();
+            else
+                modified = serialized_object.ApplyModifiedPropertiesWithoutUndo();
+            object previous_value;
+            if (modified)
+                previous_value = field_value_before_apply; // Restore to value right before this application
+            else
+                previous_value = previously_set_field_value; // Restore to value from right after previous application
+            // Get the value of the field after applying modified properties
+            var current_value = field_info.GetValue(target);
+            // Restore the field to its previous value so that the property setter can act on changes to the backing field
+            field_info.SetValue(target, previous_value);
+            // Invoke the setter of the property
+            property_info.SetValue(target, current_value, null);
+            // Return the current value
+            return current_value;
+        }
+
+        private void UpdateLateBindings(object target)
+        {
+            // Perform late binding on target and handlers
+            WeakReference previous_drawer_wr;
+            var key = new PropertyInfoBinding()
+            {
+                TargetId = target.GetHashCode(),
+                PropertyInfo = _PropertyInfo,
+            };
+            if (AutoPropertyDrawerBindings.TryGetValue(key, out previous_drawer_wr) && previous_drawer_wr.IsAlive)
+            {
+                var previous_drawer = previous_drawer_wr.Target as AutoPropertyDrawer;
+                if (this != previous_drawer)
+                {
+                    _PreviouslySetFieldValue = previous_drawer._PreviouslySetFieldValue;
+                    Undo.undoRedoPerformed -= previous_drawer.HandleUndoRedoPerformed;
+                    Undo.undoRedoPerformed += HandleUndoRedoPerformed;
+                    AutoPropertyDrawerBindings[key] = new WeakReference(this);
+                }
+            }
+            else
+            {
+                Undo.undoRedoPerformed += HandleUndoRedoPerformed;
+                AutoPropertyDrawerBindings[key] = new WeakReference(this);
             }
         }
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
             return EditorGUI.GetPropertyHeight(property, label, true);
+        }
+
+        private static Dictionary<PropertyInfoBinding, WeakReference> AutoPropertyDrawerBindings =
+            new Dictionary<PropertyInfoBinding, WeakReference>();
+        public AutoPropertyDrawer() :
+            base()
+        {
+        }
+
+        private void HandleUndoRedoPerformed()
+        {
+            if (_TargetWR.IsAlive)
+            {
+                // Get the target object by its weak reference
+                var target = (UnityEngine.Object)_TargetWR.Target;
+                // Get the value of the field before modifying
+                var field_value = fieldInfo.GetValue(target);
+                // If the field value changed
+                if (field_value != _PreviouslySetFieldValue)
+                {
+                    var serialized_object = new SerializedObject(target);
+                    // Update the serialized object but don't re-affect undo in this undo handler
+                    _PreviouslySetFieldValue = UpdatePropertyFromField(fieldInfo, _PropertyInfo, serialized_object, _PreviouslySetFieldValue, false);
+                }
+            }
+            else
+            {
+                Undo.undoRedoPerformed -= HandleUndoRedoPerformed;
+            }
         }
     }
 }
