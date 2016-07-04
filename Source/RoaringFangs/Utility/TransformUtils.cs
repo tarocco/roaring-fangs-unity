@@ -26,6 +26,7 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RoaringFangs.Utility
 {
@@ -159,7 +160,22 @@ namespace RoaringFangs.Utility
         public static IEnumerable<ITransformDP> GetAllDescendantsWithPaths(Transform root, Transform t)
         {
             foreach (ITransformDP tdp in GetAllDescendantsWithPaths(root, t, 0, GetTransformPath(root, t)))
+            {
                 yield return tdp;
+            }
+        }
+
+        public static IEnumerable<ITransformDP> GetAllDescendantsWithPaths(Transform root, Transform t, IEnumerable<Transform> exclude)
+        {
+            foreach (ITransformDP tdp in GetAllDescendantsWithPaths(root, t, 0, GetTransformPath(root, t), exclude))
+            {
+                yield return tdp;
+            }
+        }
+
+        public static IEnumerable<ITransformDP> GetAllDescendantsWithPaths(Transform root, Transform t, params Transform[] exclude)
+        {
+            return GetAllDescendantsWithPaths(root, t, (IEnumerable<Transform>)exclude);
         }
 
         private static IEnumerable<ITransformDP> GetAllDescendantsWithPaths(Transform root, Transform t, int depth, string path)
@@ -170,6 +186,20 @@ namespace RoaringFangs.Utility
             {
                 foreach (TransformDP tp in GetAllDescendantsWithPaths(root, t2, depth + 1, path + t2.name))
                     yield return tp;
+            }
+        }
+
+        private static IEnumerable<ITransformDP> GetAllDescendantsWithPaths(Transform root, Transform t, int depth, string path, IEnumerable<Transform> exclude)
+        {
+            if (!exclude.Contains(t))
+            {
+                yield return new TransformDP(t, depth, path);
+                path += "/";
+                foreach (Transform t2 in t)
+                {
+                    foreach (TransformDP tp in GetAllDescendantsWithPaths(root, t2, depth + 1, path + t2.name, exclude))
+                        yield return tp;
+                }
             }
         }
 
@@ -330,7 +360,7 @@ namespace RoaringFangs.Utility
         private static Transform Find(string path)
         {
             var game_object = GameObject.Find(path);
-            if(game_object)
+            if (game_object)
                 return game_object.transform;
             else
                 throw new ArgumentNullException(path, "Game object at path not found");
