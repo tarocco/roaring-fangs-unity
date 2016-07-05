@@ -29,7 +29,7 @@ Installing
 -----
 You can download this repository and copy it into your Unity project manually or use this repository as a git subproject.
 
-###### Installing as a Git Subproject
+### As a Git Subtree
 Optionally fork your own copy before you start.
 
 1. Commit or stash any changes before adding.
@@ -57,6 +57,6 @@ This library depends on projects in the `/.Projects` directory. First and foremo
 
 Contributing
 -----
-Please contact me, @Tarocco, if you would like to know more about contributing.
+Please contact me, @Tarocco, about questions on general usage and contributing.
 
 🐰🐇
