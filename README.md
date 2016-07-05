@@ -1,4 +1,4 @@
-Roaring Fangs General Purpose Library for Unity
+Roaring Fangs Multipurpose Library for Unity
 =====
 License
 -----
