@@ -13,6 +13,8 @@ Features Overview (why aren't you using it yet?)
 
 - Various improvements and fixes to the Unity animation editor (renaming paths, updating with hierarchy changes)
 - `[AutoProperty]` lets you write _full_ properties that work with the inspector. Use it on your backing fields!
+- `[Layer]` lets you use the editor dropdown to specify a _single_ layer `int` (unlike `UnityEngine.LayerMask`)
+- Highly customizeable audio envelope follower that lets you make sound visualizers, etc.
 - Abstraction of `UnityEvent` methods for editor and player
 - Simple input re-mapping controller
 - Non-canvas mesh 9-patch controller
