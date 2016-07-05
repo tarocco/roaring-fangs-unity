@@ -4,6 +4,10 @@ License
 -----
 MIT License
 
+Full Documentation
+-----
+Check out the [Wiki](https://github.com/Tarocco/roaring-fangs-unity/wiki) for documentation, examples and guides.
+
 Features Overview (why aren't you using it yet?)
 -----
 
