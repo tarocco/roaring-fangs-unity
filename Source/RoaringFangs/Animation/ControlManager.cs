@@ -229,7 +229,7 @@ namespace RoaringFangs.Animation
                 Debug.LogWarning("CollectSubjectDescendants called at runtime!");
             if (Subject == null)
                 return null;
-            return TransformUtils.GetAllDescendantsWithPaths(Subject.transform.parent, Subject.transform);
+            return TransformUtils.GetAllDescendantsWithPaths(Subject.transform.parent, Subject.transform, transform);
         }
 
         #endregion
