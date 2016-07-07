@@ -42,6 +42,67 @@ namespace RoaringFangs.Animation.Editor
         //private Stack<GameObject> _GroupStack = new Stack<GameObject>();
         private ILookup<string, PenToolPathResource> _PenToolPathResources;
 
+        /// <summary>
+        /// Extracts JSON instances from a string (assumes valid JSON)
+        /// </summary>
+        /// <param name="subject"></param>
+        /// <returns></returns>
+        private IEnumerable<string> ExtractJSONStrings(string subject)
+        {
+            int depth = 0;
+            int match_start_index = 0;
+            for (int i = 0; i < subject.Length; i++)
+            {
+                char c = subject[i];
+                switch (c)
+                {
+                    case '{':
+                        if (depth == 0)
+                            match_start_index = i;
+                        depth++;
+                        break;
+                    case '}':
+                        depth--;
+                        if (depth == 0)
+                            yield return subject.Substring(match_start_index, i - match_start_index + 1);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        private class InlineMetadata
+        {
+            public IKMetadata IK;
+            public override string ToString()
+            {
+                return "< IK: " + IK.ToString() + ">";
+            }
+        }
+
+        private class IKMetadata
+        {
+            public string Target;
+            public int ChainLength;
+            public override string ToString()
+            {
+                return "< Target: " + Target + ", ChainLength: " + ChainLength + ">";
+            }
+        }
+
+        private InlineMetadata GetFirstMetadata(string text)
+        {
+            IEnumerable<string> jsons = ExtractJSONStrings(text);
+            if (jsons.Any())
+            {
+                var reader = new JsonFx.Json.JsonReader();
+                return reader.Read<InlineMetadata>(jsons.First());
+            }
+            else
+                return null;
+        }
+
         private BuildPSDArgs _Context;
         public BuildPSDArgs Context
         {
@@ -111,6 +172,23 @@ namespace RoaringFangs.Animation.Editor
         public override void HandleGroupClose(GameObject groupParent)
         {
             //_GroupStack.Pop();
+            GameObject root = Context.Root;
+            Transform root_transform;
+            if (root)
+                root_transform = root.transform;
+            else
+                root_transform = null;
+            var parent_transform = groupParent.transform.parent;
+            if (parent_transform == root_transform)
+            {
+                var metadata = _PenToolPathResources
+                    .Select(g => new KeyValuePair<PenToolPathResource, InlineMetadata>(g.First(), GetFirstMetadata(g.Key)))
+                    .Where(p => p.Value != null);
+                foreach (var entry in metadata)
+                {
+                    Debug.Log(entry.Value);
+                }
+            }
         }
 
         public override void HandleGroupOpen(GameObject groupParent)
