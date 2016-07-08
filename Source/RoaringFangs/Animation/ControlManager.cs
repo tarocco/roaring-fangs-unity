@@ -22,10 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
+#endif
 
-using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -37,7 +38,9 @@ using RoaringFangs.Editor;
 namespace RoaringFangs.Animation
 {
     [ExecuteInEditMode]
+#if UNITY_EDITOR
     [InitializeOnLoad]
+#endif
     public class ControlManager : MonoBehaviour, IHasHierarchyIcons
     {
         public static Texture2D HIControlManager { get; protected set; }
@@ -263,7 +266,7 @@ namespace RoaringFangs.Animation
 
         void OnEnable()
         {
-//#if UNITY_EDITOR
+#if UNITY_EDITOR
             if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
             {
                 CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
@@ -274,17 +277,17 @@ namespace RoaringFangs.Animation
                 RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
             }
             FindIcons();
-//#endif
+#endif
         }
 
         void OnDisable()
         {
-//#if UNITY_EDITOR
+#if UNITY_EDITOR
             RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
-//#endif
+#endif
         }
 
-//#if UNITY_EDITOR
+#if UNITY_EDITOR
         private bool PathChangeHandledOnceThisUpdate = false;
         private void HandleHierarchyObjectPathChanged(object sender, RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChangedEventArgs args)
         {
@@ -313,13 +316,13 @@ namespace RoaringFangs.Animation
                 }
             }
         }
-//#endif
+#endif
 
         void Update()
         {
-//#if UNITY_EDITOR
+#if UNITY_EDITOR
             PathChangeHandledOnceThisUpdate = false;
-//#endif
+#endif
             var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true).OfType<ITargetGroup>();
             // For each groups array, select valid target lists in all of the target groups and create
             // rules on whether to show or hide the targets based on the control group's active state
@@ -355,7 +358,7 @@ namespace RoaringFangs.Animation
             // Replace previous value dictionary with still-valid targets
             TargetDataPrevious = target_data_previous;
         }
-//#if UNITY_EDITOR
+#if UNITY_EDITOR
         [MenuItem("Roaring Fangs/Animation/Control Manager", false, 0)]
         [MenuItem("GameObject/Roaring Fangs/Animation/Control Manager", false, 0)]
         public static ControlManager Create()
@@ -376,13 +379,13 @@ namespace RoaringFangs.Animation
         {
             UnityEngine.GUI.Label(icon_position, HIControlManager);
         }
-//#endif
+
         public static void FindIcons()
         {
             var icons = HierarchyIcons.GetIcons("ControlManager", HierarchyIcons.KeyMode.LowerCase);
             HIControlManager = icons.GetOrDefault("controlmanager.png");
         }
-    }
-   
-}
 #endif
+    }
+
+}

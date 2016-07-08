@@ -40,7 +40,9 @@ using RoaringFangs.Editor;
 
 namespace RoaringFangs.Animation
 {
+#if UNITY_EDITOR
     [InitializeOnLoad]
+#endif
     public class RegExTargetGroup : TargetGroupBase, ITargetGroup, IHasHierarchyIcons
     {
         #region Properties

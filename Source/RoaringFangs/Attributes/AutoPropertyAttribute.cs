@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -37,6 +36,7 @@ namespace RoaringFangs.Attributes
 {
     public class AutoPropertyAttribute : PropertyAttribute
     {
+#if UNITY_EDITOR
         #region Types
         private struct PropertyInfoBindingKey
         {
@@ -49,6 +49,7 @@ namespace RoaringFangs.Attributes
             public WeakReference TargetWR;
         }
         #endregion
+#endif
         #region Instance Fields/Properties
         private bool _Delayed;
         /// <summary>
@@ -76,8 +77,8 @@ namespace RoaringFangs.Attributes
             get { return _PropertyInfo; }
             set { _PropertyInfo = value; }
         }
-
         #endregion
+#if UNITY_EDITOR
         #region Static Fields/Properties
         /// <summary>
         /// Characters to trim from field names when searching for corresponding properties
@@ -210,23 +211,26 @@ namespace RoaringFangs.Attributes
         }
 
         #endregion
+        #region Static Constructor
+        static AutoPropertyAttribute()
+        {
+            Undo.undoRedoPerformed += HandleUndoRedoPerformedAll;
+        }
+        #endregion
+#endif
         #region Instance Constructors
         public AutoPropertyAttribute(Type type, string property_name) :
             base()
         {
+#if UNITY_EDITOR
             if (type != null)
                 PropertyInfo = type.GetProperty(property_name, DefaultFlags);
+#endif
         }
 
         public AutoPropertyAttribute() :
             this(null, null)
         {
-        }
-        #endregion
-        #region Static Constructor
-        static AutoPropertyAttribute()
-        {
-            Undo.undoRedoPerformed += HandleUndoRedoPerformedAll;
         }
         #endregion
     }
