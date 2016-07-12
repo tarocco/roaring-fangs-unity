@@ -30,6 +30,7 @@ using System.Collections.Generic;
 using System.Reflection;
 
 using RoaringFangs.Attributes;
+using System.Linq;
 
 namespace RoaringFangs.Editor
 {
@@ -59,6 +60,35 @@ namespace RoaringFangs.Editor
         {
             EditorGUI.DelayedTextField(position, property, label);
             return false;
+        }
+        private static bool RangeField(Rect position, SerializedProperty property, GUIContent label, float min, float max)
+        {
+            switch (property.propertyType)
+            {
+                case SerializedPropertyType.Float:
+                    property.floatValue = EditorGUI.Slider(position, property.floatValue, min, max);
+                    return false;
+                case SerializedPropertyType.Integer:
+                    property.intValue = EditorGUI.IntSlider(position, property.intValue, Mathf.FloorToInt(min), Mathf.FloorToInt(max));
+                    return false;
+            }
+            return EditorGUI.PropertyField(position, property, label, true);
+        }
+        private static bool MinMaxField(Rect position, SerializedProperty property, GUIContent label, float min, float max)
+        {
+            Vector2 vector2Value; 
+            float value_min, value_max;
+            switch (property.propertyType)
+            {
+                case SerializedPropertyType.Vector2:
+                    vector2Value = property.vector2Value;
+                    value_min = vector2Value.x;
+                    value_max = vector2Value.y;
+                    EditorGUI.MinMaxSlider(label, position, ref value_min, ref value_max, min, max);
+                    property.vector2Value = new Vector2(value_min, value_max);
+                    return false;
+            }
+            return EditorGUI.PropertyField(position, property, label, true);
         }
         private static bool PropertyFieldIncludingChildren(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -91,7 +121,7 @@ namespace RoaringFangs.Editor
         /// Gets the cortrect property field drawing method for a given SerializedProperty.
         /// </summary>
         /// <param name="delayed">Whether the field should be delayed. See <seealso cref="AutoPropertyAttribute.Delayed"/>.</param>
-        private static PropertyFieldHandler GetPropertyFieldDrawer(Type property_type, bool delayed)
+        private static PropertyFieldHandler GetPropertyFieldDrawer(Type property_type, bool delayed, AutoPropertyAttribute auto)
         {
             if (delayed)
             {
@@ -101,6 +131,20 @@ namespace RoaringFangs.Editor
                     return DelayedFloatField;
                 else if (property_type == typeof(string))
                     return DelayedTextField;
+            }
+            foreach(var _attribute in auto.PropertyAttributes)
+            {
+                // Curry time!
+                if (_attribute is RangeAttribute)
+                {
+                    var range_attribute = _attribute as RangeAttribute;
+                    return (a, b, c) => RangeField(a, b, c, range_attribute.min, range_attribute.max);
+                }
+                else if (_attribute is MinMaxAttribute)
+                {
+                    var min_max_attribute = _attribute as MinMaxAttribute;
+                    return (a, b, c) => MinMaxField(a, b, c, min_max_attribute.Min, min_max_attribute.Max);
+                }
             }
             return PropertyFieldIncludingChildren;
         }
@@ -115,8 +159,10 @@ namespace RoaringFangs.Editor
             auto.FieldInfo = auto.FieldInfo ?? fieldInfo;
             // Lazily initialize/cache the property info to the attribute
             auto.PropertyInfo = auto.PropertyInfo ?? AutoPropertyAttribute.GetPropertyInfoAuto(fieldInfo);
+            // Lazily initialize/cache the property attributes
+            auto.PropertyAttributes = /*auto.PropertyAttributes ??*/ Attribute.GetCustomAttributes(auto.FieldInfo);
             // Lazily initialize/cache the property field drawer for this property
-            _DrawPropertyField = _DrawPropertyField ?? GetPropertyFieldDrawer(auto.PropertyInfo.DeclaringType, auto.Delayed);
+            _DrawPropertyField = /*_DrawPropertyField ??*/ GetPropertyFieldDrawer(auto.PropertyInfo.DeclaringType, auto.Delayed, auto);
             // Begin checking for changes
             EditorGUI.BeginChangeCheck();
             // Draw the property field

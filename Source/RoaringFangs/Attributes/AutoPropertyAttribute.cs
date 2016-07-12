@@ -77,6 +77,14 @@ namespace RoaringFangs.Attributes
             get { return _PropertyInfo; }
             set { _PropertyInfo = value; }
         }
+
+        private Attribute[] _ParentAttributes;
+
+        public IEnumerable<Attribute> PropertyAttributes
+        {
+            get { return _ParentAttributes; }
+            set { _ParentAttributes = value.ToArray(); }
+        }
         #endregion
 #if UNITY_EDITOR
         #region Static Fields/Properties
@@ -219,19 +227,20 @@ namespace RoaringFangs.Attributes
         #endregion
 #endif
         #region Instance Constructors
-        public AutoPropertyAttribute(Type type, string property_name) :
+        public AutoPropertyAttribute() :
             base()
+        {
+        }
+
+        public AutoPropertyAttribute(Type type, string property_name) :
+            this()
         {
 #if UNITY_EDITOR
             if (type != null)
                 PropertyInfo = type.GetProperty(property_name, DefaultFlags);
 #endif
         }
-
-        public AutoPropertyAttribute() :
-            this(null, null)
-        {
-        }
+        
         #endregion
     }
 }
