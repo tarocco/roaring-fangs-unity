@@ -1,14 +1,20 @@
-Roaring Fangs General Purpose Library for Unity
+Roaring Fangs Multipurpose Library for Unity
 =====
 License
 -----
 MIT License
+
+Full Documentation
+-----
+Check out the [Wiki](https://github.com/Tarocco/roaring-fangs-unity/wiki) for documentation, examples and guides.
 
 Features Overview (why aren't you using it yet?)
 -----
 
 - Various improvements and fixes to the Unity animation editor (renaming paths, updating with hierarchy changes)
 - `[AutoProperty]` lets you write _full_ properties that work with the inspector. Use it on your backing fields!
+- `[Layer]` lets you use the editor dropdown to specify a _single_ layer `int` (unlike `UnityEngine.LayerMask`)
+- Highly customizeable audio envelope follower that lets you make sound visualizers, etc.
 - Abstraction of `UnityEvent` methods for editor and player
 - Simple input re-mapping controller
 - Non-canvas mesh 9-patch controller
@@ -29,7 +35,7 @@ Installing
 -----
 You can download this repository and copy it into your Unity project manually or use this repository as a git subproject.
 
-###### Installing as a Git Subproject
+### As a Git Subtree
 Optionally fork your own copy before you start.
 
 1. Commit or stash any changes before adding.
@@ -57,6 +63,6 @@ This library depends on projects in the `/.Projects` directory. First and foremo
 
 Contributing
 -----
-Please contact me, @Tarocco, if you would like to know more about contributing.
+Please contact me, @Tarocco, about questions on general usage and contributing.
 
 🐰🐇
