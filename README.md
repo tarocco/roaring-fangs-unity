@@ -24,7 +24,7 @@ Features Overview (why aren't you using it yet?)
 - Post-processing utilities
 - Editor utilities and helpers like `EditorHelper.HierarchyObjectPathChanged`
 - Physical camera scripts (some features require [FluffyUnderware Curvy](http://fluffyunderware.com/curvy/start))
-- MIDI format parsing library by Cristoph Fabritz with additional helpers
+- MIDI format parsing library by Christoph Fabritz with additional helpers
 - Includes JsonFx 2 assembly (may be removed in future releases)
 - Various backports from newer versions of Mono `Mono Supplement`
 - Math functions
