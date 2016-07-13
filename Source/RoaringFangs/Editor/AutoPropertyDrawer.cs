@@ -66,10 +66,10 @@ namespace RoaringFangs.Editor
             switch (property.propertyType)
             {
                 case SerializedPropertyType.Float:
-                    property.floatValue = EditorGUI.Slider(position, property.floatValue, min, max);
+                    property.floatValue = EditorGUI.Slider(position, label, property.floatValue, min, max);
                     return false;
                 case SerializedPropertyType.Integer:
-                    property.intValue = EditorGUI.IntSlider(position, property.intValue, Mathf.FloorToInt(min), Mathf.FloorToInt(max));
+                    property.intValue = EditorGUI.IntSlider(position, label, property.intValue, Mathf.FloorToInt(min), Mathf.FloorToInt(max));
                     return false;
             }
             return EditorGUI.PropertyField(position, property, label, true);
