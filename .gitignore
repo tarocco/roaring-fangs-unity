@@ -24,9 +24,6 @@ Sandbox
 # Consolidated assets are copies anyway
 Consolidated
 
-# However, do include projects in the library folder; these are generally libraries that build into Assets/Assemblies
-![Ll]ibrary/Projects/
-
 # More stuff to ignore
 bin/
 
@@ -34,3 +31,6 @@ bin/
 Thumbs.db
 # Dangit, Unity
 Thumbs.db.meta
+
+# Projects go in ".Projects" but symlinks to projects go in "Projects"
+[Pp]rojects

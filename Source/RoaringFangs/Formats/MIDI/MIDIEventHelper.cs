@@ -82,5 +82,10 @@ namespace RoaringFangs.Formats.MIDI
             _TimeBeats = time_beats;
             _DurationBeats = duration_beats;
         }
+
+        public override string ToString()
+        {
+            return "MIDIEvent: " + MIDIEvent.ToString() + " - TimeBeats: " + TimeBeats + " - DurationBeats: " + DurationBeats;
+        }
     }
 }

@@ -39,6 +39,10 @@ namespace RoaringFangs.Formats.MIDI
     public class MIDIHelper : MIDIHelperBase
     {
         private List<MIDIEventList> _EventLists;
+        public int NumberOfEventLists
+        {
+            get { return _EventLists.Count; }
+        }
         public MIDIEventList GetEventListByIndex(int index)
         {
             return _EventLists[index];
@@ -63,17 +67,9 @@ namespace RoaringFangs.Formats.MIDI
             //MIDIData = data;
             _EventLists = new List<MIDIEventList>();
             // For every track in the MIDI data
-            bool skip_first = true;
+            // Skip the first track as it contains only meta events
             foreach (TrackChunk track in data.tracks)
             {
-                // TODO: better way to detect this...
-                // Maybe use MIDI channels and not tracks?
-                // Skip the first track because it only contains meta events
-                if(skip_first)
-                {
-                    skip_first = false;
-                    continue;
-                }
                 // Create a new event list of note on/off events for this MIDI track
                 MIDIEventList list = new MIDIEventList(data, track, MIDIEventFilter.NotesOnOffFilter);
                 // Add the backing list to the EventLists list.
