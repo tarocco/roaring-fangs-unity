@@ -159,7 +159,7 @@ namespace RoaringFangs.Formats.MIDI
                 // Calculate the event time based on delta_time
                 // delta_time is measured in ticks
                 time += time_scale * (float)enum_midi_event.delta_time;
-                if(filter.Accepts(enum_midi_event))
+                if (filter.Accepts(enum_midi_event))
                 {
                     // Create an event helper (wrapper for event and details)
                     MIDIEventHelper current_event_helper =
@@ -185,21 +185,33 @@ namespace RoaringFangs.Formats.MIDI
                     {
                         // Store it as the last note-on event for this note number
                         var note_on = enum_midi_event as Midi.Events.ChannelEvents.NoteOnEvent;
+                        // Quantize the time to 16th notes
+                        current_event_helper.TimeBeats = Quantization(current_event_helper.TimeBeats, 16);
                         int number = note_on.note_number;
                         notes_on_last[number] = current_event_helper;
                     }
                     index++;
                 }
-                else if(MIDIEventFilter.TrackNameFilter.Accepts(enum_midi_event))
+                else if (MIDIEventFilter.TrackNameFilter.Accepts(enum_midi_event))
                 {
                     Name = track.chunk_ID ?? "";
-                        
+
                     // TODO: get this working
                     //var name = (m_e.Element as Midi.Events.MetaEvents.SequenceOrTrackNameEvent).name;
                     // Small workaround for bug in MIDI parsing library
                     //Name = name.Trim(new[] {'\0'});
                 }
             }
+        }
+
+        //Quick Quantization function without rounding function
+        //Basically "round 'n' to the nearest increment of '1/b'"
+        private float Quantization(float n, int b)
+        {
+            float q = n * b;
+            float r = q % 1;
+            float s = (r * 2) - (r * 2) % 1;
+            return (q - r + s) / b;
         }
     }
 }
