@@ -1,18 +1,14 @@
 ﻿/*
 The MIT License (MIT)
-
 Copyright (c) 2016 Roaring Fangs Entertainment
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
-
 The above copyright notice and this permission notice shall be included in
 all copies or substantial portions of the Software.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -52,7 +48,12 @@ namespace RoaringFangs.Audio
         #endregion
         #region Properties
         [SerializeField]
+        [AutoProperty]
+        private AudioSource _AudioSource;
+        public AudioSource AudioSource
         {
+            get { return _AudioSource; }
+            set { _AudioSource = value; }
         }
 
         [SerializeField]
@@ -114,6 +115,9 @@ namespace RoaringFangs.Audio
         }
 
         [SerializeField]
+        [AutoProperty(Delayed = true)]
+        private int _BufferStride = 24;
+        public int BufferStride
         {
             get { return Mathf.Max(1, _BufferStride); }
             set { _BufferStride = Mathf.Max(1, value); }
@@ -124,13 +128,21 @@ namespace RoaringFangs.Audio
         private int _IncrementalBufferSize = 1024;
         public int IncrementalBufferSize
         {
+            get { return _IncrementalBufferSize; }
+            set { _IncrementalBufferSize = value; }
         }
 
         [SerializeField]
         [AutoProperty(Delayed = true)]
+        private int _ChannelBufferSize = 1024;
+        public int ChannelBufferSize
         {
+            get { return _ChannelBufferSize; }
+            set { _ChannelBufferSize = Mathf.Clamp(value, 0, 16384); }
         }
 
+        protected float[] _ChannelBuffer;
+        public float[] ChannelBuffer
         {
             get
             {
@@ -149,8 +161,10 @@ namespace RoaringFangs.Audio
             set { _IncrementalBufferHead = value; }
         }
 
+        protected float[] _IncrementalBuffer;
         public float[] IncrementalBuffer
         {
+            get
             {
                 if (_IncrementalBuffer == null || _IncrementalBuffer.Length != _IncrementalBufferSize)
                 {
@@ -169,6 +183,7 @@ namespace RoaringFangs.Audio
         }
         #endregion
         #region Methods
+        #region Static
         protected static void Buffer(
             AudioSource audio_source,
             ref int audio_source__ts__prev,
@@ -188,21 +203,24 @@ namespace RoaringFangs.Audio
                 sample_count = audio_source.timeSamples - audio_source__ts__prev;
                 audio_source__ts__prev = audio_source.timeSamples;
                 audio_source.GetOutputData(channel_buffer, channel_number);
-        }
+            }
             else
-        void Update()
-        {
+            {
                 // Get channel data from audio listener
                 sample_count = Mathf.FloorToInt(AudioSettings.outputSampleRate * Time.deltaTime);
+                AudioListener.GetOutputData(channel_buffer, channel_number);
             }
+            int offset_read = Mathf.Max(0, channel_buffer.Length - sample_count);
             var i_write = buffer_read_head;
             buffer_stride = Mathf.Max(1, buffer_stride);
             if (stride_collector != null)
             {
                 if (stride_divisor_collector != null)
                 {
+                    for (int i = offset_read; i < channel_buffer.Length; i += buffer_stride)
                     {
                         i_write = (i_write + 1) % incremental_buffer.Length;
+                        float collected_sample = 0f;
                         float collected_divisor = 0f;
                         int end = Mathf.Min(i + buffer_stride, channel_buffer.Length);
                         for (int i_read = i; i_read < end; i_read++)
@@ -252,8 +270,13 @@ namespace RoaringFangs.Audio
             float integrated_divisor = divisor_collector != null ? 0f : 1f;
             float integrated_level = 0f;
             float samples_to_read_f = (float)samples_to_read;
+            for (int i = 0; i < samples_to_read; i++)
             {
                 int read_index = (index_start_offset + i) % buffer.Length;
+                float t = evaluation_coefficient * i / samples_to_read_f;
+                float f = integration_curve.Evaluate(t);
+                float sample = buffer[read_index];
+                float sample_rectified = rectify(sample);
                 if (divisor_collector != null)
                     divisor_collector(ref integrated_divisor, f);
                 collector(ref integrated_level, input_gain * f * sample_rectified);
@@ -307,11 +330,13 @@ namespace RoaringFangs.Audio
                 IncrementalBuffer,
                 IncrementalBufferSize,
                 index_start_offset,
+                IntegrationCurve,
                 InputGain,
                 Rectify,
                 collector,
                 divisor_collector);
         }
+        protected float GetRawLevel(int buffer_read_start_index)
         {
             switch (FollowerMode)
             {
@@ -347,6 +372,7 @@ namespace RoaringFangs.Audio
         {
             int buffer_read_start_index;
             Buffer(out buffer_read_start_index);
+            Level = OutputGain * GetRawLevel(buffer_read_start_index);
         }
         #endregion
     }
