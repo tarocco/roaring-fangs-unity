@@ -38,7 +38,9 @@ using System.Linq;
 namespace RoaringFangs.Animation
 {
     [ExecuteInEditMode]
+#if UNITY_EDITOR
     [InitializeOnLoad]
+#endif
     public abstract class TargetGroupBase : MonoBehaviour
     {
         public bool Active

@@ -23,10 +23,10 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -38,7 +38,9 @@ using RoaringFangs.Editor;
 namespace RoaringFangs.Animation
 {
     [ExecuteInEditMode]
+#if UNITY_EDITOR
     [InitializeOnLoad]
+#endif
     public class ControlManager : MonoBehaviour, IHasHierarchyIcons
     {
         public static Texture2D HIControlManager { get; protected set; }
@@ -230,7 +232,7 @@ namespace RoaringFangs.Animation
                 Debug.LogWarning("CollectSubjectDescendants called at runtime!");
             if (Subject == null)
                 return null;
-            return TransformUtils.GetAllDescendantsWithPaths(Subject.transform.parent, Subject.transform);
+            return TransformUtils.GetAllDescendantsWithPaths(Subject.transform.parent, Subject.transform, transform);
         }
 
         #endregion
@@ -377,11 +379,13 @@ namespace RoaringFangs.Animation
         {
             UnityEngine.GUI.Label(icon_position, HIControlManager);
         }
-#endif
+
         public static void FindIcons()
         {
             var icons = HierarchyIcons.GetIcons("ControlManager", HierarchyIcons.KeyMode.LowerCase);
             HIControlManager = icons.GetOrDefault("controlmanager.png");
         }
+#endif
     }
+
 }

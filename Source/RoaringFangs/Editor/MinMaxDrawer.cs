@@ -1,4 +1,4 @@
-﻿/*
+/*
 The MIT License (MIT)
 
 Copyright (c) 2016 Roaring Fangs Entertainment
@@ -23,21 +23,34 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-#if UNITY_EDITOR
 using UnityEditor;
-#endif
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+
+using RoaringFangs.Attributes;
 
 namespace RoaringFangs.Editor
 {
-    public interface IHasHierarchyIcons
+    [CustomPropertyDrawer(typeof(MinMaxAttribute), true)]
+    public class MinMaxDrawer : PropertyDrawer
     {
-#if UNITY_EDITOR
-        void OnDrawHierarchyIcons(Rect icon_position);
-#endif
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        {
+            if (property.propertyType == SerializedPropertyType.Vector2)
+            {
+                Vector2 range = property.vector2Value;
+                float min = range.x;
+                float max = range.y;
+                MinMaxAttribute min_max_attribute = attribute as MinMaxAttribute;
+                EditorGUI.BeginChangeCheck();
+                EditorGUI.MinMaxSlider(label, position, ref min, ref max, min_max_attribute.Min, min_max_attribute.Max);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    range.x = min;
+                    range.y = max;
+                    property.vector2Value = range;
+                }
+            }
+            else
+                base.OnGUI(position, property, label);
+        }
     }
 }

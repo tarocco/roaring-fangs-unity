@@ -26,18 +26,27 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace RoaringFangs.Editor
+namespace RoaringFangs.Attributes
 {
-    public interface IHasHierarchyIcons
+    public class MinMaxAttribute : PropertyAttribute
     {
-#if UNITY_EDITOR
-        void OnDrawHierarchyIcons(Rect icon_position);
-#endif
+        private float _Min;
+        public float Min
+        {
+            get { return _Min; }
+            set { _Min = value; }
+        }
+        private float _Max;
+        public float Max
+        {
+            get { return _Max; }
+            set { _Max = value; }
+        }
+        public MinMaxAttribute(float min, float max)
+        {
+            Min = min;
+            Max = max;
+        }
     }
 }
