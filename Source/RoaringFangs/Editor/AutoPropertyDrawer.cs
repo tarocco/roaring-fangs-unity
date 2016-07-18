@@ -24,9 +24,13 @@ THE SOFTWARE.
 
 using UnityEngine;
 using UnityEditor;
+
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 using RoaringFangs.Attributes;
+using System.Linq;
 
 namespace RoaringFangs.Editor
 {
@@ -36,10 +40,10 @@ namespace RoaringFangs.Editor
     {
         private delegate bool PropertyFieldHandler(Rect position, SerializedProperty property, GUIContent label);
 
-        private static readonly char[] AutoPropertyTrimChars = { '_' };
-        private PropertyInfo PropertyInfo;
-        private object PreviousFieldValue = null;
-        private PropertyFieldHandler DrawPropertyField = null;
+        /// <summary>
+        /// Draw method to use in OnGUI for this property
+        /// </summary>
+        private PropertyFieldHandler _DrawPropertyField = null;
 
         #region Field Proxies
         private static bool DelayedIntField(Rect position, SerializedProperty property, GUIContent label)
@@ -57,6 +61,35 @@ namespace RoaringFangs.Editor
             EditorGUI.DelayedTextField(position, property, label);
             return false;
         }
+        private static bool RangeField(Rect position, SerializedProperty property, GUIContent label, float min, float max)
+        {
+            switch (property.propertyType)
+            {
+                case SerializedPropertyType.Float:
+                    property.floatValue = EditorGUI.Slider(position, label, property.floatValue, min, max);
+                    return false;
+                case SerializedPropertyType.Integer:
+                    property.intValue = EditorGUI.IntSlider(position, label, property.intValue, Mathf.FloorToInt(min), Mathf.FloorToInt(max));
+                    return false;
+            }
+            return EditorGUI.PropertyField(position, property, label, true);
+        }
+        private static bool MinMaxField(Rect position, SerializedProperty property, GUIContent label, float min, float max)
+        {
+            Vector2 vector2Value; 
+            float value_min, value_max;
+            switch (property.propertyType)
+            {
+                case SerializedPropertyType.Vector2:
+                    vector2Value = property.vector2Value;
+                    value_min = vector2Value.x;
+                    value_max = vector2Value.y;
+                    EditorGUI.MinMaxSlider(label, position, ref value_min, ref value_max, min, max);
+                    property.vector2Value = new Vector2(value_min, value_max);
+                    return false;
+            }
+            return EditorGUI.PropertyField(position, property, label, true);
+        }
         private static bool PropertyFieldIncludingChildren(Rect position, SerializedProperty property, GUIContent label)
         {
             return EditorGUI.PropertyField(position, property, label, true);
@@ -67,91 +100,88 @@ namespace RoaringFangs.Editor
         /// Gets the cortrect property field drawing method for a given SerializedProperty.
         /// </summary>
         /// <param name="delayed">Whether the field should be delayed. See <seealso cref="AutoPropertyAttribute.Delayed"/>.</param>
-        private static PropertyFieldHandler GetPropertyFieldDrawer(Rect position, SerializedProperty property, GUIContent label, bool delayed)
+        private static PropertyFieldHandler GetPropertyFieldDrawer(SerializedPropertyType sp_type, bool delayed)
         {
-            SerializedPropertyType sp_type;
-            // If this field should have delayed input
             if (delayed)
-                sp_type = property.propertyType; // Type-dependent selection for delayed properties
-            else
-                sp_type = SerializedPropertyType.Generic; // Default to non-delayed property field
-                                                          // Switch to delayed field if Delayed is true
-            switch (sp_type)
             {
-                case SerializedPropertyType.Integer:
-                    return DelayedIntField;
-                case SerializedPropertyType.Float:
-                    return DelayedFloatField;
-                case SerializedPropertyType.String:
-                    return DelayedTextField;
-                default:
-                    return PropertyFieldIncludingChildren;
+                switch (sp_type)
+                {
+                    case SerializedPropertyType.Integer:
+                        return DelayedIntField;
+                    case SerializedPropertyType.Float:
+                        return DelayedFloatField;
+                    case SerializedPropertyType.String:
+                        return DelayedTextField;
+                }
             }
+            return PropertyFieldIncludingChildren;
         }
 
         /// <summary>
-        /// Gets the target's property info from field info and AutoPropertyAttribute
+        /// Gets the cortrect property field drawing method for a given SerializedProperty.
         /// </summary>
-        private static PropertyInfo GetPropertyInfo(Object target, FieldInfo field_info, AutoPropertyAttribute auto)
+        /// <param name="delayed">Whether the field should be delayed. See <seealso cref="AutoPropertyAttribute.Delayed"/>.</param>
+        private static PropertyFieldHandler GetPropertyFieldDrawer(Type property_type, bool delayed, AutoPropertyAttribute auto)
         {
-            if (auto.PropertyInfo != null)
+            if (delayed)
             {
-                return auto.PropertyInfo;
+                if (property_type == typeof(int) || property_type == typeof(long))
+                    return DelayedIntField;
+                else if (property_type == typeof(float) || property_type == typeof(double))
+                    return DelayedFloatField;
+                else if (property_type == typeof(string))
+                    return DelayedTextField;
             }
-            else
+            foreach(var _attribute in auto.PropertyAttributes)
             {
-                var field_name = field_info.Name;
-                var field_type = field_info.FieldType;
-                var target_type = target.GetType();
-                var auto_property_name = field_name.TrimStart(AutoPropertyTrimChars);
-                var property_info = target_type.GetProperty(auto_property_name, field_type);
-                return property_info;
+                // Curry time!
+                if (_attribute is RangeAttribute)
+                {
+                    var range_attribute = _attribute as RangeAttribute;
+                    return (a, b, c) => RangeField(a, b, c, range_attribute.min, range_attribute.max);
+                }
+                else if (_attribute is MinMaxAttribute)
+                {
+                    var min_max_attribute = _attribute as MinMaxAttribute;
+                    return (a, b, c) => MinMaxField(a, b, c, min_max_attribute.Min, min_max_attribute.Max);
+                }
             }
+            return PropertyFieldIncludingChildren;
         }
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            // Get the target object
-            var target = property.serializedObject.targetObject;
             // Get the AutoPropertyDrawer associated with the field
             var auto = (AutoPropertyAttribute)attribute;
-            // Get the value of the field before modifying
-            var previous_field_value = fieldInfo.GetValue(target);
-            // Lazily initialize and cache the previous field value
-            PreviousFieldValue = PreviousFieldValue ?? previous_field_value;
-            // Lazily initialize snd cache the property field drawer
-            DrawPropertyField = DrawPropertyField ?? GetPropertyFieldDrawer(position, property, label, auto.Delayed);
+            // Get the serialized object the serialized property belongs to
+            var serialized_object = property.serializedObject;
+            // Lazily initialize/cache the field info to the attribute
+            auto.FieldInfo = auto.FieldInfo ?? fieldInfo;
+            // Lazily initialize/cache the property info to the attribute
+            auto.PropertyInfo = auto.PropertyInfo ?? AutoPropertyAttribute.GetPropertyInfoAuto(fieldInfo);
+            // Lazily initialize/cache the property attributes
+            auto.PropertyAttributes = /*auto.PropertyAttributes ??*/ Attribute.GetCustomAttributes(auto.FieldInfo);
+            // Lazily initialize/cache the property field drawer for this property
+            _DrawPropertyField = /*_DrawPropertyField ??*/ GetPropertyFieldDrawer(auto.PropertyInfo.DeclaringType, auto.Delayed, auto);
+            // Begin checking for changes
+            EditorGUI.BeginChangeCheck();
             // Draw the property field
             label = EditorGUI.BeginProperty(position, label, property);
-            DrawPropertyField(position, property, label);
+            _DrawPropertyField(position, property, label);
             EditorGUI.EndProperty();
-            // Whether the serialized property was directly modified (unaffected by undo!)
-            bool modified = property.serializedObject.ApplyModifiedProperties();
-            // Whether the field value has changed by any means (including undo operations or anything else!)
-            bool different = !Equals(previous_field_value, PreviousFieldValue);
-            if (different)
+            // Whether the field value has changed
+            if (EditorGUI.EndChangeCheck())
             {
-                object previous_value;
-                if (modified)
-                    previous_value = previous_field_value; // Restore to value right before this modification
-                else
-                    previous_value = PreviousFieldValue; // Restore to value from right after last mofification
-                // Get the value of the field after modifying
-                var current_value = fieldInfo.GetValue(target);
-                // Restore the field to its previous value so that the property setter can act on changes to the backing field
-                fieldInfo.SetValue(target, previous_value);
-                // Lazily initialize the property info
-                PropertyInfo = PropertyInfo ?? GetPropertyInfo(target, fieldInfo, auto);
-                // Invoke the setter of the property
-                PropertyInfo.SetValue(target, current_value, null);
-                // Update the previous field value to be the current value
-                PreviousFieldValue = current_value;
+                foreach (var target in serialized_object.targetObjects)
+                {
+                    auto.Validate(serialized_object, target, true);
+                }
             }
         }
 
-        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        public AutoPropertyDrawer() :
+            base()
         {
-            return EditorGUI.GetPropertyHeight(property, label, true);
         }
     }
 }

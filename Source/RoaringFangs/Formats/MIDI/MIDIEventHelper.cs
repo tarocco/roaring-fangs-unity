@@ -52,7 +52,7 @@ namespace RoaringFangs.Formats.MIDI
         public float TimeBeats
         {
             get { return _TimeBeats; }
-            private set { _TimeBeats = value; }
+            set { _TimeBeats = value; }
         }
         [SerializeField]
         private float _DurationBeats = 0;
@@ -74,13 +74,18 @@ namespace RoaringFangs.Formats.MIDI
             get { return _Index; }
             private set { _Index = value; }
         }
-
+		
         public MIDIEventHelper(MidiEvent m_e, int index, float time_beats, float duration_beats = 0)
         {
             MIDIEvent = m_e;
             _Index = index;
             _TimeBeats = time_beats;
             _DurationBeats = duration_beats;
+        }
+
+        public override string ToString()
+        {
+            return "MIDIEvent: " + MIDIEvent.ToString() + " - TimeBeats: " + TimeBeats + " - DurationBeats: " + DurationBeats;
         }
     }
 }

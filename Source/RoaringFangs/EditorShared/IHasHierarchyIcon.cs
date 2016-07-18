@@ -23,8 +23,9 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+#if UNITY_EDITOR
 using UnityEditor;
-
+#endif
 using System;
 using System.IO;
 using System.Collections.Generic;

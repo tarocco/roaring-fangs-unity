@@ -23,10 +23,10 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -38,8 +38,9 @@ using RoaringFangs.Editor;
 namespace RoaringFangs.Animation
 {
     [ExecuteInEditMode]
+#if UNITY_EDITOR
     [InitializeOnLoad]
-    [Serializable]
+#endif
     public class ControlManager : MonoBehaviour, IHasHierarchyIcons
     {
 #if UNITY_EDITOR
@@ -384,11 +385,13 @@ namespace RoaringFangs.Animation
         {
             UnityEngine.GUI.Label(icon_position, HIControlManager);
         }
-#endif
+
         public static void FindIcons()
         {
             var icons = HierarchyIcons.GetIcons("ControlManager", HierarchyIcons.KeyMode.LowerCase);
             HIControlManager = icons.GetOrDefault("controlmanager.png");
         }
+#endif
     }
+
 }

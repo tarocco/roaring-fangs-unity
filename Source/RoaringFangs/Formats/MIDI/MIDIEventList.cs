@@ -39,6 +39,10 @@ namespace RoaringFangs.Formats.MIDI
     public class MIDIEventList : MIDIHelperBase
     {
         private List<MIDIEventHelper> _Events;
+        public int NumberOfEvents
+        {
+            get { return _Events.Count; }
+        }
         protected override List<MIDIEventHelper> pEvents
         {
             get
@@ -146,60 +150,68 @@ namespace RoaringFangs.Formats.MIDI
             float time = 0.0f;
             // Keep track of the last note-on events and match them with note-off events that follow,
             // then store the time between the events as the duration in the event helper
-            MIDIEventHelper[] last_helper_per_note_number = null;
-            last_helper_per_note_number = new MIDIEventHelper[256];
-            // Count and index each of the elements that get added to pEvents
+            MIDIEventHelper[] notes_on_last = new MIDIEventHelper[256];
+            // Keep track of the valid event index
             int index = 0;
-            // Add all of the events for this track to the backing list (pEvents)
-            foreach (var m_e_h in track.events.Enumerate())
+            // Add all of the events needed for this track to the backing list (pEvents)
+            foreach (var enum_midi_event in track.events)
             {
                 // Calculate the event time based on delta_time
                 // delta_time is measured in ticks
-                time += time_scale * (float)m_e_h.Element.delta_time;
-                if(filter.Accepts(m_e_h.Element))
+                time += time_scale * (float)enum_midi_event.delta_time;
+                if (filter.Accepts(enum_midi_event))
                 {
-                    
                     // Create an event helper (wrapper for event and details)
-                    MIDIEventHelper event_helper =
-                        new MIDIEventHelper(m_e_h.Element, (int)m_e_h.Index, time);
+                    MIDIEventHelper current_event_helper =
+                        new MIDIEventHelper(enum_midi_event, (int)index, time);
                     // Add the event helper to the backing list
-                    pEvents.Add(event_helper);
-
+                    pEvents.Add(current_event_helper);
                     // If this event is a note off event
-                    if (m_e_h.Element is Midi.Events.ChannelEvents.NoteOffEvent)
+                    if (enum_midi_event is Midi.Events.ChannelEvents.NoteOffEvent)
                     {
-                        var note_off = m_e_h.Element as Midi.Events.ChannelEvents.NoteOffEvent;
-                        var corresponding_helper = last_helper_per_note_number[note_off.note_number];
-                        if (corresponding_helper != null)
+                        var note_off = enum_midi_event as Midi.Events.ChannelEvents.NoteOffEvent;
+                        int number = note_off.note_number;
+                        var on_event_helper = notes_on_last[number];
+                        if (on_event_helper != null)
                         {
-                            float duration = time - corresponding_helper.TimeBeats;
-                            corresponding_helper.DurationBeats = duration;
-                            event_helper.DurationBeats = duration;
+                            float duration = time - on_event_helper.TimeBeats;
+                            on_event_helper.DurationBeats = duration;
+                            current_event_helper.DurationBeats = duration;
                         }
                         // The note off event is not accounted for when consolidating
                     }
-
                     //  If this event is a note on event
-                    if (m_e_h.Element is Midi.Events.ChannelEvents.NoteOnEvent)
+                    else if (enum_midi_event is Midi.Events.ChannelEvents.NoteOnEvent)
                     {
                         // Store it as the last note-on event for this note number
-                        var note_on = m_e_h.Element as Midi.Events.ChannelEvents.NoteOnEvent;
-                        last_helper_per_note_number[note_on.note_number] = event_helper;
+                        var note_on = enum_midi_event as Midi.Events.ChannelEvents.NoteOnEvent;
+                        // Quantize the time to 16th notes
+                        current_event_helper.TimeBeats = Quantization(current_event_helper.TimeBeats, 16);
+                        int number = note_on.note_number;
+                        notes_on_last[number] = current_event_helper;
                     }
+                    index++;
                 }
-                if(MIDIEventFilter.TrackNameFilter.Accepts(m_e_h.Element))
+                else if (MIDIEventFilter.TrackNameFilter.Accepts(enum_midi_event))
                 {
-                    // NOTE: Unfortunately I can't seem to get the track name working yet,
-                    // so we're going to make up a name instead. It's just the index as a string.
+                    Name = track.chunk_ID ?? "";
 
-                    Name = m_e_h.Index.ToString();
-                        
                     // TODO: get this working
                     //var name = (m_e.Element as Midi.Events.MetaEvents.SequenceOrTrackNameEvent).name;
                     // Small workaround for bug in MIDI parsing library
                     //Name = name.Trim(new[] {'\0'});
                 }
             }
+        }
+
+        //Quick Quantization function without rounding function
+        //Basically "round 'n' to the nearest increment of '1/b'"
+        private float Quantization(float n, int b)
+        {
+            float q = n * b;
+            float r = q % 1;
+            float s = (r * 2) - (r * 2) % 1;
+            return (q - r + s) / b;
         }
     }
 }
