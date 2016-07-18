@@ -25,6 +25,7 @@ THE SOFTWARE.
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
+using RoaringFangs.Editor;
 #endif
 
 using System;
@@ -37,7 +38,12 @@ namespace RoaringFangs.Attributes
     public class AutoPropertyAttribute : PropertyAttribute
     {
 #if UNITY_EDITOR
-        #region Types
+        #region Types and Delegates
+        /// <summary>
+        /// A delegate type that handles drawing the PropertyField for a property
+        /// </summary>
+        public delegate bool PropertyFieldHandler(Rect position, SerializedProperty property, GUIContent label);
+
         private struct PropertyInfoBindingKey
         {
             public PropertyInfo PropertyInfo;
@@ -49,7 +55,7 @@ namespace RoaringFangs.Attributes
             public WeakReference TargetWR;
         }
         #endregion
-#endif
+
         #region Instance Fields/Properties
         private bool _Delayed;
         /// <summary>
@@ -78,15 +84,18 @@ namespace RoaringFangs.Attributes
             set { _PropertyInfo = value; }
         }
 
-        private Attribute[] _ParentAttributes;
-
-        public IEnumerable<Attribute> PropertyAttributes
+        private PropertyFieldHandler _DrawPropertyField = null;
+        /// <summary>
+        /// Draw method to use in OnGUI for this property
+        /// </summary>
+        public PropertyFieldHandler DrawPropertyField
         {
-            get { return _ParentAttributes; }
-            set { _ParentAttributes = value.ToArray(); }
+            get { return _DrawPropertyField; }
+            protected set { _DrawPropertyField = value; }
         }
+
         #endregion
-#if UNITY_EDITOR
+
         #region Static Fields/Properties
         /// <summary>
         /// Characters to trim from field names when searching for corresponding properties
@@ -218,6 +227,104 @@ namespace RoaringFangs.Attributes
             ValidateAllCached(false);
         }
 
+        #region Field Proxies
+        public static bool DelayedIntField(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.DelayedIntField(position, property, label);
+            return false;
+        }
+        public static bool DelayedFloatField(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.DelayedFloatField(position, property, label);
+            return false;
+        }
+        public static bool DelayedTextField(Rect position, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.DelayedTextField(position, property, label);
+            return false;
+        }
+        public static bool RangeField(Rect position, SerializedProperty property, GUIContent label, float min, float max)
+        {
+            switch (property.propertyType)
+            {
+                case SerializedPropertyType.Float:
+                    property.floatValue = EditorGUI.Slider(position, label, property.floatValue, min, max);
+                    return false;
+                case SerializedPropertyType.Integer:
+                    property.intValue = EditorGUI.IntSlider(position, label, property.intValue, Mathf.FloorToInt(min), Mathf.FloorToInt(max));
+                    return false;
+            }
+            return EditorGUI.PropertyField(position, property, label, true);
+        }
+        public static PropertyFieldHandler RangeField(float min, float max)
+        {
+            return (a, b, c) => RangeField(a, b, c, min, max);
+        }
+        public static bool MinMaxField(Rect position, SerializedProperty property, GUIContent label, float min, float max)
+        {
+            Vector2 vector2Value; 
+            float value_min, value_max;
+            switch (property.propertyType)
+            {
+                case SerializedPropertyType.Vector2:
+                    vector2Value = property.vector2Value;
+                    value_min = vector2Value.x;
+                    value_max = vector2Value.y;
+                    EditorGUI.MinMaxSlider(label, position, ref value_min, ref value_max, min, max);
+                    property.vector2Value = new Vector2(value_min, value_max);
+                    return false;
+            }
+            return EditorGUI.PropertyField(position, property, label, true);
+        }
+        public static PropertyFieldHandler MinMaxField(float min, float max)
+        {
+            return (a, b, c) => MinMaxField(a, b, c, min, max);
+        }
+        public static bool PropertyFieldIncludingChildren(Rect position, SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.PropertyField(position, property, label, true);
+        }
+        #endregion
+
+        /// <summary>
+        /// Gets the cortrect property field drawing method for a given SerializedProperty.
+        /// </summary>
+        /// <param name="delayed">Whether the field should be delayed. See <seealso cref="AutoPropertyAttribute.Delayed"/>.</param>
+        public static PropertyFieldHandler GetPropertyFieldDrawer(SerializedPropertyType sp_type, bool delayed)
+        {
+            if (delayed)
+            {
+                switch (sp_type)
+                {
+                    case SerializedPropertyType.Integer:
+                        return DelayedIntField;
+                    case SerializedPropertyType.Float:
+                        return DelayedFloatField;
+                    case SerializedPropertyType.String:
+                        return DelayedTextField;
+                }
+            }
+            return PropertyFieldIncludingChildren;
+        }
+
+        /// <summary>
+        /// Gets the cortrect property field drawing method for a given SerializedProperty.
+        /// </summary>
+        /// <param name="delayed">Whether the field should be delayed. See <seealso cref="AutoPropertyAttribute.Delayed"/>.</param>
+        public static PropertyFieldHandler GetPropertyFieldDrawer(Type property_type, bool delayed)
+        {
+            if (delayed)
+            {
+                if (property_type == typeof(int) || property_type == typeof(long))
+                    return DelayedIntField;
+                else if (property_type == typeof(float) || property_type == typeof(double))
+                    return DelayedFloatField;
+                else if (property_type == typeof(string))
+                    return DelayedTextField;
+            }
+            return PropertyFieldIncludingChildren;
+        }
+
         #endregion
         #region Static Constructor
         static AutoPropertyAttribute()
@@ -240,7 +347,6 @@ namespace RoaringFangs.Attributes
                 PropertyInfo = type.GetProperty(property_name, DefaultFlags);
 #endif
         }
-        
         #endregion
     }
 }
