@@ -23,21 +23,19 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
 
 namespace RoaringFangs.GSR
 {
     public abstract class TexturableBehavior : MonoBehaviour, ITexturable
     {
         public abstract Texture Texture { get; set; }
-        void Start()
-        {
 
+        private void Start()
+        {
         }
 
-        void Update()
+        private void Update()
         {
-
         }
     }
 }

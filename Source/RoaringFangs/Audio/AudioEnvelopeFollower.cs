@@ -18,18 +18,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using System.Collections;
-using System.Linq;
-
 using RoaringFangs.Attributes;
-using System;
+using System.Linq;
+using UnityEngine;
 
 namespace RoaringFangs.Audio
 {
     public class AudioEnvelopeFollower : MonoBehaviour
     {
         #region Types
+
         public enum EFollowerMode
         {
             Maximum,
@@ -44,12 +42,17 @@ namespace RoaringFangs.Audio
         }
 
         public delegate float Rectifier(float value);
+
         public delegate void Collector(ref float basis, float value);
-        #endregion
+
+        #endregion Types
+
         #region Properties
+
         [SerializeField]
         [AutoProperty]
         private AudioSource _AudioSource;
+
         public AudioSource AudioSource
         {
             get { return _AudioSource; }
@@ -59,6 +62,7 @@ namespace RoaringFangs.Audio
         [SerializeField]
         [AutoProperty(Delayed = true)]
         private int _ChannelNumber = 0;
+
         public int ChannelNumber
         {
             get { return _ChannelNumber; }
@@ -73,6 +77,7 @@ namespace RoaringFangs.Audio
         [SerializeField]
         [AutoProperty]
         private float _InputGain = 1f;
+
         public float InputGain
         {
             get { return _InputGain; }
@@ -82,6 +87,7 @@ namespace RoaringFangs.Audio
         [SerializeField]
         [AutoProperty]
         private float _OutputGain = 1f;
+
         public float OutputGain
         {
             get { return _OutputGain; }
@@ -91,6 +97,7 @@ namespace RoaringFangs.Audio
         [SerializeField]
         [AutoProperty]
         private EFollowerMode _FollowerMode = EFollowerMode.Maximum;
+
         public EFollowerMode FollowerMode
         {
             get { return _FollowerMode; }
@@ -100,6 +107,7 @@ namespace RoaringFangs.Audio
         [SerializeField]
         [AutoProperty]
         private EStrideMode _StrideMode = EStrideMode.Maximum;
+
         public EStrideMode StrideMode
         {
             get { return _StrideMode; }
@@ -108,6 +116,7 @@ namespace RoaringFangs.Audio
 
         [SerializeField]
         private AnimationCurve _IntegrationCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
+
         public AnimationCurve IntegrationCurve
         {
             get { return _IntegrationCurve; }
@@ -117,6 +126,7 @@ namespace RoaringFangs.Audio
         [SerializeField]
         [AutoProperty(Delayed = true)]
         private int _BufferStride = 24;
+
         public int BufferStride
         {
             get { return Mathf.Max(1, _BufferStride); }
@@ -126,6 +136,7 @@ namespace RoaringFangs.Audio
         [SerializeField]
         [AutoProperty(Delayed = true)]
         private int _IncrementalBufferSize = 1024;
+
         public int IncrementalBufferSize
         {
             get { return _IncrementalBufferSize; }
@@ -135,6 +146,7 @@ namespace RoaringFangs.Audio
         [SerializeField]
         [AutoProperty(Delayed = true)]
         private int _ChannelBufferSize = 1024;
+
         public int ChannelBufferSize
         {
             get { return _ChannelBufferSize; }
@@ -142,6 +154,7 @@ namespace RoaringFangs.Audio
         }
 
         protected float[] _ChannelBuffer;
+
         public float[] ChannelBuffer
         {
             get
@@ -155,6 +168,7 @@ namespace RoaringFangs.Audio
         }
 
         private int _IncrementalBufferHead = 0;
+
         protected int IncrementalBufferHead
         {
             get { return _IncrementalBufferHead; }
@@ -162,6 +176,7 @@ namespace RoaringFangs.Audio
         }
 
         protected float[] _IncrementalBuffer;
+
         public float[] IncrementalBuffer
         {
             get
@@ -176,14 +191,19 @@ namespace RoaringFangs.Audio
         }
 
         private float _Level;
+
         public float Level
         {
             get { return _Level; }
             private set { _Level = value; }
         }
-        #endregion
+
+        #endregion Properties
+
         #region Methods
+
         #region Static
+
         protected static void Buffer(
             AudioSource audio_source,
             ref int audio_source__ts__prev,
@@ -255,6 +275,7 @@ namespace RoaringFangs.Audio
             buffer_read_start_index = buffer_read_head;
             buffer_read_head = i_write;
         }
+
         protected static float GetRawLevel(
             float[] buffer,
             int samples_to_read,
@@ -283,9 +304,11 @@ namespace RoaringFangs.Audio
             }
             return integrated_level / integrated_divisor;
         }
-        #endregion
+
+        #endregion Static
 
         private int AudioSource__timeSamples__previous; // c-static
+
         protected void Buffer(
             out int buffer_read_start_index,
             Collector stride_collector,
@@ -305,6 +328,7 @@ namespace RoaringFangs.Audio
                 stride_divisor_collector);
             IncrementalBufferHead = incremental_buffer_head;
         }
+
         protected void Buffer(out int buffer_read_start_index)
         {
             switch (StrideMode)
@@ -313,14 +337,17 @@ namespace RoaringFangs.Audio
                 case EStrideMode.Skip:
                     Buffer(out buffer_read_start_index, null, null);
                     break;
+
                 case EStrideMode.Maximum:
                     Buffer(out buffer_read_start_index, CollectMax, null);
                     break;
+
                 case EStrideMode.Average:
                     Buffer(out buffer_read_start_index, CollectSum, CollectSum);
                     break;
             }
         }
+
         protected float GetRawLevel(
             int index_start_offset,
             Collector collector,
@@ -336,6 +363,7 @@ namespace RoaringFangs.Audio
                 collector,
                 divisor_collector);
         }
+
         protected float GetRawLevel(int buffer_read_start_index)
         {
             switch (FollowerMode)
@@ -343,6 +371,7 @@ namespace RoaringFangs.Audio
                 default:
                 case EFollowerMode.Maximum:
                     return GetRawLevel(buffer_read_start_index, CollectMax, null);
+
                 case EFollowerMode.Integrate:
                     return GetRawLevel(buffer_read_start_index, CollectSum, CollectSum);
             }
@@ -363,17 +392,17 @@ namespace RoaringFangs.Audio
             sum = sum + amount;
         }
 
-        void Start()
+        private void Start()
         {
-
         }
 
-        void Update()
+        private void Update()
         {
             int buffer_read_start_index;
             Buffer(out buffer_read_start_index);
             Level = OutputGain * GetRawLevel(buffer_read_start_index);
         }
-        #endregion
+
+        #endregion Methods
     }
 }

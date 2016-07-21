@@ -23,21 +23,27 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+
 #if UNITY_EDITOR
+
 using UnityEditor;
+
 #endif
+
 using System.Collections;
 
 namespace RoaringFangs.Utility
 {
-	public static class Coroutines
-	{
+    public static class Coroutines
+    {
 #if UNITY_EDITOR
+
         private static void ForceUpdate(Transform target)
         {
             target.position += new Vector3(0f, 0f, 0.01f);
             target.position -= new Vector3(0f, 0f, 0.01f);
         }
+
         private static IEnumerator CoroutineWithForceUpdate(MonoBehaviour target, IEnumerator work)
         {
             EditorApplication.CallbackFunction force_update = () => ForceUpdate(target.transform);
@@ -52,7 +58,9 @@ namespace RoaringFangs.Utility
                 EditorApplication.update -= force_update;
             }
         }
+
 #endif
+
         public static UnityEngine.Coroutine Start(MonoBehaviour target, IEnumerator work)
         {
 #if UNITY_EDITOR

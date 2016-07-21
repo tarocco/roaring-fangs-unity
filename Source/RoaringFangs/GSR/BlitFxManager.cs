@@ -22,11 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-
-using System;
-using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace RoaringFangs.GSR
 {
@@ -34,28 +31,36 @@ namespace RoaringFangs.GSR
     public class BlitFxManager : BlitFxManagerBase
     {
         #region Updaters
+
         [SerializeField]
         private BlitFxManagerBase.UpdateDirectiveTexture[] _UpdateTextures;
+
         public BlitFxManagerBase.UpdateDirectiveTexture[] UpdateTextures
         {
             get { return _UpdateTextures; }
             private set { _UpdateTextures = value; }
         }
+
         [SerializeField]
         private BlitFxManagerBase.UpdateDirectiveColor[] _UpdateColors;
+
         public BlitFxManagerBase.UpdateDirectiveColor[] UpdateColors
         {
             get { return _UpdateColors; }
             private set { _UpdateColors = value; }
         }
+
         [SerializeField]
         private BlitFxManagerBase.UpdateDirectiveFloat[] _UpdateFloats;
+
         public BlitFxManagerBase.UpdateDirectiveFloat[] UpdateFloats
         {
             get { return _UpdateFloats; }
             private set { _UpdateFloats = value; }
         }
-        #endregion
+
+        #endregion Updaters
+
         public override IEnumerable<UpdateDirectiveBase> Directives()
         {
             foreach (var directive in UpdateFloats)
@@ -65,7 +70,8 @@ namespace RoaringFangs.GSR
             foreach (var directive in UpdateTextures)
                 yield return directive;
         }
-        void OnPreRender()
+
+        private void OnPreRender()
         {
             foreach (var updater in Directives())
                 updater.ApplyAll();

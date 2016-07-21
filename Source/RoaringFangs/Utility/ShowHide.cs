@@ -22,10 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using System.Collections;
-
 using RoaringFangs.Attributes;
+using UnityEngine;
 
 namespace RoaringFangs.Utility
 {
@@ -33,15 +31,16 @@ namespace RoaringFangs.Utility
     {
         [SerializeField, AutoProperty]
         private bool _HideOnAwake = false;
+
         public bool HideOnAwake
         {
             get { return _HideOnAwake; }
             set { _HideOnAwake = value; }
         }
 
-        void Awake()
+        private void Awake()
         {
-            if(HideOnAwake)
+            if (HideOnAwake)
                 gameObject.SetActive(false);
         }
     }

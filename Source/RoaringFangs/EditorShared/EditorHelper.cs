@@ -23,15 +23,13 @@ THE SOFTWARE.
 */
 
 #if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
+
+using RoaringFangs.Utility;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
-using System.Linq;
-
-using RoaringFangs.Utility;
+using UnityEditor;
+using UnityEngine;
 
 namespace RoaringFangs.Editor
 {
@@ -43,20 +41,23 @@ namespace RoaringFangs.Editor
         /// Number of parallel operations to perform per update
         /// </summary>
         private const int ParallelTaskOperationsPerUpdate = 200;
+
         /// <summary>
         /// Threshold of parallel operations to perform continuously
         /// across update calls before presenting a progress indicator
         /// </summary>
         private const int ParallelTaskOperationShowDialog = 1000;
+
         private static int ParallelCounter = 0;
 
         private static IEnumerator HierarchyChangedTask;
         private static IEnumerator _ParallelTasksForever;
+
         private static IEnumerator ParallelTasksForever
         {
             get
             {
-                if(_ParallelTasksForever == null)
+                if (_ParallelTasksForever == null)
                     _ParallelTasksForever = GetParallelTasksForever().GetEnumerator();
                 return _ParallelTasksForever;
             }
@@ -77,6 +78,7 @@ namespace RoaringFangs.Editor
                 yield return yield_value;
             }
         }
+
         private static IEnumerable<GameObject> GetEverythingInHierarchy()
         {
             var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
@@ -87,17 +89,20 @@ namespace RoaringFangs.Editor
                 var descendants = TransformUtils.GetAllDescendants(@object.transform);
                 foreach (Transform t in descendants)
                 {
-                    if(t != null)
+                    if (t != null)
                         yield return t.gameObject;
                 }
             }
         }
+
         private struct WeakReferenceAndPath
         {
             public WeakReference WeakReference;
             public string Path;
         }
+
         private static Dictionary<int, WeakReferenceAndPath> HierarchyPaths;
+
         private static IEnumerable DoHierarchyWindowChanged()
         {
             var hierarchy_paths = new Dictionary<int, WeakReferenceAndPath>();
@@ -145,6 +150,7 @@ namespace RoaringFangs.Editor
             public readonly GameObject GameObject;
             public readonly string OldPath;
             public readonly string NewPath;
+
             public HierarchyObjectPathChangedEventArgs(GameObject game_object, string old_path, string new_path) :
                 base()
             {
@@ -153,13 +159,17 @@ namespace RoaringFangs.Editor
                 NewPath = new_path;
             }
         }
+
         public delegate void HierarchyObjectPathChangedHandler(object sender, HierarchyObjectPathChangedEventArgs args);
+
         public static event HierarchyObjectPathChangedHandler HierarchyObjectPathChanged;
+
         private static void OnHierarchyObjectPathChange(GameObject game_object, string old_path, string new_path)
         {
             if (HierarchyObjectPathChanged != null)
                 HierarchyObjectPathChanged(null, new HierarchyObjectPathChangedEventArgs(game_object, old_path, new_path));
         }
+
         private static void HandleUpdate()
         {
             // Return early if playing and no existing tasks remain
@@ -177,7 +187,7 @@ namespace RoaringFangs.Editor
                     {
                         ParallelTasksForever.MoveNext();
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         ParallelTasksForever = null;
                         string message = "Unhandled exception thrown in parallel tasks";
@@ -199,6 +209,7 @@ namespace RoaringFangs.Editor
                 }
             }
         }
+
         private static void HandleHierarchyWindowChanged()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -206,6 +217,7 @@ namespace RoaringFangs.Editor
             // Restart the DoHierarchyWindowChanged task
             HierarchyChangedTask = DoHierarchyWindowChanged().GetEnumerator();
         }
+
         static EditorHelper()
         {
             EditorApplication.update += HandleUpdate;

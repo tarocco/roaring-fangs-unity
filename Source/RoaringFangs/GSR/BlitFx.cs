@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
 
 namespace RoaringFangs.GSR
 {
@@ -32,7 +31,8 @@ namespace RoaringFangs.GSR
     public class BlitFx : MonoBehaviour
     {
         public Material Material;
-        void OnRenderImage(RenderTexture src, RenderTexture dest)
+
+        private void OnRenderImage(RenderTexture src, RenderTexture dest)
         {
             Graphics.Blit(src, dest, Material);
         }

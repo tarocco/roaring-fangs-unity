@@ -22,10 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using System.Collections;
-
 using RoaringFangs.GSR;
+using UnityEngine;
 
 namespace RoaringFangs.CameraBehavior
 {
@@ -48,12 +46,12 @@ namespace RoaringFangs.CameraBehavior
         public Camera ReferenceCamera;
 
         // Use this for initialization
-        void Start()
+        private void Start()
         {
         }
 
         // Update is called once per frame
-        void Update()
+        private void Update()
         {
             GetComponent<Camera>().fieldOfView = ReferenceCamera.fieldOfView;
         }

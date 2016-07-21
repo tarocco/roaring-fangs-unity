@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
 
 namespace RoaringFangs.Motion
 {
@@ -32,6 +31,7 @@ namespace RoaringFangs.Motion
         public float Speed = 1f;
         private RectTransform RectTransform;
         private float MaxDeltaTimeRecip;
+
         // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
         override public void OnStateEnter(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
         {

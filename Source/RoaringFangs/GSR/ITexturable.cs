@@ -23,8 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System;
-using System.Collections;
 
 namespace RoaringFangs.GSR
 {

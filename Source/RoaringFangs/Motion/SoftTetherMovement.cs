@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
 
 namespace RoaringFangs.Motion
 {
@@ -39,26 +38,26 @@ namespace RoaringFangs.Motion
 
         public float SmoothingFactor = 1.5f;
 
-        void Start()
+        private void Start()
         {
-
         }
 
-        float SoftLimit(float t)
+        private float SoftLimit(float t)
         {
             return 0.5f * (Mathf.Cos(Mathf.PI * (t + 1f)) + 1f);
         }
 
-        float SoftLimitOut(float t)
+        private float SoftLimitOut(float t)
         {
             return Mathf.Sin(Mathf.PI * (0.5f * t));
         }
-        float SoftLimitOut2(float t)
+
+        private float SoftLimitOut2(float t)
         {
             return 1f - Mathf.Pow(t - 1f, 2f);
         }
 
-        void Update()
+        private void Update()
         {
             if (Target != null)
             {
@@ -76,6 +75,7 @@ namespace RoaringFangs.Motion
                 transform.position = follow_position + Offset;
             }
         }
+
         /*
         void OnDrawGizmos()
         {

@@ -22,12 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using Midi.Events;
 using System;
 using UnityEngine;
-
-using Midi;
-using Midi.Chunks;
-using Midi.Events;
 
 namespace RoaringFangs.Formats.MIDI
 {
@@ -36,6 +33,7 @@ namespace RoaringFangs.Formats.MIDI
     {
         [SerializeField]
         private MidiEvent _Event;
+
         /// <summary>
         /// The MidiEvent being helped
         /// </summary>
@@ -44,8 +42,10 @@ namespace RoaringFangs.Formats.MIDI
             get { return _Event; }
             protected set { _Event = value; }
         }
+
         [SerializeField]
         private float _TimeBeats;
+
         /// <summary>
         /// Time at which the event takes place, measured in quarter notes, NOT seconds
         /// </summary>
@@ -54,8 +54,10 @@ namespace RoaringFangs.Formats.MIDI
             get { return _TimeBeats; }
             set { _TimeBeats = value; }
         }
+
         [SerializeField]
         private float _DurationBeats = 0;
+
         /// <summary>
         /// Duration of the event measured in quarter notes, NOT seconds
         /// </summary>
@@ -64,8 +66,10 @@ namespace RoaringFangs.Formats.MIDI
             get { return _DurationBeats; }
             set { _DurationBeats = value; }
         }
+
         [SerializeField]
         private int _Index;
+
         /// <summary>
         /// Event index as counted when read from MIDI data chunks
         /// </summary>
@@ -74,7 +78,7 @@ namespace RoaringFangs.Formats.MIDI
             get { return _Index; }
             private set { _Index = value; }
         }
-		
+
         public MIDIEventHelper(MidiEvent m_e, int index, float time_beats, float duration_beats = 0)
         {
             MIDIEvent = m_e;

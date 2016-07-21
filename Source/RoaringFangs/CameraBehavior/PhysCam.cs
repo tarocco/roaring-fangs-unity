@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
 
 using System.Linq;
 
@@ -31,59 +30,63 @@ using System.Linq;
 using FluffyUnderware.Curvy;
 
 #else
+
 using RoaringFangs.Adapters.FluffyUnderware.Curvy;
+
 #endif
 
 namespace RoaringFangs.CameraBehavior
 {
-	[RequireComponent (typeof(Rigidbody))]
-	public class PhysCam : MonoBehaviour
-	{
-		public GameObject Target;
-		#if FLUFFYUNDERWARE_CURVY
+    [RequireComponent(typeof(Rigidbody))]
+    public class PhysCam : MonoBehaviour
+    {
+        public GameObject Target;
+#if FLUFFYUNDERWARE_CURVY
         public CurvySpline GuideCameraDirection;
 
 #else
-		public ICurvySpline GuideCameraDirection;
-		#endif
+        public ICurvySpline GuideCameraDirection;
+#endif
 
-		public GameObject CameraParent;
-		public Camera Camera;
-        
-		public LayerMask CameraPusherMask;
-		public Collider Detector;
-		public bool RollUp = false;
-		private Rigidbody Rigidbody;
+        public GameObject CameraParent;
+        public Camera Camera;
 
-		void Start ()
-		{
-			Rigidbody = GetComponent<Rigidbody> ();
-			//transform.position = Target.transform.position;
-		}
+        public LayerMask CameraPusherMask;
+        public Collider Detector;
+        public bool RollUp = false;
+        private Rigidbody Rigidbody;
 
-		void FixedUpdate ()
-		{
-			var colliders = Physics.OverlapBox (Detector.bounds.center, Detector.bounds.extents, transform.rotation, CameraPusherMask);
-			bool any_others = colliders.Except (new[] { Detector }).Any ();
-			if (!any_others)
-				transform.position = Target.transform.position;
+        private void Start()
+        {
+            Rigidbody = GetComponent<Rigidbody>();
+            //transform.position = Target.transform.position;
+        }
 
-			if (RollUp) {
-				Quaternion rotation = Rigidbody.rotation;
-				rotation = Quaternion.LookRotation (rotation * Vector3.forward, Vector3.up);
-				Rigidbody.MoveRotation (rotation);
-			}
-		}
+        private void FixedUpdate()
+        {
+            var colliders = Physics.OverlapBox(Detector.bounds.center, Detector.bounds.extents, transform.rotation, CameraPusherMask);
+            bool any_others = colliders.Except(new[] { Detector }).Any();
+            if (!any_others)
+                transform.position = Target.transform.position;
 
-		void LateUpdate ()
-		{
-			if (GuideCameraDirection != null) {
-				float tf_nearest = GuideCameraDirection.GetNearestPointTF (transform.position);
-				Vector3 tangent = GuideCameraDirection.GetTangent (tf_nearest);
-				Vector3 normal = Vector3.Cross (tangent, Vector3.up);
-				Quaternion rotation = Quaternion.LookRotation (normal, Vector3.up);
-				CameraParent.transform.localRotation = rotation;
-			}
-		}
-	}
+            if (RollUp)
+            {
+                Quaternion rotation = Rigidbody.rotation;
+                rotation = Quaternion.LookRotation(rotation * Vector3.forward, Vector3.up);
+                Rigidbody.MoveRotation(rotation);
+            }
+        }
+
+        private void LateUpdate()
+        {
+            if (GuideCameraDirection != null)
+            {
+                float tf_nearest = GuideCameraDirection.GetNearestPointTF(transform.position);
+                Vector3 tangent = GuideCameraDirection.GetTangent(tf_nearest);
+                Vector3 normal = Vector3.Cross(tangent, Vector3.up);
+                Quaternion rotation = Quaternion.LookRotation(normal, Vector3.up);
+                CameraParent.transform.localRotation = rotation;
+            }
+        }
+    }
 }

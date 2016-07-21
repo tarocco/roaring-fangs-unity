@@ -25,10 +25,12 @@ THE SOFTWARE.
 using UnityEngine;
 
 #if UNITY_EDITOR
+
 using UnityEditor;
+
 #endif
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Linq;
@@ -41,13 +43,16 @@ using RoaringFangs.Editor;
 namespace RoaringFangs.Animation
 {
 #if UNITY_EDITOR
+
     [InitializeOnLoad]
 #endif
     public class RegExTargetGroup : TargetGroupBase, ITargetGroup, IHasHierarchyIcons
     {
         #region Properties
+
         [SerializeField, AutoProperty]
         private TargetGroupMode _Mode;
+
         public TargetGroupMode Mode
         {
             get { return _Mode; }
@@ -62,6 +67,7 @@ namespace RoaringFangs.Animation
 
         [SerializeField, AutoProperty(Delayed = true)]
         private string _Pattern = "^$";
+
         public string Pattern
         {
             get { return _Pattern; }
@@ -82,13 +88,16 @@ namespace RoaringFangs.Animation
         }
 
         private Regex _Regex;
+
         private Regex Regex
         {
             get { return _Regex ?? (_Regex = new Regex(Pattern)); }
         }
-        #endregion
+
+        #endregion Properties
 
         #region Cached Target Transforms
+
         [SerializeField, HideInInspector]
         private TransformUtils.TransformD[] _Targets;
 
@@ -113,9 +122,11 @@ namespace RoaringFangs.Animation
                     _Targets = null;
             }
         }
-        #endregion
+
+        #endregion Cached Target Transforms
 
         #region Targets
+
         private static IEnumerable<TransformUtils.ITransformD> FindMatchingTransformsD(
             IEnumerable<TransformUtils.ITransformDP> descendants, Regex regex)
         {
@@ -145,14 +156,17 @@ namespace RoaringFangs.Animation
                 //Debug.Log(tp.Path);
             }
         }
+
         private IEnumerable<TransformUtils.ITransformD> FindTargetsInDescendants(
             IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
         {
             return FindMatchingTransformsD(subject_descendants_and_paths, Regex);
         }
-        #endregion
+
+        #endregion Targets
 
         #region Descendants
+
         private IEnumerable<TransformUtils.ITransformDP> GetDescendantsFromParentManager()
         {
             var manager = GetComponentInParent<ControlManager>();
@@ -161,6 +175,7 @@ namespace RoaringFangs.Animation
             else
                 throw new NullReferenceException("RegExTargetGroup has no parent ControlManager!");
         }
+
         public void OnFindMatchingTargetsInDescendants(
             IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths)
         {
@@ -169,11 +184,15 @@ namespace RoaringFangs.Animation
             else
                 Targets = null;
         }
-        #endregion
+
+        #endregion Descendants
 
 #if UNITY_EDITOR
+
         #region Editor Menus
+
         private static readonly Type HierarchyWindow = typeof(EditorWindow).Assembly.GetType("UnityEditor.SceneHierarchyWindow");
+
         [MenuItem("Roaring Fangs/Animation/RegEx Target Group", false, 0)]
         [MenuItem("GameObject/Roaring Fangs/Animation/RegEx Target Group", false, 0)]
         [MenuItem("CONTEXT/ControlManager/RegEx Target Group", false, 25)]
@@ -204,13 +223,15 @@ namespace RoaringFangs.Animation
             }
             return regex_target_group;
         }
-        #endregion
+
+        #endregion Editor Menus
 
         public void OnDrawHierarchyIcons(Rect icon_position)
         {
             UnityEngine.GUI.color = Active ? Color.white : Color.gray;
             UnityEngine.GUI.Label(icon_position, GetIcon(Mode));
         }
+
 #endif
     }
 }
