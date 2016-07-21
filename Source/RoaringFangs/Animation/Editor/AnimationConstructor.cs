@@ -35,25 +35,35 @@ using subjectnerdagreement.psdexport;
 
 using SpritesAndBones;
 
+using RoaringFangs.Utility;
+
 namespace RoaringFangs.Animation.Editor
 {
     public class AnimationConstructor : SpriteConstructor, IPsdConstructorDependent
     {
-        //private Stack<GameObject> _GroupStack = new Stack<GameObject>();
         private ILookup<string, PenToolPathResource> _PenToolPathResources;
+
+        private struct IKWithMetadata
+        {
+            public InverseKinematics IK;
+            public IKMetadata Metadata;
+        }
+
+        private List<IKWithMetadata> _IKData;
+        private Dictionary<string, Transform> _IKDestinations;
 
         /// <summary>
         /// Extracts JSON instances from a string (assumes valid JSON)
         /// </summary>
-        /// <param name="subject"></param>
+        /// <param name="text"></param>
         /// <returns></returns>
-        private IEnumerable<string> ExtractJSONStrings(string subject)
+        private static IEnumerable<string> ExtractJSONStrings(string text)
         {
             int depth = 0;
             int match_start_index = 0;
-            for (int i = 0; i < subject.Length; i++)
+            for (int i = 0; i < text.Length; i++)
             {
-                char c = subject[i];
+                char c = text[i];
                 switch (c)
                 {
                     case '{':
@@ -64,12 +74,26 @@ namespace RoaringFangs.Animation.Editor
                     case '}':
                         depth--;
                         if (depth == 0)
-                            yield return subject.Substring(match_start_index, i - match_start_index + 1);
+                            yield return text.Substring(match_start_index, i - match_start_index + 1);
                         break;
                     default:
                         break;
                 }
             }
+        }
+
+        /// <summary>
+        /// Returns the text before any JSON onset
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        private static string TextBeforeJSON(string text)
+        {
+            int idx_first_open_brace = text.IndexOf('{');
+            if (idx_first_open_brace != -1)
+                return text.Substring(0, idx_first_open_brace).TrimEnd(' ');
+            else
+                return text;
         }
 
         private class InlineMetadata
@@ -83,11 +107,11 @@ namespace RoaringFangs.Animation.Editor
 
         private class IKMetadata
         {
-            public string Target;
-            public int ChainLength;
+            public string Parent;
+            public int ChainLength = 1;
             public override string ToString()
             {
-                return "< Target: " + Target + ", ChainLength: " + ChainLength + ">";
+                return "< Parent: " + Parent + ", ChainLength: " + ChainLength + ">";
             }
         }
 
@@ -129,14 +153,15 @@ namespace RoaringFangs.Animation.Editor
             return base.CreateGameObject(name, parent);
         }
 
-        public override Matrix4x4 GetGroupMatrix(Matrix4x4 rootBaseM__worldToLocal, GameObject groupRoot, SpriteAlignment alignment)
+        public override Matrix4x4 GetGroupMatrix(Matrix4x4 rootM__worldToLocal, GameObject groupRoot, SpriteAlignment alignment)
         {
             var settings = Context.Settings;
-            CacheResources();
+
             var size = new Vector2(settings.Psd.ColumnCount, settings.Psd.RowCount);
             //var scale = PsdExportSettings.GetScaleValues(settings.ScaleBy).Scale;
 
             var matching_paths = _PenToolPathResources[groupRoot.name];
+
             if (matching_paths.Any())
             {
                 var path = matching_paths.First();
@@ -161,7 +186,7 @@ namespace RoaringFangs.Animation.Editor
                 return groupM;
             }
             else
-                return base.GetGroupMatrix(rootBaseM__worldToLocal, groupRoot, alignment);
+                return base.GetGroupMatrix(rootM__worldToLocal, groupRoot, alignment);
         }
 
         public override Matrix4x4 GetLayerMatrix(Rect layerSize, Vector2 layerPivot, float pixelsToUnitSize)
@@ -171,34 +196,57 @@ namespace RoaringFangs.Animation.Editor
 
         public override void HandleGroupClose(GameObject groupParent)
         {
-            //_GroupStack.Pop();
             GameObject root = Context.Root;
             Transform root_transform;
             if (root)
                 root_transform = root.transform;
             else
                 root_transform = null;
-            var parent_transform = groupParent.transform.parent;
-            if (parent_transform == root_transform)
+            var group_transform = groupParent.transform;
+            var group_transform_parent = group_transform.parent;
+            // If closing the last group (finished)
+            if (group_transform_parent == root_transform)
             {
-                var metadata = _PenToolPathResources
-                    .Select(g => new KeyValuePair<PenToolPathResource, InlineMetadata>(g.First(), GetFirstMetadata(g.Key)))
-                    .Where(p => p.Value != null);
-                foreach (var entry in metadata)
-                {
-                    Debug.Log(entry.Value);
-                }
+                HandleFinish();
             }
         }
 
         public override void HandleGroupOpen(GameObject groupParent)
         {
-            CacheResources();
-            //_GroupStack.Push(groupParent);
+            GameObject root = Context.Root;
+            Transform root_transform;
+            Matrix4x4 root_transform_m_local, root_transform_m_world;
+            if (root)
+            {
+                root_transform = root.transform;
+                root_transform_m_local = root_transform.worldToLocalMatrix;
+                root_transform_m_world = root_transform.localToWorldMatrix;
+            }
+            else
+            {
+                root_transform = null;
+                root_transform_m_local = Matrix4x4.identity;
+                root_transform_m_world = Matrix4x4.identity;
+            }
+
+            var group_transform = groupParent.transform;
+            var group_transform_parent = group_transform.parent;
+            // If opening the first group (beginning)
+            if (group_transform_parent == root_transform)
+            {
+                HandleBegin();
+            }
 
             var settings = Context.Settings;
             var size = new Vector2(settings.Psd.ColumnCount, settings.Psd.RowCount);
+
             //var scale = PsdExportSettings.GetScaleValues(settings.ScaleBy).Scale;
+
+            // Store the full groupParent name for metadata parsing
+            var groupParent_name_orig = groupParent.name;
+
+            // Mutate to the "plain" groupParent name as everything before the first JSON
+            groupParent.name = TextBeforeJSON(groupParent.name);
 
             var matching_paths = _PenToolPathResources[groupParent.name];
             if (matching_paths.Any())
@@ -222,10 +270,46 @@ namespace RoaringFangs.Animation.Editor
                 // bone.boneAxis = Bone.BoneAxis.Y;
                 //bone.Direction = direction;
                 bone.length = direction.magnitude;
+
+                // Read metadata by parsing the JSON from the original group name
+                var metadata = GetFirstMetadata(groupParent_name_orig);
+                if (metadata != null)
+                {
+                    var ik_metadata = metadata.IK;
+                    if (ik_metadata != null)
+                    {
+                        var ik = groupParent.AddComponent<InverseKinematics>();
+                        ik.chainLength = ik_metadata.ChainLength;
+                        var target = new GameObject(groupParent.name + " IK");
+                        var helper = target.AddComponent<Helper>();
+                        var target_transform = target.transform;
+
+                        // Bone (group) position and rotation have not been updated yet,
+                        // so we will need to get the group matrix using GetGroupMatrix()
+                        var groupParent_m = GetGroupMatrix(root_transform_m_local, groupParent, settings.Pivot);
+                        var groupParent_m_world = root_transform_m_world * groupParent_m;
+                        var groupParent_position = TRS.GetPosition(ref groupParent_m_world);
+                        var groupParent_rotation = TRS.GetRotation(ref groupParent_m_world);
+                        var target_position_offset = groupParent_rotation * new Vector3(0f, bone.length, 0f);
+
+                        target_transform.rotation = groupParent_rotation;
+                        target_transform.position = groupParent_position + target_position_offset;
+                        target_transform.SetParent(root_transform, true);
+
+                        ik.target = target_transform;
+                        _IKData.Add(new IKWithMetadata()
+                        {
+                            IK = ik,
+                            Metadata = ik_metadata
+                        });
+                        _IKDestinations[target.name] = target.transform;
+                    }
+                }
+                _IKDestinations[groupParent.name] = groupParent.transform;
             }
         }
 
-        private void CacheResources()
+        protected void HandleBegin()
         {
             var settings = Context.Settings;
             var psd = settings.Psd;
@@ -234,6 +318,35 @@ namespace RoaringFangs.Animation.Editor
                 .Where(r => r is PenToolPathResource)
                 .Cast<PenToolPathResource>()
                 .ToLookup(p => p.Name);
+            _IKData = new List<IKWithMetadata>();
+            _IKDestinations = new Dictionary<string, Transform>();
+        }
+
+        protected void HandleFinish()
+        {
+            GameObject root = Context.Root;
+            Transform root_transform;
+            if (root)
+                root_transform = root.transform;
+            else
+                root_transform = null;
+
+            foreach (var e in _IKData)
+            {
+                var ik = e.IK;
+                var metadata = e.Metadata;
+                var destination_name = metadata.Parent;
+                var ik_target = ik.target;
+                Transform destination;
+                if (!String.IsNullOrEmpty(destination_name) && _IKDestinations.TryGetValue(destination_name, out destination))
+                {
+                    ik_target.SetParent(destination, true);
+                }
+                else if (root_transform != null)
+                {
+                    ik_target.SetParent(root_transform, true);
+                }
+            }
         }
     }
 }
