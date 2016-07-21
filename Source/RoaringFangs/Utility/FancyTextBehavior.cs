@@ -23,8 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using UnityEngine.Rendering;
-using System.Collections;
 
 namespace RoaringFangs.Utility
 {
@@ -34,11 +32,15 @@ namespace RoaringFangs.Utility
     {
         // >> WET Model: ManualSortingOrder
         public string SortingLayerName = "Default";
+
         public int SortingOrder = 0;
+
         // << WET Model: ManualSortingOrder
         private float _Opacity = float.NaN;
+
         public float Opacity = 1.0f;
-        void Start()
+
+        private void Start()
         {
             // >> WET Model: ManualSortingOrder
             if (GetComponent<Renderer>() != null)
@@ -48,7 +50,8 @@ namespace RoaringFangs.Utility
             }
             // << WET Model: ManualSortingOrder
         }
-        void Update()
+
+        private void Update()
         {
             // >> WET Model: ManualSortingOrder
             if (GetComponent<Renderer>() != null &&
@@ -66,6 +69,7 @@ namespace RoaringFangs.Utility
                 GetComponent<Renderer>().material.color = color;
             }
         }
+
         public void SetText(string text)
         {
             this.GetComponent<TextMesh>().text = text;

@@ -22,31 +22,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
-using UnityEngine;
-using System.Collections;
+using Midi.Chunks;
 using System.Collections.Generic;
 using System.Linq;
-
-using Midi;
-using Midi.Chunks;
-using Midi.Events;
-
-using RoaringFangs.Utility;
 
 namespace RoaringFangs.Formats.MIDI
 {
     public class MIDIHelper : MIDIHelperBase
     {
         private List<MIDIEventList> _EventLists;
+
         public int NumberOfEventLists
         {
             get { return _EventLists.Count; }
         }
+
         public MIDIEventList GetEventListByIndex(int index)
         {
             return _EventLists[index];
         }
+
         public MIDIEventList GetEventListByName(string name)
         {
             return _EventLists.First((list) =>
@@ -54,6 +49,7 @@ namespace RoaringFangs.Formats.MIDI
                 return list.Name == name;
             });
         }
+
         /*
         private Midi.MidiData _MIDIData;
         private Midi.MidiData MIDIData
@@ -62,6 +58,7 @@ namespace RoaringFangs.Formats.MIDI
             set { _MIDIData = value; }
         }
         */
+
         public void Load(Midi.MidiData data)
         {
             //MIDIData = data;
@@ -78,9 +75,9 @@ namespace RoaringFangs.Formats.MIDI
                 _EventLists.Add(list);
             }
         }
+
         public MIDIHelper()
         {
-
         }
     }
 }

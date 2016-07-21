@@ -22,9 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
 using System;
-using System.Collections;
+using UnityEngine;
 
 namespace RoaringFangs.Utility
 {
@@ -33,16 +32,19 @@ namespace RoaringFangs.Utility
     {
         [JsonFx.Json.JsonIgnore]
         public Color Color;
+
         [JsonFx.Json.JsonName("HexColor")]
         public string HexColor
         {
             get { return Codec.ColorToARGB32String(Color); }
             set { Color = Codec.ARGB32ToColor(value); }
         }
+
         public ColorWrap(Color color)
         {
             Color = color;
         }
+
         public ColorWrap() :
             this(default(Color))
         {

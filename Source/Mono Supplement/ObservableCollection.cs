@@ -5,10 +5,10 @@
 // distribute, sublicense, and/or sell copies of the Software, and to
 // permit persons to whom the Software is furnished to do so, subject to
 // the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -29,7 +29,6 @@
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace System.Collections.ObjectModel
 {
@@ -37,7 +36,7 @@ namespace System.Collections.ObjectModel
     public class ObservableCollection<T> : Collection<T>, INotifyCollectionChanged, INotifyPropertyChanged
     {
         [Serializable]
-        sealed class SimpleMonitor : IDisposable
+        private sealed class SimpleMonitor : IDisposable
         {
             private int _busyCount;
 
@@ -84,6 +83,7 @@ namespace System.Collections.ObjectModel
         [field: NonSerialized]
 #pragma warning disable 67
         public virtual event NotifyCollectionChangedEventHandler CollectionChanged;
+
         [field: NonSerialized]
 #pragma warning disable 67
         protected virtual event PropertyChangedEventHandler PropertyChanged;

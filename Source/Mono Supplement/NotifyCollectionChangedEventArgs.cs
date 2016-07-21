@@ -5,10 +5,10 @@
 // distribute, sublicense, and/or sell copies of the Software, and to
 // permit persons to whom the Software is furnished to do so, subject to
 // the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be
 // included in all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
 // EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
@@ -24,11 +24,8 @@
 //	Brian O'Keefe (zer0keefie@gmail.com)
 //
 
-using System.Runtime.CompilerServices;
-
 namespace System.Collections.Specialized
 {
-
     public class NotifyCollectionChangedEventArgs : EventArgs
     {
         private NotifyCollectionChangedAction action;
@@ -167,7 +164,7 @@ namespace System.Collections.Specialized
             InitializeReplace(new object[] { newItem }, new object[] { oldItem }, index);
         }
 
-        #endregion
+        #endregion Constructors
 
         #region Accessor Properties
 
@@ -196,7 +193,7 @@ namespace System.Collections.Specialized
             get { return oldIndex; }
         }
 
-        #endregion
+        #endregion Accessor Properties
 
         #region Initialize Methods
 
@@ -224,6 +221,6 @@ namespace System.Collections.Specialized
             InitializeRemove(removedItems, index);
         }
 
-        #endregion
+        #endregion Initialize Methods
     }
 }

@@ -23,8 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System;
-using System.Collections;
 
 namespace RoaringFangs.CameraBehavior
 {
@@ -49,11 +47,12 @@ namespace RoaringFangs.CameraBehavior
         private Vector2 TargetVelocity;
         private Vector2 TargetVelocity_Abs;
 
-        void Start()
+        private void Start()
         {
             Self = GetComponent<Rigidbody2D>();
         }
-        void Update()
+
+        private void Update()
         {
 #if UNITY_EDITOR
             if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
@@ -62,7 +61,8 @@ namespace RoaringFangs.CameraBehavior
             }
 #endif
         }
-        void FixedUpdate()
+
+        private void FixedUpdate()
         {
             TargetVelocity = Vector2.Lerp(TargetVelocity, Target.velocity, SpeedSmooth * Time.fixedDeltaTime);
             Vector2 target_velocity_abs = new Vector2(Mathf.Abs(Target.velocity.x), Mathf.Abs(Target.velocity.y));
@@ -86,7 +86,8 @@ namespace RoaringFangs.CameraBehavior
             Self.MovePosition(target_position);
             UpdateColliders(scale);
         }
-        void UpdateColliders(Vector2 scale = default(Vector2))
+
+        private void UpdateColliders(Vector2 scale = default(Vector2))
         {
             float aspect_ratio = Camera.main.aspect;
             Vector2 size = RoaringFangs.Utility.Math2.LerpV2(DeadZoneInner.size, DeadZoneOuter.size, scale);
@@ -96,6 +97,7 @@ namespace RoaringFangs.CameraBehavior
             MainBox.size = size;
             MainBox.offset = offset;
         }
+
         private Bounds AspectBounds2D(Bounds bounds)
         {
             float aspect = Camera.main.aspect;

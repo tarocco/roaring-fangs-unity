@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
 
 namespace RoaringFangs.Motion
 {
@@ -42,13 +41,14 @@ namespace RoaringFangs.Motion
 
         private Vector2 TargetPosition;
         private Vector2 TargetVelocity;
-        void Start()
+
+        private void Start()
         {
             Self = GetComponent<BouncyMove>();
         }
 
         // Update is called once per frame
-        void Update()
+        private void Update()
         {
             TargetPosition = Vector2.Lerp(TargetPosition, Target.position, SpeedSmoothRateP * Time.smoothDeltaTime);
             TargetVelocity = Vector2.Lerp(TargetVelocity, Target.velocity, SpeedSmoothRateV * Time.smoothDeltaTime);

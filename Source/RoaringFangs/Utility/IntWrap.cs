@@ -22,12 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
 namespace RoaringFangs.Utility
 {
     public class IntWrap
     {
         public int Value;
+
         public IntWrap(int value = default(int))
         {
             Value = value;

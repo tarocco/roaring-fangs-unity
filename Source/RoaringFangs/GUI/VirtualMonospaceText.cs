@@ -32,12 +32,14 @@ namespace RoaringFangs.GUI
     {
         private UnityEngine.UI.Text Self;
         public UnityEngine.UI.Text[] Digits;
-        void Awake()
+
+        private void Awake()
         {
             Self = GetComponent<UnityEngine.UI.Text>();
             Self.enabled = false;
         }
-        void Update()
+
+        private void Update()
         {
             string padded = Self.text.PadRight(Digits.Length);
             Color self_color = Self.color;

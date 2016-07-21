@@ -1,27 +1,28 @@
 ﻿using UnityEngine;
 
 using System;
-using System.Collections;
 using System.Linq;
 
 #if FLUFFYUNDERWARE_CURVY
 using FluffyUnderware.Curvy;
 #else
+
 using RoaringFangs.Adapters.FluffyUnderware.Curvy;
+
 #endif
 
-
 using RoaringFangs.Attributes;
-using RoaringFangs.Utility;
 
 namespace RoaringFangs.Visuals
 {
     [ExecuteInEditMode]
     public class CurvySplineMeshDeformer : MonoBehaviour
     {
-#region Properties
+        #region Properties
+
         [SerializeField, AutoProperty]
         private Transform[] _Weights;
+
         public Transform[] Weights
         {
             get { return _Weights; }
@@ -31,6 +32,7 @@ namespace RoaringFangs.Visuals
                 _WeightsDirty = true;
             }
         }
+
         [SerializeField, AutoProperty]
 #if FLUFFYUNDERWARE_CURVY
         private CurvySpline _PathSpline;
@@ -45,6 +47,7 @@ namespace RoaringFangs.Visuals
         }
 #else
         private ICurvySpline _PathSpline;
+
         public ICurvySpline PathSpline
         {
             get { return _PathSpline; }
@@ -54,9 +57,12 @@ namespace RoaringFangs.Visuals
                 _WeightsDirty = true;
             }
         }
+
 #endif
+
         [SerializeField, AutoProperty]
         private float _SegmentPathPosition = 0f;
+
         public float SegmentPathPosition
         {
             get { return _SegmentPathPosition; }
@@ -66,8 +72,10 @@ namespace RoaringFangs.Visuals
                 _WeightsDirty = true;
             }
         }
+
         [SerializeField, AutoProperty]
         private float _SegmentLength = 1f;
+
         public float SegmentLength
         {
             get { return _SegmentLength; }
@@ -77,8 +85,10 @@ namespace RoaringFangs.Visuals
                 _WeightsDirty = true;
             }
         }
+
         [SerializeField, AutoProperty]
         private float _SegmentAngle = 0f;
+
         public float SegmentAngle
         {
             get { return _SegmentAngle; }
@@ -88,8 +98,10 @@ namespace RoaringFangs.Visuals
                 _WeightsDirty = true;
             }
         }
+
         [SerializeField, AutoProperty]
         private Vector3 _SegmentForwardVector = Vector3.forward;
+
         public Vector3 SegmentForwardVector
         {
             get { return _SegmentForwardVector; }
@@ -99,8 +111,10 @@ namespace RoaringFangs.Visuals
                 _WeightsDirty = true;
             }
         }
+
         [SerializeField, AutoProperty]
         private Vector3 _SegmentScale = Vector3.one;
+
         public Vector3 SegmentScale
         {
             get { return _SegmentScale; }
@@ -110,8 +124,10 @@ namespace RoaringFangs.Visuals
                 _WeightsDirty = true;
             }
         }
+
         [SerializeField, AutoProperty]
         private Vector3 _SegmentNormalShift = Vector3.zero;
+
         public Vector3 SegmentNormalShift
         {
             get { return _SegmentNormalShift; }
@@ -121,8 +137,10 @@ namespace RoaringFangs.Visuals
                 _WeightsDirty = true;
             }
         }
+
         [SerializeField, AutoProperty]
         private bool _SegmentUseFixedAngle = false;
+
         public bool SegmentUseFixedAngle
         {
             get { return _SegmentUseFixedAngle; }
@@ -132,8 +150,10 @@ namespace RoaringFangs.Visuals
                 _WeightsDirty = true;
             }
         }
+
         [SerializeField, AutoProperty]
         private bool _SegmentFlipWeightDirection = false;
+
         public bool SegmentFlipWeightDirection
         {
             get { return _SegmentFlipWeightDirection; }
@@ -147,6 +167,7 @@ namespace RoaringFangs.Visuals
         [Tooltip("Experimental feature to evenly space weights along the length of the spline.")]
         [SerializeField, AutoProperty]
         private bool _UseUniformSpacing = false;
+
         public bool UseUniformSpacing
         {
             get { return _UseUniformSpacing; }
@@ -159,6 +180,7 @@ namespace RoaringFangs.Visuals
 
         [SerializeField, AutoMinMax(0f, 1f)]
         private Vector2 _StraightenEnds = new Vector2(0f, 1f);
+
         public Vector2 StraightenEnds
         {
             get { return _StraightenEnds; }
@@ -171,19 +193,21 @@ namespace RoaringFangs.Visuals
         }
 
         private bool _WeightsDirty;
-#endregion
 
-        void Start()
+        #endregion Properties
+
+        private void Start()
         {
             _WeightsDirty = true;
         }
 
         private int _SplinePointsChecksum;
-        void Update()
+
+        private void Update()
         {
             if (PathSpline != null)
             {
-                if(PathSpline.Dirty)
+                if (PathSpline.Dirty)
                     PathSpline.Refresh();
                 int spline_points_checksum = CurvyControlPointsHash(PathSpline);
                 if (_SplinePointsChecksum != spline_points_checksum || _WeightsDirty)
@@ -211,12 +235,14 @@ namespace RoaringFangs.Visuals
         {
             return s.transform.localToWorldMatrix.GetHashCode();
         }
+
         private static int CurvyControlPointsHash(ICurvySpline spline)
         {
             return spline.ControlPoints
                 .Select((Func<ICurvySplineSegment, int>)CurvySplineSegmentHash)
                 .Aggregate((a, b) => a ^ b);
         }
+
 #endif
 
         public void UpdateMeshWeights()
@@ -231,7 +257,7 @@ namespace RoaringFangs.Visuals
                 float weights_length_m1 = (float)Weights.Length - 1f;
                 Vector3 point, tangent;
                 Quaternion rotation, rotation_initial;
-                
+
                 for (int i = 0; i < Weights.Length; i++)
                 {
                     float t;

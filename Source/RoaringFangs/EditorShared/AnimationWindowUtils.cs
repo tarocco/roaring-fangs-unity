@@ -24,13 +24,12 @@ THE SOFTWARE.
 */
 
 #if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
+using UnityEditor;
+using UnityEngine;
 
 namespace RoaringFangs.Editor
 {
@@ -131,4 +130,5 @@ namespace RoaringFangs.Editor
         }
     }
 }
+
 #endif

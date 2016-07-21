@@ -23,14 +23,10 @@ THE SOFTWARE.
 */
 
 #if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using System.Linq;
 
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
 using UGUI = UnityEngine.GUI;
 
 namespace RoaringFangs.Editor
@@ -38,6 +34,7 @@ namespace RoaringFangs.Editor
     public class AnimationHelperWindow : EditorWindow
     {
         private static GUIStyle RemarkStyle;
+
         [MenuItem("Window/Animation Helper")]
         public static void ShowWindow()
         {
@@ -45,15 +42,17 @@ namespace RoaringFangs.Editor
             self.minSize = new Vector2(192, 192);
             self.maxSize = new Vector2(256, 1024);
         }
-        void OnGUI()
+
+        private void OnGUI()
         {
-            if(RemarkStyle == null)
+            if (RemarkStyle == null)
             {
                 RemarkStyle = new GUIStyle(UGUI.skin.label);
                 RemarkStyle.fontStyle = FontStyle.Italic;
             }
             Left(OnGUIRoutine().GetEnumerator());
         }
+
         private IEnumerable<bool> OnGUIRoutine()
         {
             AnimationHelper.EnableStickyProperties = EditorGUILayout.ToggleLeft("Enable Sticky Properties", AnimationHelper.EnableStickyProperties);
@@ -66,6 +65,7 @@ namespace RoaringFangs.Editor
             UGUI.enabled = true;
             yield return true;
         }
+
         private void Left(IEnumerator<bool> routine)
         {
             for (;;)
@@ -77,6 +77,7 @@ namespace RoaringFangs.Editor
                     break;
             }
         }
+
         private void Centered(IEnumerator<bool> routine)
         {
             for (;;)
@@ -90,6 +91,7 @@ namespace RoaringFangs.Editor
                     break;
             }
         }
+
         private void OnRepairPropertyPaths()
         {
             Debug.LogError("Repair property paths not implemented yet! Bun needs a break...");
@@ -97,4 +99,5 @@ namespace RoaringFangs.Editor
         }
     }
 }
+
 #endif

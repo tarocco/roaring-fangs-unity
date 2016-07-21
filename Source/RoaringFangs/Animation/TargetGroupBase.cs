@@ -23,17 +23,15 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-using System.Collections;
-using System.Collections.Generic;
 
-using RoaringFangs.Attributes;
+#if UNITY_EDITOR
+
+using UnityEditor;
+
+#endif
+
 using RoaringFangs.Utility;
 using RoaringFangs.Editor;
-using System;
-using System.Linq;
 
 namespace RoaringFangs.Animation
 {
@@ -69,10 +67,13 @@ namespace RoaringFangs.Animation
                 default:
                 case TargetGroupMode.Set:
                     return HISet;
+
                 case TargetGroupMode.AND:
                     return HIAND;
+
                 case TargetGroupMode.OR:
                     return HIOR;
+
                 case TargetGroupMode.XOR:
                     return HIXOR;
             }
@@ -86,6 +87,7 @@ namespace RoaringFangs.Animation
             HIOR = icons.GetOrDefault("mode.or.png");
             HIXOR = icons.GetOrDefault("mode.xor.png");
         }
+
 #endif
     }
 }

@@ -22,14 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-
-using RoaringFangs;
-using RoaringFangs.Utility;
-using System;
+using UnityEngine;
 
 namespace RoaringFangs.UserInput
 {
@@ -41,24 +36,29 @@ namespace RoaringFangs.UserInput
             public InputType Type;
             public string StringValue;
             public int IntValue;
+
             public T GetByStringValue<T>(System.Func<string, T> f)
             {
                 return f(StringValue);
             }
+
             public T GetByIntValue<T>(System.Func<int, T> f)
             {
                 return f(IntValue);
             }
+
             // string: bool to float
             public float GetFloatValue(System.Func<string, bool> f)
             {
                 return GetByStringValue(f) ? 1f : 0f;
             }
+
             // string: float to bool
             public bool GetBoolValue(System.Func<string, float> f)
             {
                 return GetByStringValue(f) > 0f;
             }
+
             // int: bool to float
             public float GetFloatValue(System.Func<int, bool> f)
             {
@@ -71,15 +71,18 @@ namespace RoaringFangs.UserInput
                 System.Func<string, bool> f_key,
                 System.Func<int, bool> f_mouse_button)
             {
-                switch(Type)
+                switch (Type)
                 {
                     default:
                     case InputType.Axis:
                         return GetByStringValue(f_axis);
+
                     case InputType.Button:
                         return GetFloatValue(f_button);
+
                     case InputType.Key:
                         return GetFloatValue(f_key);
+
                     case InputType.MouseButton:
                         return GetFloatValue(f_mouse_button);
                 }
@@ -96,10 +99,13 @@ namespace RoaringFangs.UserInput
                     default:
                     case InputType.Axis:
                         return GetBoolValue(f_axis);
+
                     case InputType.Button:
                         return GetByStringValue(f_button);
+
                     case InputType.Key:
                         return GetByStringValue(f_key);
+
                     case InputType.MouseButton:
                         return GetByIntValue(f_mouse_button);
                 }
@@ -111,6 +117,7 @@ namespace RoaringFangs.UserInput
         {
             [SerializeField]
             private string _Name;
+
             public string Name
             {
                 get { return _Name; }
@@ -119,6 +126,7 @@ namespace RoaringFangs.UserInput
 
             [SerializeField]
             private bool _Bypass;
+
             public bool Bypass
             {
                 get { return _Bypass; }
@@ -127,6 +135,7 @@ namespace RoaringFangs.UserInput
 
             [SerializeField]
             private InputSelection _Source;
+
             public InputSelection Source
             {
                 get { return _Source; }
@@ -146,6 +155,7 @@ namespace RoaringFangs.UserInput
         {
             [SerializeField]
             private bool _Bypass;
+
             public bool Bypass
             {
                 get { return _Bypass; }
@@ -154,6 +164,7 @@ namespace RoaringFangs.UserInput
 
             [SerializeField]
             private int _Id;
+
             public int Id
             {
                 get { return _Id; }
@@ -162,6 +173,7 @@ namespace RoaringFangs.UserInput
 
             [SerializeField]
             private InputSelection _Source;
+
             public InputSelection Source
             {
                 get { return _Source; }
@@ -212,12 +224,12 @@ namespace RoaringFangs.UserInput
             }
         }
 
-        void Start()
+        private void Start()
         {
             CollectInputMappingDictionaries();
         }
 
-        void OnValidate()
+        private void OnValidate()
         {
             CollectInputMappingDictionaries();
         }
@@ -258,7 +270,7 @@ namespace RoaringFangs.UserInput
         public float GetAxisRaw(string name)
         {
             InputSelection d;
-            if(_AxisInputMappingDictionary.TryGetValue(name, out d))
+            if (_AxisInputMappingDictionary.TryGetValue(name, out d))
                 return d.GetFloatValueAuto(Input.GetAxisRaw, Input.GetButton, Input.GetKey, Input.GetMouseButton);
             else
                 return Input.GetAxisRaw(name);
@@ -276,7 +288,7 @@ namespace RoaringFangs.UserInput
         public bool GetButtonDown(string name)
         {
             InputSelection d;
-            if(_ButtonInputMappingDictionary.TryGetValue(name, out d))
+            if (_ButtonInputMappingDictionary.TryGetValue(name, out d))
                 return d.GetBoolValueAuto(Input.GetAxis, Input.GetButtonDown, Input.GetKeyDown, Input.GetMouseButtonDown);
             else
                 return Input.GetButtonDown(name);
@@ -285,7 +297,7 @@ namespace RoaringFangs.UserInput
         public bool GetButtonUp(string name)
         {
             InputSelection d;
-            if(_ButtonInputMappingDictionary.TryGetValue(name, out d))
+            if (_ButtonInputMappingDictionary.TryGetValue(name, out d))
                 return d.GetBoolValueAuto(Input.GetAxis, Input.GetButtonUp, Input.GetKeyUp, Input.GetMouseButtonUp);
             else
                 return Input.GetButtonUp(name);
@@ -303,7 +315,7 @@ namespace RoaringFangs.UserInput
         public bool GetKeyDown(string name)
         {
             InputSelection d;
-            if(_KeyInputMappingDictionary.TryGetValue(name, out d))
+            if (_KeyInputMappingDictionary.TryGetValue(name, out d))
                 return d.GetBoolValueAuto(Input.GetAxis, Input.GetButtonDown, Input.GetKeyDown, Input.GetMouseButtonDown);
             else
                 return Input.GetKeyDown(name);
@@ -312,7 +324,7 @@ namespace RoaringFangs.UserInput
         public bool GetKeyUp(string name)
         {
             InputSelection d;
-            if(_KeyInputMappingDictionary.TryGetValue(name, out d))
+            if (_KeyInputMappingDictionary.TryGetValue(name, out d))
                 return d.GetBoolValueAuto(Input.GetAxis, Input.GetButtonUp, Input.GetKeyUp, Input.GetMouseButtonUp);
             else
                 return Input.GetKeyUp(name);
@@ -321,7 +333,7 @@ namespace RoaringFangs.UserInput
         public bool GetMouseButton(int index)
         {
             InputSelection d;
-            if(_MouseButtonInputMappingDictionary.TryGetValue(index, out d))
+            if (_MouseButtonInputMappingDictionary.TryGetValue(index, out d))
                 return d.GetBoolValueAuto(Input.GetAxis, Input.GetButton, Input.GetKey, Input.GetMouseButton);
             else
                 return Input.GetMouseButton(index);
@@ -330,7 +342,7 @@ namespace RoaringFangs.UserInput
         public bool GetMouseButtonDown(int index)
         {
             InputSelection d;
-            if(_MouseButtonInputMappingDictionary.TryGetValue(index, out d))
+            if (_MouseButtonInputMappingDictionary.TryGetValue(index, out d))
                 return d.GetBoolValueAuto(Input.GetAxis, Input.GetButtonDown, Input.GetKeyDown, Input.GetMouseButtonDown);
             else
                 return Input.GetMouseButtonDown(index);
@@ -339,7 +351,7 @@ namespace RoaringFangs.UserInput
         public bool GetMouseButtonUp(int index)
         {
             InputSelection d;
-            if(_MouseButtonInputMappingDictionary.TryGetValue(index, out d))
+            if (_MouseButtonInputMappingDictionary.TryGetValue(index, out d))
                 return d.GetBoolValueAuto(Input.GetAxis, Input.GetButtonUp, Input.GetKeyUp, Input.GetMouseButtonUp);
             else
                 return Input.GetMouseButtonUp(index);

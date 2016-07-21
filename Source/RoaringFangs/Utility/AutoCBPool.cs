@@ -22,11 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 using UnityEngine;
 
 namespace RoaringFangs.Utility
@@ -35,25 +30,31 @@ namespace RoaringFangs.Utility
     {
         [SerializeField]
         private bool _FillPoolAtStart = true;
+
         public bool FillPoolAtStart
         {
             get { return _FillPoolAtStart; }
             set { _FillPoolAtStart = value; }
         }
+
         [SerializeField]
         private GameObject _Reference;
+
         public GameObject Reference
         {
             get { return _Reference; }
             set { _Reference = value; }
         }
+
         [SerializeField]
         private int _PoolSize = 16;
+
         public int PoolSize
         {
             get { return _PoolSize; }
             set { _PoolSize = value; }
         }
+
         protected override void Start()
         {
             // How many objects will we need to make?

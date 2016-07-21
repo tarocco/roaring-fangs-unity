@@ -22,30 +22,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
-
-using System;
-using System.Collections;
 
 namespace RoaringFangs.Utility
 {
     public class SceneLoader : MonoBehaviour
     {
         #region Events
+
         public class SceneLoadCompleteEventArgs : EventArgs
         {
             public readonly Scene Scene;
+
             public SceneLoadCompleteEventArgs(Scene scene)
             {
                 Scene = scene;
             }
         }
+
         public delegate void SceneLoadCompletedHandler(object sender, SceneLoadCompleteEventArgs args);
+
         [Serializable]
         public class SceneLoadCompleteEvent : UnityEvent<object, SceneLoadCompleteEventArgs> { }
-        #endregion
+
+        #endregion Events
 
         public SceneLoadCompleteEvent SceneLoadComplete = new SceneLoadCompleteEvent();
 
@@ -54,7 +58,7 @@ namespace RoaringFangs.Utility
         public bool Async = true;
         public bool LoadAtStart = true;
 
-        void Start()
+        private void Start()
         {
             if (LoadAtStart)
                 DoLoad();

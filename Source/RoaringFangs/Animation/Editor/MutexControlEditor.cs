@@ -22,14 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using UnityEditor;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-
-using RoaringFangs.Utility;
+using UnityEditor;
 
 namespace RoaringFangs.Animation.Editor
 {
@@ -52,10 +47,12 @@ namespace RoaringFangs.Animation.Editor
                 self.Selected = selected;
             }
         }
+
         public override void OnInspectorGUI()
         {
             _OnInspectorGUI();
         }
+
         protected void _OnInspectorGUI(params string[] propertyToExclude)
         {
             serializedObject.Update();

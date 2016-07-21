@@ -23,61 +23,65 @@ THE SOFTWARE.
 */
 
 using System;
-using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-
-using Midi;
-using Midi.Chunks;
-using Midi.Events;
-
-using RoaringFangs.Utility;
 
 namespace RoaringFangs.Formats.MIDI
 {
     public abstract class MIDIHelperBase
     {
         // Faux friend pattern.
+
         #region Virtual Methods
+
         protected virtual List<MIDIEventHelper> pEvents
         {
             get { return null; }
-            set {  }
+            set { }
         }
+
         protected virtual string pName
         {
             get { return null; }
             set { }
         }
-        protected virtual void pInclude(params Type[]  type)
+
+        protected virtual void pInclude(params Type[] type)
         {
         }
+
         protected virtual void pExclude(params Type[] type)
         {
         }
-        #endregion
+
+        #endregion Virtual Methods
+
         #region Static Methods
+
         protected static List<MIDIEventHelper> GetInternalListOfEvents(MIDIHelperBase self)
         {
             return self.pEvents;
         }
+
         protected static string GetName(MIDIHelperBase self)
         {
             return self.pName;
         }
+
         protected static void SetName(MIDIHelperBase self, string value)
         {
             self.pName = value;
         }
+
         protected static void Include(MIDIHelperBase self, Type type)
         {
             self.pInclude(type);
         }
+
         protected static void Exclude(MIDIHelperBase self, Type type)
         {
             self.pExclude(type);
         }
-        #endregion
+
+        #endregion Static Methods
     }
 }

@@ -23,19 +23,16 @@ THE SOFTWARE.
 */
 
 #if PSD_IMPORTER_MODULE && SPRITES_AND_BONES
-using UnityEngine;
-using UnityEditor;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
 using PhotoshopFile;
-using subjectnerdagreement.psdexport;
-
-using SpritesAndBones;
-
 using RoaringFangs.Utility;
+using SpritesAndBones;
+using subjectnerdagreement.psdexport;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
 namespace RoaringFangs.Animation.Editor
 {
@@ -71,11 +68,13 @@ namespace RoaringFangs.Animation.Editor
                             match_start_index = i;
                         depth++;
                         break;
+
                     case '}':
                         depth--;
                         if (depth == 0)
                             yield return text.Substring(match_start_index, i - match_start_index + 1);
                         break;
+
                     default:
                         break;
                 }
@@ -99,6 +98,7 @@ namespace RoaringFangs.Animation.Editor
         private class InlineMetadata
         {
             public IKMetadata IK;
+
             public override string ToString()
             {
                 return "< IK: " + IK.ToString() + ">";
@@ -109,6 +109,7 @@ namespace RoaringFangs.Animation.Editor
         {
             public string Parent;
             public int ChainLength = 1;
+
             public override string ToString()
             {
                 return "< Parent: " + Parent + ", ChainLength: " + ChainLength + ">";
@@ -128,6 +129,7 @@ namespace RoaringFangs.Animation.Editor
         }
 
         private BuildPSDArgs _Context;
+
         public BuildPSDArgs Context
         {
             get { return _Context; }
@@ -350,4 +352,5 @@ namespace RoaringFangs.Animation.Editor
         }
     }
 }
+
 #endif

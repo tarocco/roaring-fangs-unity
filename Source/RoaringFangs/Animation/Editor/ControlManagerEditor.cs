@@ -22,16 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using UnityEditor;
-using UnityEditor.AnimatedValues;
-
+using RoaringFangs.Utility;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-
-using RoaringFangs.Utility;
+using UnityEditor;
+using UnityEditor.AnimatedValues;
+using UnityEngine;
 
 namespace RoaringFangs.Animation.Editor
 {
@@ -66,6 +63,7 @@ namespace RoaringFangs.Animation.Editor
         private bool _DirtyInclude;
 
         private HashSet<Transform> _Include;
+
         private HashSet<Transform> Include
         {
             get
@@ -83,6 +81,7 @@ namespace RoaringFangs.Animation.Editor
         }
 
         private string _ControlManagerPath;
+
         private string ControlManagerPath
         {
             get
@@ -96,6 +95,7 @@ namespace RoaringFangs.Animation.Editor
             }
             set { _ControlManagerPath = value; }
         }
+
         private bool _PathChangeHandledOnceThisUpdate = false;
 
         public override void OnInspectorGUI()
@@ -191,7 +191,7 @@ namespace RoaringFangs.Animation.Editor
                 UnityEngine.GUI.enabled = gui_previously_enabled;
                 GUILayout.Space(0.5f * single_line_height);
                 show_children.target = EditorGUILayout.Foldout(show_children.target, current_game_object.name);
-                if(!show_children.value && current_mutex_helper)
+                if (!show_children.value && current_mutex_helper)
                 {
                     GUILayout.Space(Mathf.Lerp(0.25f, 1f, show_children.faded) * Screen.width);
                     UnityEditor.Editor editor;
@@ -200,7 +200,9 @@ namespace RoaringFangs.Animation.Editor
                     _Editors[current_component] = editor;
                     editor.OnInspectorGUI();
                 }
+
                 #region Context Menu
+
                 var last_rect = GUILayoutUtility.GetLastRect();
                 if (DidMouseInRect(e, EventType.MouseUp, 1, last_rect))
                 {
@@ -212,9 +214,12 @@ namespace RoaringFangs.Animation.Editor
                     right_click_menu.ShowAsContext();
                     e.Use();
                 }
-                #endregion
+
+                #endregion Context Menu
             }
+
             #region Contents Drawing
+
             //bool gui_enabled_at_start = UnityEngine.GUI.enabled;
             //UnityEngine.GUI.enabled &= current_game_object.activeSelf;
             //EditorGUI.indentLevel++;
@@ -258,7 +263,8 @@ namespace RoaringFangs.Animation.Editor
             }
             //EditorGUI.indentLevel--;
             //UnityEngine.GUI.enabled = gui_enabled_at_start;
-            #endregion
+
+            #endregion Contents Drawing
         }
 
         private void CreateChild<T>(object data) where T : class
@@ -306,7 +312,7 @@ namespace RoaringFangs.Animation.Editor
             bool descendants_affected =
                 Paths.IsSubPath(ControlManagerPath, args.OldPath) ||
                 Paths.IsSubPath(ControlManagerPath, args.NewPath);
-            if(descendants_affected)
+            if (descendants_affected)
             {
                 _Include = null;
                 _PathChangeHandledOnceThisUpdate = true;

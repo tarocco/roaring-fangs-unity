@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
 
 namespace RoaringFangs.GUI
 {
@@ -31,6 +30,7 @@ namespace RoaringFangs.GUI
     {
         [SerializeField]
         private Transform _AnchorWidth;
+
         public Transform AnchorWidth
         {
             get { return _AnchorWidth; }
@@ -38,6 +38,7 @@ namespace RoaringFangs.GUI
 
         [SerializeField]
         private Transform _AnchorHeight;
+
         public Transform MyProperty
         {
             get { return _AnchorHeight; }
@@ -45,6 +46,7 @@ namespace RoaringFangs.GUI
 
         [SerializeField]
         private RectTransform _RectTransform;
+
         public RectTransform RectTransform
         {
             get { return _RectTransform; }
@@ -52,22 +54,26 @@ namespace RoaringFangs.GUI
 
         [SerializeField]
         private SkinnedMeshRenderer _Renderer;
+
         public SkinnedMeshRenderer Renderer
         {
             get { return _Renderer; }
         }
 
-
         [SerializeField]
         private float _Border = 1f;
+
         public float Border
         {
             get { return _Border; }
             set { CalculateDimensions(value, _Width, _Height, false); }
         }
+
         private float _Stretch = 1f;
+
         [SerializeField]
         private float _Width = 0f;
+
         public float Width
         {
             get { return _Width; }
@@ -76,28 +82,27 @@ namespace RoaringFangs.GUI
 
         [SerializeField]
         private float _Height = 0f;
+
         public float Height
         {
             get { return _Height; }
             set { CalculateDimensions(_Border, _Width, value, false); }
         }
 
-        void Start()
+        private void Start()
         {
-
         }
 
-        void Update()
+        private void Update()
         {
-
         }
 
-        void OnValidate()
+        private void OnValidate()
         {
             CalculateDimensions(_Border, _Width, _Height, true);
         }
 
-        void CalculateDimensions(float border, float width, float height, bool flush)
+        private void CalculateDimensions(float border, float width, float height, bool flush)
         {
             border = Mathf.Max(0.01f, border);
             if (flush || border != _Border)
@@ -141,6 +146,7 @@ namespace RoaringFangs.GUI
                 _Height = height;
             }
         }
+
         private static void UpdateRendererBounds(SkinnedMeshRenderer renderer, Vector3 size, float border)
         {
             float border_2 = 2f * border;
@@ -148,6 +154,7 @@ namespace RoaringFangs.GUI
                 (size) / 2f,
                 size + new Vector3(1, 1));
         }
+
         /*
         void OnDrawGizmos()
         {

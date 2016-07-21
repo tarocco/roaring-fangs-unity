@@ -22,19 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
 #if UNITY_EDITOR
-using UnityEditor;
 #endif
-
-using System;
-using System.Collections.Generic;
 
 namespace RoaringFangs.Attributes
 {
     public class AutoMinMaxAttribute : AutoPropertyAttribute
     {
-        public AutoMinMaxAttribute(float min, float max):
+        public AutoMinMaxAttribute(float min, float max) :
         base()
         {
             DrawPropertyField = MinMaxField(min, max);

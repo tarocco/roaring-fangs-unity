@@ -22,13 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-
 using RoaringFangs.Attributes;
 using RoaringFangs.Utility;
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace RoaringFangs.Animation
 {
@@ -36,6 +34,7 @@ namespace RoaringFangs.Animation
     {
         [SerializeField, AutoProperty]
         private TargetGroupMode _Mode;
+
         public TargetGroupMode Mode
         {
             get
@@ -46,6 +45,7 @@ namespace RoaringFangs.Animation
 
         [SerializeField]
         private TransformUtils.ITransformD[] _Targets;
+
         public IEnumerable<TransformUtils.ITransformD> Targets
         {
             get { return _Targets; }
@@ -57,7 +57,7 @@ namespace RoaringFangs.Animation
             {
                 throw new NotImplementedException();
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Debug.LogWarning(ex);
             }

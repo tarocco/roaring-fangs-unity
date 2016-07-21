@@ -22,11 +22,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-
-using RoaringFangs.Utility;
 using System;
 
 namespace RoaringFangs.Animation
@@ -40,26 +35,33 @@ namespace RoaringFangs.Animation
                 default:
                 case TargetGroupMode.Set:
                     return Right;
+
                 case TargetGroupMode.AND:
                     return And;
+
                 case TargetGroupMode.OR:
                     return Or;
+
                 case TargetGroupMode.XOR:
                     return Xor;
             }
         }
+
         private static bool Right(bool left, bool right)
         {
             return right;
         }
+
         private static bool And(bool left, bool right)
         {
             return left && right;
         }
+
         private static bool Or(bool left, bool right)
         {
             return left || right;
         }
+
         private static bool Xor(bool left, bool right)
         {
             return left ^ right;

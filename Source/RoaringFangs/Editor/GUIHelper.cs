@@ -22,10 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
 using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
+using UnityEngine;
 
 namespace RoaringFangs.Editor
 {
@@ -35,6 +33,7 @@ namespace RoaringFangs.Editor
         public static Color Red = new Color(1.0f, 0.8f, 0.8f);
 
         private static GUIStyle _StyleButtonBold;
+
         public static GUIStyle StyleButtonBold
         {
             get
@@ -49,6 +48,7 @@ namespace RoaringFangs.Editor
         }
 
         private static GUIStyle _StyleLabelHeaderHint;
+
         public static GUIStyle StyleLabelHeaderHint
         {
             get

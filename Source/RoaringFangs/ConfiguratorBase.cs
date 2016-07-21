@@ -1,6 +1,5 @@
-﻿using UnityEngine;
-
-using RoaringFangs.Utility;
+﻿using RoaringFangs.Utility;
+using UnityEngine;
 
 namespace RoaringFangs
 {

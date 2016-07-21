@@ -23,12 +23,11 @@ THE SOFTWARE.
 */
 
 #if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
+
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using UnityEditor;
+using UnityEngine;
 
 namespace RoaringFangs.Editor
 {
@@ -36,9 +35,12 @@ namespace RoaringFangs.Editor
     public static class AnimationHelper
     {
         private const string FTFY = " ==> ";
+
         #region Preferences
+
         private const string EnableStickyPropertiesKeyName = "RoaringFangs.Editor.AnimationHelper.EnableStickyProperties";
         private static bool? _EnableStickyProperties;
+
         public static bool EnableStickyProperties
         {
             get
@@ -49,14 +51,16 @@ namespace RoaringFangs.Editor
             }
             set
             {
-                if(value != _EnableStickyProperties)
+                if (value != _EnableStickyProperties)
                 {
                     EditorPrefs.SetBool(EnableStickyPropertiesKeyName, value);
                     _EnableStickyProperties = value;
                 }
             }
         }
-        #endregion
+
+        #endregion Preferences
+
         private static readonly Regex Slashes = new Regex("/+");
         private static readonly string SlashesReplacement = "/";
         private static readonly Regex Parent = new Regex("\\/*[^\\/]*\\/\\.\\.");
@@ -67,6 +71,7 @@ namespace RoaringFangs.Editor
             path = Parent.Replace(path, string.Empty);
             return path;
         }
+
         /// <summary>
         /// Fixes this shit: https://feedback.unity3d.com/suggestions/allow-retargeting-specific-animation-properties
         /// TODO: make this event-driven like <see cref="EditorApplication.hierarchyWindowChanged"/>
@@ -109,11 +114,12 @@ namespace RoaringFangs.Editor
                     }
                 }
             }
-            catch(NullReferenceException ex)
+            catch (NullReferenceException ex)
             {
                 // Suppress until I figure out a way to not spam users (esp. animators)
             }
         }
+
         private static void HandleHierarchyObjectPathChanged(object sender, EditorHelper.HierarchyObjectPathChangedEventArgs args)
         {
             if (EnableStickyProperties)
@@ -153,6 +159,7 @@ namespace RoaringFangs.Editor
                 }
             }
         }
+
         static AnimationHelper()
         {
             EditorApplication.update += HandleUpdate;
@@ -160,4 +167,5 @@ namespace RoaringFangs.Editor
         }
     }
 }
+
 #endif

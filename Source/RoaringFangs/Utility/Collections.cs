@@ -22,11 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace RoaringFangs.Utility
 {
@@ -51,6 +47,7 @@ namespace RoaringFangs.Utility
                 index++;
             }
         }
+
         public static long Count<T>(this IEnumerable<T> collection)
         {
             long counter = 0;
@@ -59,6 +56,7 @@ namespace RoaringFangs.Utility
                 counter++;
             return counter;
         }
+
         public static TValue GetOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> self, TKey key)
         {
             TValue value;

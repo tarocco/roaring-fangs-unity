@@ -23,13 +23,13 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
 
 namespace RoaringFangs.Utility
 {
     public static partial class Assets
     {
         #region File Management
+
         public static string StreamingAssetsPathCombine(params string[] elements)
         {
             string[] elements_trimmed = new string[elements.Length];
@@ -39,6 +39,7 @@ namespace RoaringFangs.Utility
             string path_uri_fixed = new System.Uri(path_joined).ToString().Replace("\\", "/");
             return path_uri_fixed;
         }
-        #endregion
+
+        #endregion File Management
     }
 }

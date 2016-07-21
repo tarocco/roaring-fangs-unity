@@ -22,15 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using UnityEditor;
-
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-
 using RoaringFangs.Attributes;
-using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
 namespace RoaringFangs.Editor
 {

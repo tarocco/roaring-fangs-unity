@@ -23,13 +23,11 @@ THE SOFTWARE.
 */
 
 #if SPRITES_AND_BONES
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
 
 using RoaringFangs.Utility;
-
 using SpritesAndBones;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace RoaringFangs.Animation.Extra
 {
@@ -51,10 +49,12 @@ namespace RoaringFangs.Animation.Extra
 
         public bool OptionOperateOnMatchingBones = true;
         public bool OptionAssimilateAlignGroups = true;
+
         public IEnumerable<Transform> AllDescendants
         {
             get { return TransformUtils.GetAllDescendants(transform); }
         }
+
         public IEnumerable<Transform> GetBones(string prefix, bool matching)
         {
             if (matching)
@@ -62,12 +62,14 @@ namespace RoaringFangs.Animation.Extra
             else
                 return TransformUtils.GetTransforms(GetComponentsInChildren<Bone>());
         }
+
         public IEnumerable<Transform> GetRootAndBones(string prefix, bool matching)
         {
             yield return transform;
-            foreach(Transform t in GetBones(prefix, matching))
+            foreach (Transform t in GetBones(prefix, matching))
                 yield return t;
         }
+
         public IEnumerable<Transform> GetGroups(string prefix, bool matching)
         {
             if (matching)
@@ -143,7 +145,7 @@ namespace RoaringFangs.Animation.Extra
             TransformUtils.SetTransformParentDelegate set_parent = null)
         {
             // Default to SetTransformParent
-            if(set_parent == null)
+            if (set_parent == null)
                 set_parent = TransformUtils.SetTransformParent;
             foreach (Relationship relationship in relationships)
             {
@@ -191,4 +193,5 @@ namespace RoaringFangs.Animation.Extra
         }
     }
 }
+
 #endif

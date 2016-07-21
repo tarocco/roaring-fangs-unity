@@ -23,8 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using UnityEngine.Rendering;
-using System.Collections;
 
 namespace RoaringFangs.GSR
 {
@@ -33,7 +31,8 @@ namespace RoaringFangs.GSR
     {
         public string SortingLayerName = "Default";
         public int SortingOrder = 0;
-        void Start()
+
+        private void Start()
         {
             Renderer renderer = GetComponent<Renderer>();
             if (renderer != null)
@@ -42,7 +41,8 @@ namespace RoaringFangs.GSR
                 renderer.sortingOrder = SortingOrder;
             }
         }
-        void Update()
+
+        private void Update()
         {
             Renderer renderer = GetComponent<Renderer>();
             if (renderer != null &&

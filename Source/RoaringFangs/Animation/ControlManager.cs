@@ -23,12 +23,14 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+
 #if UNITY_EDITOR
+
 using UnityEditor;
+
 #endif
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -44,16 +46,23 @@ namespace RoaringFangs.Animation
     public class ControlManager : MonoBehaviour, IHasHierarchyIcons
     {
 #if UNITY_EDITOR
+
         [HideInInspector, SerializeField]
         public bool Editor__ShowTargetGroups;
+
         [HideInInspector, SerializeField]
         public UnityEngine.Object[] Editor__TargetGroupsShown;
+
 #endif
         public static Texture2D HIControlManager { get; protected set; }
+
         #region Subject
+
         #region Subject Paths
+
         [SerializeField, HideInInspector]
         private string _SubjectPath;
+
         public string SubjectPath
         {
             get { return _SubjectPath; }
@@ -84,12 +93,14 @@ namespace RoaringFangs.Animation
                 }
             }
         }
+
         private string _SubjectPathAbs;
+
         public string SubjectPathAbs
         {
             get
             {
-                if(_SubjectPathAbs == null)
+                if (_SubjectPathAbs == null)
                     _SubjectPathAbs = TransformUtils.GetTransformPathRelative(transform, _SubjectPath);
                 return _SubjectPathAbs;
             }
@@ -120,9 +131,12 @@ namespace RoaringFangs.Animation
                 }
             }
         }
-        #endregion
+
+        #endregion Subject Paths
+
         [SerializeField, HideInInspector]
         private GameObject _Subject;
+
         public GameObject Subject
         {
             get
@@ -171,7 +185,7 @@ namespace RoaringFangs.Animation
             }
         }
 
-        #endregion
+        #endregion Subject
 
         #region Cached Subject Descendants
 
@@ -214,7 +228,6 @@ namespace RoaringFangs.Animation
                     NotifyControlGroupsOfSubjectDescendants(null);
                     Debug.Log("Cleared Descendants", this);
                 }
-
             }
         }
 
@@ -241,13 +254,14 @@ namespace RoaringFangs.Animation
             return TransformUtils.GetAllDescendantsWithPaths(Subject.transform.parent, Subject.transform, transform);
         }
 
-        #endregion
+        #endregion Cached Subject Descendants
 
         #region Targets
 
         private struct TargetInfo
         {
             public readonly int Depth;
+
             public TargetInfo(int depth)
             {
                 Depth = depth;
@@ -268,9 +282,9 @@ namespace RoaringFangs.Animation
 
         private Dictionary<Transform, TargetInfo> TargetDataPrevious = new Dictionary<Transform, TargetInfo>();
 
-        #endregion
+        #endregion Targets
 
-        void OnEnable()
+        private void OnEnable()
         {
 #if UNITY_EDITOR
             if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
@@ -286,7 +300,7 @@ namespace RoaringFangs.Animation
 #endif
         }
 
-        void OnDisable()
+        private void OnDisable()
         {
 #if UNITY_EDITOR
             RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
@@ -295,6 +309,7 @@ namespace RoaringFangs.Animation
 
 #if UNITY_EDITOR
         private bool PathChangeHandledOnceThisUpdate = false;
+
         private void HandleHierarchyObjectPathChanged(object sender, RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChangedEventArgs args)
         {
             // If the change had anything to do with the subject, notify control groups of the changes to the subject descendants
@@ -322,9 +337,10 @@ namespace RoaringFangs.Animation
                 }
             }
         }
+
 #endif
 
-        void Update()
+        private void Update()
         {
 #if UNITY_EDITOR
             PathChangeHandledOnceThisUpdate = false;
@@ -364,7 +380,9 @@ namespace RoaringFangs.Animation
             // Replace previous value dictionary with still-valid targets
             TargetDataPrevious = target_data_previous;
         }
+
 #if UNITY_EDITOR
+
         [MenuItem("Roaring Fangs/Animation/Control Manager", false, 0)]
         [MenuItem("GameObject/Roaring Fangs/Animation/Control Manager", false, 0)]
         public static ControlManager Create()
@@ -391,7 +409,7 @@ namespace RoaringFangs.Animation
             var icons = HierarchyIcons.GetIcons("ControlManager", HierarchyIcons.KeyMode.LowerCase);
             HIControlManager = icons.GetOrDefault("controlmanager.png");
         }
+
 #endif
     }
-
 }

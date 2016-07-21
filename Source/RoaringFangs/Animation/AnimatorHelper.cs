@@ -22,9 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using System.Collections;
 using RoaringFangs.Attributes;
+using UnityEngine;
 
 namespace RoaringFangs.Animation
 {
@@ -33,6 +32,7 @@ namespace RoaringFangs.Animation
     {
         [SerializeField, AutoProperty]
         private Animator _Animator;
+
         public Animator Animator
         {
             get
@@ -44,7 +44,7 @@ namespace RoaringFangs.Animation
             protected set { _Animator = value; }
         }
 
-        void Start()
+        private void Start()
         {
             Animator = GetComponent<Animator>();
         }
