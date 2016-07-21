@@ -211,6 +211,13 @@ namespace RoaringFangs.Utility
                     yield return child;
             }
         }
+
+        public static IEnumerable<Transform> GetChildren(Transform parent)
+        {
+            foreach (Transform child in parent)
+                yield return child;
+        }
+
         public static List<Transform> GetMatchingTransforms(Transform transform, string prefix)
         {
             List<Transform> matching = new List<Transform>();
@@ -234,7 +241,7 @@ namespace RoaringFangs.Utility
                 yield return ((GameObject)@object).transform;
         }
 
-        public static T GetComponentInChildrenExclusively<T>(Transform self) where T : Component
+        public static T GetComponentInChildrenExclusively<T>(Transform self) where T : class
         {
             foreach (Transform t in self)
             {
@@ -245,7 +252,7 @@ namespace RoaringFangs.Utility
             return null;
         }
 
-        public static IEnumerable<T> GetComponentsInChildrenExclusively<T>(Transform self) where T : Component
+        public static IEnumerable<T> GetComponentsInChildrenExclusively<T>(Transform self) where T : class
         {
             foreach (Transform t in self)
             {
@@ -256,7 +263,7 @@ namespace RoaringFangs.Utility
             }
         }
 
-        public static IEnumerable<T> GetComponents<T>(IEnumerable<Transform> transforms) where T : Component
+        public static IEnumerable<T> GetComponents<T>(IEnumerable<Transform> transforms) where T : class
         {
             foreach (Transform t in transforms)
             {
@@ -267,7 +274,7 @@ namespace RoaringFangs.Utility
             }
         }
 
-        public static IEnumerable<T> GetComponentsInDescendants<T>(Transform root, bool include_all = false) where T : Component
+        public static IEnumerable<T> GetComponentsInDescendants<T>(Transform root, bool include_all = false) where T : class
         {
             foreach (Transform t in root)
             {
@@ -283,7 +290,16 @@ namespace RoaringFangs.Utility
             }
         }
 
-        public static T GetComponentInParent<T>(Transform transform, bool include_all = false) where T : Component
+        public static IEnumerable<T> GetComponentsInDescendants<T>(IEnumerable<Transform> transforms, bool include_all = false) where T : class
+        {
+            foreach (Transform t in transforms)
+            {
+                foreach (T c in GetComponentsInDescendants<T>(t, include_all))
+                    yield return c;
+            }
+        }
+
+        public static T GetComponentInParent<T>(Transform transform, bool include_all = false) where T : class
         {
             if (include_all || transform.gameObject.activeSelf)
             {
@@ -311,11 +327,11 @@ namespace RoaringFangs.Utility
                 _Depth = depth;
             }
         }
-        public static IEnumerable<WithDepth<T>> GetComponentsInDescendantsWithDepth<T>(Transform root, bool include_all = false) where T : Component
+        public static IEnumerable<WithDepth<T>> GetComponentsInDescendantsWithDepth<T>(Transform root, bool include_all = false) where T : class
         {
             return GetComponentsInDescendantsWithDepth<T>(root, include_all, 0);
         }
-        public static IEnumerable<WithDepth<T>> GetComponentsInDescendantsWithDepth<T>(Transform root, bool include_all, int depth) where T : Component
+        public static IEnumerable<WithDepth<T>> GetComponentsInDescendantsWithDepth<T>(Transform root, bool include_all, int depth) where T : class
         {
             foreach (Transform t in root)
             {
@@ -387,6 +403,24 @@ namespace RoaringFangs.Utility
             }
             else
                 return path;
+        }
+
+        public static IEnumerable<Transform> Ancestors(Transform current)
+        {
+            while(current != null)
+            {
+                yield return current;
+                current = current.parent;
+            }
+        }
+
+        public static IEnumerable<Transform> Ancestors(IEnumerable<Transform> current)
+        {
+            foreach (Transform t in current)
+            {
+                foreach (Transform c in Ancestors(t))
+                    yield return c;
+            }
         }
         #endregion
     }

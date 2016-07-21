@@ -61,7 +61,7 @@ namespace RoaringFangs.Animation
         }
 
         [SerializeField, AutoProperty(Delayed = true)]
-        private string _Pattern;
+        private string _Pattern = "^$";
         public string Pattern
         {
             get { return _Pattern; }

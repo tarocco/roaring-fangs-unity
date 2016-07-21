@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 using System;
 using System.Collections;
@@ -157,7 +157,7 @@ namespace RoaringFangs.Visuals
             }
         }
 
-        [SerializeField, MinMax(0f, 1f), AutoProperty]
+        [SerializeField, AutoMinMax(0f, 1f)]
         private Vector2 _StraightenEnds = new Vector2(0f, 1f);
         public Vector2 StraightenEnds
         {

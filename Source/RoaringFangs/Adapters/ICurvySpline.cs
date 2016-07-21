@@ -14,5 +14,6 @@ namespace RoaringFangs.Adapters.FluffyUnderware.Curvy
         List<ICurvySplineSegment> ControlPoints { get; }
         bool Dirty { get; }
         Quaternion GetOrientationFast(float tf);
+        void Refresh();
     }
 }
