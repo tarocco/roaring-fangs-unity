@@ -23,8 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
-using System.Linq;
 
 namespace RoaringFangs.Utility
 {
@@ -32,9 +30,12 @@ namespace RoaringFangs.Utility
     {
         [SerializeField]
         private GameObject _Prefab;
+
         private GameObject _Instance;
+
         [SerializeField]
         private bool _DontDestroy = true;
+
         public bool DontDestroy
         {
             get { return _DontDestroy; }
@@ -42,7 +43,8 @@ namespace RoaringFangs.Utility
         }
 
         private static bool _singletonInstantiated;
-        void Awake()
+
+        private void Awake()
         {
             //var helpers = FindObjectsOfType<SingletonHelper>();
 
@@ -51,14 +53,14 @@ namespace RoaringFangs.Utility
             // I'm just gonna leave it there because I don't get it
             //if (helpers.All(s => s == this || s.name != name))
             //{
-                if (_singletonInstantiated)
-                    return;
+            if (_singletonInstantiated)
+                return;
 
-                _Instance = (GameObject)GameObject.Instantiate(_Prefab);
-                if(_DontDestroy)
-                    DontDestroyOnLoad(_Instance);
+            _Instance = (GameObject)GameObject.Instantiate(_Prefab);
+            if (_DontDestroy)
+                DontDestroyOnLoad(_Instance);
 
-                _singletonInstantiated = true;
+            _singletonInstantiated = true;
             //}
         }
     }

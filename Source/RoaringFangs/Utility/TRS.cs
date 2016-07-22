@@ -22,32 +22,44 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
 using UnityEngine;
 
 namespace RoaringFangs.Utility
 {
-    [Serializable]
-    public class ColorWrap
+    public struct TRS
     {
-        [JsonFx.Json.JsonIgnore]
-        public Color Color;
+        public Vector3 Position;
+        public Quaternion Rotation;
+        public Vector3 Scale;
 
-        [JsonFx.Json.JsonName("HexColor")]
-        public string HexColor
+        public static TRS Create(ref Matrix4x4 m)
         {
-            get { return Codec.ColorToARGB32String(Color); }
-            set { Color = Codec.ARGB32ToColor(value); }
+            return new TRS()
+            {
+                Position = GetPosition(ref m),
+                Rotation = GetRotation(ref m),
+                Scale = GetScale(ref m)
+            };
         }
 
-        public ColorWrap(Color color)
+        public static Vector3 GetPosition(ref Matrix4x4 m)
         {
-            Color = color;
+            return m.GetColumn(3);
         }
 
-        public ColorWrap() :
-            this(default(Color))
+        public static Quaternion GetRotation(ref Matrix4x4 m)
         {
+            return Quaternion.LookRotation(
+                    m.GetColumn(2),
+                    m.GetColumn(1));
+        }
+
+        public static Vector3 GetScale(ref Matrix4x4 m)
+        {
+            return new Vector3(
+                    m.GetColumn(0).magnitude,
+                    m.GetColumn(1).magnitude,
+                    m.GetColumn(2).magnitude);
         }
     }
 }

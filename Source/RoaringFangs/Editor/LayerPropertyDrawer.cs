@@ -1,12 +1,9 @@
-﻿using UnityEngine;
-using System.Collections;
-
-using RoaringFangs.Attributes;
+﻿using RoaringFangs.Attributes;
 
 namespace RoaringFangs.Editor
 {
-    using UnityEngine;
     using UnityEditor;
+    using UnityEngine;
 
     [CustomPropertyDrawer(typeof(LayerAttribute))]
     public class LayerDrawer : PropertyDrawer

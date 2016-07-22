@@ -22,27 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-
 using Midi;
 using Midi.Chunks;
-using Midi.Events;
-
-using RoaringFangs.Utility;
+using System.Collections.Generic;
 
 namespace RoaringFangs.Formats.MIDI
 {
     public class MIDIEventList : MIDIHelperBase
     {
         private List<MIDIEventHelper> _Events;
+
         public int NumberOfEvents
         {
             get { return _Events.Count; }
         }
+
         protected override List<MIDIEventHelper> pEvents
         {
             get
@@ -54,12 +48,15 @@ namespace RoaringFangs.Formats.MIDI
                 _Events = value;
             }
         }
+
         private string _Name;
+
         public string Name
         {
             get { return _Name; }
             private set { _Name = value; }
         }
+
         protected override string pName
         {
             get
@@ -71,6 +68,7 @@ namespace RoaringFangs.Formats.MIDI
                 Name = value;
             }
         }
+
         public bool GetEvent(int index, out MIDIEventHelper @event)
         {
             bool result = index >= 0 && index < _Events.Count;
@@ -80,6 +78,7 @@ namespace RoaringFangs.Formats.MIDI
                 @event = null;
             return result;
         }
+
         private IEnumerable<int> GetIndicesAfter(float beats)
         {
             // Index immediately after time
@@ -89,6 +88,7 @@ namespace RoaringFangs.Formats.MIDI
                 yield return i;
             }
         }
+
         /// <summary>
         /// Get all the notes after a given time
         /// </summary>
@@ -99,19 +99,23 @@ namespace RoaringFangs.Formats.MIDI
             foreach (int i in GetIndicesAfter(beats))
                 yield return _Events[i];
         }
+
         public IEnumerable<MIDIEventHelper> GetEventsAfter(int index)
         {
             for (; index < _Events.Count; index++)
                 yield return _Events[index];
         }
+
         private int FirstIndexAfterTime(float beats)
         {
             return FirstIndexAfterTime(beats, _Events.Count / 2);
         }
+
         private int FirstIndexAfterTime(float beats, int current_index)
         {
             return _FirstIndexAfterTime(beats, current_index, 2);
         }
+
         private int _FirstIndexAfterTime(float beats, int current_index, int depth)
         {
             // Edge cases
@@ -131,14 +135,15 @@ namespace RoaringFangs.Formats.MIDI
             if (here.TimeBeats > beats)
                 slide = -slide;
             return _FirstIndexAfterTime(beats, current_index + slide, depth + 1);
-
         }
+
         public IEnumerable<MIDIEventHelper> GetEventsUntil(int start_index, float beats)
         {
             MIDIEventHelper @event;
             while (GetEvent(start_index++, out @event) && @event.TimeBeats < beats)
                 yield return @event;
         }
+
         public MIDIEventList(MidiData midi_data, TrackChunk track, MIDIEventFilter filter)
         {
             // Calculate the time scale as the reciprocal of the MIDI time_division

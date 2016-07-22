@@ -23,8 +23,8 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+
 #if UNITY_EDITOR
-using UnityEditor;
 #endif
 
 namespace RoaringFangs.Attributes
@@ -32,17 +32,21 @@ namespace RoaringFangs.Attributes
     public class MinMaxAttribute : PropertyAttribute
     {
         private float _Min;
+
         public float Min
         {
             get { return _Min; }
             set { _Min = value; }
         }
+
         private float _Max;
+
         public float Max
         {
             get { return _Max; }
             set { _Max = value; }
         }
+
         public MinMaxAttribute(float min, float max)
         {
             Min = min;

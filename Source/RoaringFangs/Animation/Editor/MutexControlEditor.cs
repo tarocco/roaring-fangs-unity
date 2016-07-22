@@ -22,25 +22,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using UnityEditor;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-
-using RoaringFangs.Utility;
+using UnityEditor;
 
 namespace RoaringFangs.Animation.Editor
 {
     [CustomEditor(typeof(MutexHelper))]
-    public class MutexControlEditor : UnityEditor.Editor
+    public class MutexHelperEditor : UnityEditor.Editor
     {
-        public override void OnInspectorGUI()
+        protected static void DrawSelector(MutexHelper self, TargetGroupBase[] groups)
         {
-            serializedObject.Update();
-            MutexHelper self = (MutexHelper)target;
-            TargetGroupBase[] groups = self.Controls.OfType<TargetGroupBase>().ToArray();
             string[] group_names = groups.Select(g => g.name).ToArray();
             int index_selected = Math.Max(0, Array.IndexOf(groups, self.Selected));
             index_selected = EditorGUILayout.Popup(index_selected, group_names);
@@ -51,41 +43,43 @@ namespace RoaringFangs.Animation.Editor
                 selected = null;
             if (self.Selected != selected)
             {
-                Undo.RecordObjects(groups.Select(g=>g.gameObject).ToArray(), "Select Target Group");
+                Undo.RecordObjects(groups.Select(g => g.gameObject).ToArray(), "Select Target Group");
                 self.Selected = selected;
             }
+        }
 
-            #region I give up
-            /*
-            if (selected != null && self.Selected != selected)
-            {
-                var prop_selected = serializedObject.FindProperty("_Selected__encoded");
-                prop_selected.floatValue = new EncodedObjectReference<TargetGroupBehavior>(selected).GetEncodedID();
-                //Debug.Log("FOO: " + selected.GetInstanceID());
-                //Debug.Log("BAR: " + new EncodedObjectReference<TargetGroupBehavior>(self.transform, prop_selected.floatValue).GetInstanceID());
-                
-                var anim_clip = AnimationWindowUtils.GetCurrentActiveAnimationClip();
-                var bindings = AnimationUtility.GetCurveBindings(anim_clip);
-                var selected_encoded_bindings = bindings.Where(b => b.propertyName == "_Selected__encoded");
-                foreach (var binding in selected_encoded_bindings)
-                {
-                    var reference_curve = AnimationUtility.GetEditorCurve(anim_clip, binding);
-                    for (int i = 0; i < reference_curve.length; i++)
-                    {
-                        Keyframe k = reference_curve.keys[i];
-                        k.inTangent = float.PositiveInfinity;
-                        k.outTangent = float.PositiveInfinity;
-                        k.tangentMode = 31;
-                        reference_curve.keys[i] = k;
-                        Debug.Log(k);
-                    }
-                    AnimationUtility.SetEditorCurve(anim_clip, binding, reference_curve);
-                }
-            }
-            */
-            #endregion
+        public override void OnInspectorGUI()
+        {
+            _OnInspectorGUI();
+        }
 
-            DrawPropertiesExcluding(serializedObject);
+        protected void _OnInspectorGUI(params string[] propertyToExclude)
+        {
+            serializedObject.Update();
+            MutexHelper self = (MutexHelper)target;
+            TargetGroupBase[] groups = self.Controls.OfType<TargetGroupBase>().ToArray();
+            DrawSelector(self, groups);
+            DrawPropertiesExcluding(serializedObject, propertyToExclude);
+            serializedObject.ApplyModifiedProperties();
+        }
+    }
+
+    public class MutexHelperEditorBrief : MutexHelperEditor
+    {
+        public override void OnInspectorGUI()
+        {
+            base._OnInspectorGUI("m_Script");
+        }
+    }
+
+    public class MutexHelperEditorInline : MutexHelperEditor
+    {
+        public override void OnInspectorGUI()
+        {
+            serializedObject.Update();
+            MutexHelper self = (MutexHelper)target;
+            TargetGroupBase[] groups = self.Controls.OfType<TargetGroupBase>().ToArray();
+            DrawSelector(self, groups);
             serializedObject.ApplyModifiedProperties();
         }
     }

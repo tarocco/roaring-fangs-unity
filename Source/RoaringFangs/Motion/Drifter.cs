@@ -22,9 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace RoaringFangs.Motion
 {
@@ -42,11 +41,12 @@ namespace RoaringFangs.Motion
             public Vector3 p0;
             public Vector3 p1;
         }
+
         private List<LineSegment> LineSegments = new List<LineSegment>();
 
-        IEnumerator<float> TickTarget_F()
+        private IEnumerator<float> TickTarget_F()
         {
-            for (; ; )
+            for (;;)
             {
                 GetComponent<BouncyMove>().Target = TargetA;
                 yield return Interval;
@@ -54,11 +54,13 @@ namespace RoaringFangs.Motion
                 yield return Interval;
             }
         }
-        IEnumerator<WaitForSeconds> TickTarget() { yield return new WaitForSeconds(TickTarget_F().Current); }
 
-        IEnumerator<float> TickSegment_F()
+        private IEnumerator<WaitForSeconds> TickTarget()
+        { yield return new WaitForSeconds(TickTarget_F().Current); }
+
+        private IEnumerator<float> TickSegment_F()
         {
-            for (; ; )
+            for (;;)
             {
                 int last_idx = LineSegments.Count - 1;
                 Vector3 p = last_idx > 0 ? LineSegments[last_idx].p1 : transform.position;
@@ -67,16 +69,17 @@ namespace RoaringFangs.Motion
             }
         }
 
-        IEnumerator<float> _TickTarget_F;
-        IEnumerator<float> _TickSegment_F;
+        private IEnumerator<float> _TickTarget_F;
+        private IEnumerator<float> _TickSegment_F;
 
-        void Start()
+        private void Start()
         {
             //StartCoroutine("Tick");
             _TickTarget_F = TickTarget_F();
             _TickSegment_F = TickSegment_F();
         }
-        void Update()
+
+        private void Update()
         {
             if (Time.time > _TimeTargetTick)
             {
@@ -84,7 +87,8 @@ namespace RoaringFangs.Motion
                 _TimeTargetTick = Time.time + _TickTarget_F.Current;
             }
         }
-        void OnDrawGizmos()
+
+        private void OnDrawGizmos()
         {
             Gizmos.color = GetComponent<SpriteRenderer>().color;
             if (Time.time > _TimeDrawLineSegment)

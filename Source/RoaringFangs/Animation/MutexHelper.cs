@@ -23,15 +23,15 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 
-using RoaringFangs.Utility;
+#if UNITY_EDITOR
+
+using UnityEditor;
+
+#endif
+
+using System;
+using System.Collections.Generic;
 
 namespace RoaringFangs.Animation
 {
@@ -55,7 +55,7 @@ namespace RoaringFangs.Animation
         {
             get
             {
-                foreach(Transform t in transform)
+                foreach (Transform t in transform)
                 {
                     ITargetGroup ac = t.GetComponent<ITargetGroup>();
                     if (ac != null && ac.Active)
@@ -73,7 +73,9 @@ namespace RoaringFangs.Animation
                 }
             }
         }
+
 #if UNITY_EDITOR
+
         [MenuItem("Roaring Fangs/Animation/Mutex Helper", false, 0)]
         [MenuItem("GameObject/Roaring Fangs/Animation/Mutex Helper", false, 0)]
         [MenuItem("CONTEXT/ControlManager/Mutex Helper", false, 25)]
@@ -96,6 +98,7 @@ namespace RoaringFangs.Animation
             Selection.activeGameObject = mutex_helper_object;
             return mutex_helper;
         }
+
 #endif
     }
 }

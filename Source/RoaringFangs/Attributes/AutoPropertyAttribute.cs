@@ -23,9 +23,11 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+
 #if UNITY_EDITOR
+
 using UnityEditor;
-using RoaringFangs.Editor;
+
 #endif
 
 using System;
@@ -38,7 +40,9 @@ namespace RoaringFangs.Attributes
     public class AutoPropertyAttribute : PropertyAttribute
     {
 #if UNITY_EDITOR
+
         #region Types and Delegates
+
         /// <summary>
         /// A delegate type that handles drawing the PropertyField for a property
         /// </summary>
@@ -49,15 +53,19 @@ namespace RoaringFangs.Attributes
             public PropertyInfo PropertyInfo;
             public int TargetId;
         }
+
         private class PropertyInfoBindingValue
         {
             public WeakReference AutoPropertyAttributeWR;
             public WeakReference TargetWR;
         }
-        #endregion
+
+        #endregion Types and Delegates
 
         #region Instance Fields/Properties
+
         private bool _Delayed;
+
         /// <summary>
         /// Use delayed input for this property field. Compare to <seealso cref="DelayedAttribute"/>.
         /// </summary>
@@ -68,6 +76,7 @@ namespace RoaringFangs.Attributes
         }
 
         private FieldInfo _FieldInfo;
+
         public FieldInfo FieldInfo
         {
             get { return _FieldInfo; }
@@ -75,6 +84,7 @@ namespace RoaringFangs.Attributes
         }
 
         private PropertyInfo _PropertyInfo;
+
         /// <summary>
         /// PropertyInfo for property associated with the field with this drawer's AutoPropertyAttribute
         /// </summary>
@@ -85,6 +95,7 @@ namespace RoaringFangs.Attributes
         }
 
         private PropertyFieldHandler _DrawPropertyField = null;
+
         /// <summary>
         /// Draw method to use in OnGUI for this property
         /// </summary>
@@ -94,22 +105,28 @@ namespace RoaringFangs.Attributes
             protected set { _DrawPropertyField = value; }
         }
 
-        #endregion
+        #endregion Instance Fields/Properties
 
         #region Static Fields/Properties
+
         /// <summary>
         /// Characters to trim from field names when searching for corresponding properties
         /// </summary>
         private static readonly char[] _AutoPropertyTrimChars = { '_' };
+
         private static Dictionary<PropertyInfoBindingKey, PropertyInfoBindingValue> CachedAutoPropertyBindings =
             new Dictionary<PropertyInfoBindingKey, PropertyInfoBindingValue>();
+
         private const BindingFlags DefaultFlags =
             BindingFlags.GetProperty |
             BindingFlags.SetProperty |
             BindingFlags.Public |
             BindingFlags.NonPublic;
-        #endregion
+
+        #endregion Static Fields/Properties
+
         #region Instance Methods
+
         /// <summary>
         /// Perform late binding on target and handlers
         /// </summary>
@@ -162,8 +179,10 @@ namespace RoaringFangs.Attributes
             UpdateLateBindings(target);
         }
 
-        #endregion
+        #endregion Instance Methods
+
         #region Static Methods
+
         /// <summary>
         /// Gets the target's property info from field info and AutoPropertyAttribute
         /// </summary>
@@ -228,21 +247,25 @@ namespace RoaringFangs.Attributes
         }
 
         #region Field Proxies
+
         public static bool DelayedIntField(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.DelayedIntField(position, property, label);
             return false;
         }
+
         public static bool DelayedFloatField(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.DelayedFloatField(position, property, label);
             return false;
         }
+
         public static bool DelayedTextField(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.DelayedTextField(position, property, label);
             return false;
         }
+
         public static bool RangeField(Rect position, SerializedProperty property, GUIContent label, float min, float max)
         {
             switch (property.propertyType)
@@ -250,19 +273,22 @@ namespace RoaringFangs.Attributes
                 case SerializedPropertyType.Float:
                     property.floatValue = EditorGUI.Slider(position, label, property.floatValue, min, max);
                     return false;
+
                 case SerializedPropertyType.Integer:
                     property.intValue = EditorGUI.IntSlider(position, label, property.intValue, Mathf.FloorToInt(min), Mathf.FloorToInt(max));
                     return false;
             }
             return EditorGUI.PropertyField(position, property, label, true);
         }
+
         public static PropertyFieldHandler RangeField(float min, float max)
         {
             return (a, b, c) => RangeField(a, b, c, min, max);
         }
+
         public static bool MinMaxField(Rect position, SerializedProperty property, GUIContent label, float min, float max)
         {
-            Vector2 vector2Value; 
+            Vector2 vector2Value;
             float value_min, value_max;
             switch (property.propertyType)
             {
@@ -276,15 +302,18 @@ namespace RoaringFangs.Attributes
             }
             return EditorGUI.PropertyField(position, property, label, true);
         }
+
         public static PropertyFieldHandler MinMaxField(float min, float max)
         {
             return (a, b, c) => MinMaxField(a, b, c, min, max);
         }
+
         public static bool PropertyFieldIncludingChildren(Rect position, SerializedProperty property, GUIContent label)
         {
             return EditorGUI.PropertyField(position, property, label, true);
         }
-        #endregion
+
+        #endregion Field Proxies
 
         /// <summary>
         /// Gets the cortrect property field drawing method for a given SerializedProperty.
@@ -298,8 +327,10 @@ namespace RoaringFangs.Attributes
                 {
                     case SerializedPropertyType.Integer:
                         return DelayedIntField;
+
                     case SerializedPropertyType.Float:
                         return DelayedFloatField;
+
                     case SerializedPropertyType.String:
                         return DelayedTextField;
                 }
@@ -325,15 +356,21 @@ namespace RoaringFangs.Attributes
             return PropertyFieldIncludingChildren;
         }
 
-        #endregion
+        #endregion Static Methods
+
         #region Static Constructor
+
         static AutoPropertyAttribute()
         {
             Undo.undoRedoPerformed += HandleUndoRedoPerformedAll;
         }
-        #endregion
+
+        #endregion Static Constructor
+
 #endif
+
         #region Instance Constructors
+
         public AutoPropertyAttribute() :
             base()
         {
@@ -347,6 +384,7 @@ namespace RoaringFangs.Attributes
                 PropertyInfo = type.GetProperty(property_name, DefaultFlags);
 #endif
         }
-        #endregion
+
+        #endregion Instance Constructors
     }
 }

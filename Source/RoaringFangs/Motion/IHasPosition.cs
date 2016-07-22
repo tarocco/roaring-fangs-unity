@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
 
 namespace RoaringFangs.Motion
 {

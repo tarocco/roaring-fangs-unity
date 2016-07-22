@@ -22,16 +22,18 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
 using System;
+using UnityEngine;
 
 namespace RoaringFangs.Utility
 {
     public static partial class Codec
     {
         #region Color
+
         public const float RecipByteMaxF = 0.0039215686274509803921568627451f;
         public const float ByteMaxF = 255f;
+
         public static Color ARGB32ToColor(uint argb)
         {
             return new Color(
@@ -40,6 +42,7 @@ namespace RoaringFangs.Utility
                 RecipByteMaxF * (argb & 0xFF),
                 RecipByteMaxF * (argb >> 24));
         }
+
         public static Color ARGB32ToColor(string argb_string)
         {
             if (argb_string.Length == 6)
@@ -47,6 +50,7 @@ namespace RoaringFangs.Utility
             uint argb = uint.Parse(argb_string, System.Globalization.NumberStyles.HexNumber);
             return ARGB32ToColor(argb);
         }
+
         public static int ColorToARGB32(Color color)
         {
             return (Mathf.FloorToInt(ByteMaxF * color.a) << 24)
@@ -54,12 +58,16 @@ namespace RoaringFangs.Utility
                 | (Mathf.FloorToInt(ByteMaxF * color.g) << 8)
                 | Mathf.FloorToInt(ByteMaxF * color.b);
         }
+
         public static string ColorToARGB32String(Color color)
         {
             return ColorToARGB32(color).ToString("X");
         }
-        #endregion
+
+        #endregion Color
+
         #region Time
+
         public static string SecondsToMinSecMS(float seconds, bool always_show_minutes = true)
         {
             int seconds_floored_abs = Mathf.Abs(Mathf.FloorToInt(seconds));
@@ -69,6 +77,7 @@ namespace RoaringFangs.Utility
             string format = always_show_minutes || min > 0 ? "{0}{1}:{2,2:D2}:{3,3:D3}" : "{0}{2,2:D2}:{3,3:D3}";
             return String.Format(format, seconds < 0 ? "-" : "", min, sec, ms);
         }
-        #endregion
+
+        #endregion Time
     }
 }

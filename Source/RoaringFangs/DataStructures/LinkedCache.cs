@@ -22,10 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace RoaringFangs.DataStructures
 {
@@ -37,14 +34,17 @@ namespace RoaringFangs.DataStructures
             public LinkedElement Next;
             public LinkedElement Previous;
         }
+
         private struct LinkMappedEntry
         {
             public V Data;
             public LinkedElement Link;
         }
+
         private int _CacheSizeLimit;
         private LinkedElement Head, Tail;
         private Dictionary<K, LinkMappedEntry> _KeyLinkMap;
+
         public LinkedCache(int cache_size_limit = 256)
         {
             _CacheSizeLimit = cache_size_limit;
@@ -66,6 +66,7 @@ namespace RoaringFangs.DataStructures
             Head = link;
             return entry.Data;
         }
+
         public void Set(K key, V value)
         {
             if (_KeyLinkMap.Count == _CacheSizeLimit)
@@ -84,10 +85,11 @@ namespace RoaringFangs.DataStructures
                 Data = value,
                 Link = new_head,
             };
-            if(Head != null)
+            if (Head != null)
                 Head.Previous = new_head;
             Head = new_head;
         }
+
         public bool Contains(K key)
         {
             return _KeyLinkMap.ContainsKey(key);

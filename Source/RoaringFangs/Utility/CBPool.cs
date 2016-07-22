@@ -22,11 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace RoaringFangs.Utility
 {
@@ -88,11 +88,13 @@ namespace RoaringFangs.Utility
                     Debug.LogWarning("Skipping transform without gameObject property in pool");
             }
         }
+
         public IEnumerable<GameObject> ActiveElements()
         {
             foreach (GameObject pool_object in PoolData.Keys)
                 yield return pool_object;
         }
+
         protected virtual void Start()
         {
             _Cycle = _Cycle ?? CycleGenerator().GetEnumerator();
@@ -104,6 +106,7 @@ namespace RoaringFangs.Utility
         {
             _UpdateCoroutine.MoveNext();
         }
+
         /// <summary>
         /// Enumerator instance from UpdateCoroutine for this component
         /// </summary>
@@ -116,7 +119,7 @@ namespace RoaringFangs.Utility
         /// <returns>Cyclic enumerable</returns>
         protected IEnumerable UpdateCoroutine()
         {
-            for (; ; )
+            for (;;)
             {
                 if (PoolData.Count == 0)
                     yield return null;
@@ -135,6 +138,7 @@ namespace RoaringFangs.Utility
                 }
             }
         }
+
         /// <summary>
         /// Enumerable for retrieving an object from the pool
         /// Object will be activated before it is returned
@@ -145,7 +149,7 @@ namespace RoaringFangs.Utility
         /// </returns>
         protected IEnumerable<GameObject> CycleGenerator()
         {
-            for (; ; )
+            for (;;)
             {
                 foreach (GameObject game_object in PoolElements())
                 {

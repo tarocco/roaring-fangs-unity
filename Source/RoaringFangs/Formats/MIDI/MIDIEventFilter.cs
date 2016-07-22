@@ -22,17 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-
-using Midi;
-using Midi.Chunks;
 using Midi.Events;
-
-using RoaringFangs.Utility;
+using System;
+using System.Collections.Generic;
 
 namespace RoaringFangs.Formats.MIDI
 {
@@ -40,7 +32,7 @@ namespace RoaringFangs.Formats.MIDI
     {
         private List<Type> _Include;
         private List<Type> _Exclude;
-            
+
         /// <summary>
         /// Preset filter for Note on/off events
         /// </summary>
@@ -48,6 +40,7 @@ namespace RoaringFangs.Formats.MIDI
         {
             get { return _NotesOnOffFilter; }
         }
+
         private static readonly MIDIEventFilter _NotesOnOffFilter = new MIDIEventFilter();
 
         /// <summary>
@@ -57,7 +50,9 @@ namespace RoaringFangs.Formats.MIDI
         {
             get { return _TrackNameFilter; }
         }
+
         private static readonly MIDIEventFilter _TrackNameFilter = new MIDIEventFilter();
+
         static MIDIEventFilter()
         {
             NotesOnOffFilter.pInclude(
@@ -67,19 +62,23 @@ namespace RoaringFangs.Formats.MIDI
             TrackNameFilter.pInclude(
                 typeof(Midi.Events.MetaEvents.SequenceOrTrackNameEvent));
         }
+
         public MIDIEventFilter()
         {
             _Include = new List<Type>();
             _Exclude = new List<Type>();
         }
+
         protected override void pInclude(params Type[] types)
         {
             _Include.AddRange(types);
         }
+
         protected override void pExclude(params Type[] types)
         {
             _Include.AddRange(types);
         }
+
         public bool Accepts(MidiEvent m_e)
         {
             if (_Include.Count == 0)

@@ -8,14 +8,17 @@ namespace RoaringFangs.DataStructures
     {
         private IComparer<T> Comparer;
         private List<T> Items = new List<T>();
+
         public BinaryHeap()
             : this(Comparer<T>.Default)
         {
         }
+
         public BinaryHeap(IComparer<T> comp)
         {
             Comparer = comp;
         }
+
         /// <summary>
 
         /// Get a count of the number of items in the collection.
@@ -24,6 +27,7 @@ namespace RoaringFangs.DataStructures
         {
             get { return Items.Count; }
         }
+
         /// <summary>
         /// Removes all items from the collection.
         /// </summary>
@@ -31,6 +35,7 @@ namespace RoaringFangs.DataStructures
         {
             Items.Clear();
         }
+
         /// <summary>
         /// Sets the capacity to the actual number of elements in the BinaryHeap,
         /// if that number is less than a threshold value.
@@ -43,6 +48,7 @@ namespace RoaringFangs.DataStructures
         {
             Items.TrimExcess();
         }
+
         /// <summary>
         /// Inserts an item onto the heap.
         /// </summary>
@@ -59,6 +65,7 @@ namespace RoaringFangs.DataStructures
             }
             Items[i] = newItem;
         }
+
         /// <summary>
         /// Return the root item from the collection, without removing it.
         /// </summary>
@@ -72,6 +79,7 @@ namespace RoaringFangs.DataStructures
             }
             return Items[0];
         }
+
         /// <summary>
         /// Removes and returns the root item from the collection.
         /// </summary>
@@ -108,6 +116,7 @@ namespace RoaringFangs.DataStructures
             }
             return rslt;
         }
+
         IEnumerator<T> IEnumerable<T>.GetEnumerator()
         {
             foreach (var i in Items)
@@ -115,6 +124,7 @@ namespace RoaringFangs.DataStructures
                 yield return i;
             }
         }
+
         public IEnumerator GetEnumerator()
         {
             return GetEnumerator();

@@ -23,9 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
-
-using RoaringFangs.UserInput;
 
 namespace RoaringFangs.Motion
 {
@@ -35,15 +32,16 @@ namespace RoaringFangs.Motion
         //public Receiver Receiver;
         private float RayDistance = 100f;
 
-        void Start()
+        private void Start()
         {
             //Receiver.MultiMousePress += HandleMultiMousePress;
         }
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             //Receiver.MultiMousePress -= HandleMultiMousePress;
         }
+
         /*
         void HandleMultiMousePress(object sender, MultiMousePressEventArgs m_args)
         {
@@ -61,8 +59,9 @@ namespace RoaringFangs.Motion
             }
         }
         */
+
         // Update is called once per frame
-        void Update()
+        private void Update()
         {
         }
     }

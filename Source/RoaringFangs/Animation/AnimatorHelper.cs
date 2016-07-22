@@ -22,32 +22,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
+using RoaringFangs.Attributes;
 using UnityEngine;
 
-namespace RoaringFangs.Utility
+namespace RoaringFangs.Animation
 {
-    [Serializable]
-    public class ColorWrap
+    [RequireComponent(typeof(Animator))]
+    public class AnimatorHelper : MonoBehaviour
     {
-        [JsonFx.Json.JsonIgnore]
-        public Color Color;
+        [SerializeField, AutoProperty]
+        private Animator _Animator;
 
-        [JsonFx.Json.JsonName("HexColor")]
-        public string HexColor
+        public Animator Animator
         {
-            get { return Codec.ColorToARGB32String(Color); }
-            set { Color = Codec.ARGB32ToColor(value); }
+            get
+            {
+                if (_Animator == null)
+                    _Animator = GetComponent<Animator>();
+                return _Animator;
+            }
+            protected set { _Animator = value; }
         }
 
-        public ColorWrap(Color color)
+        private void Start()
         {
-            Color = color;
+            Animator = GetComponent<Animator>();
         }
 
-        public ColorWrap() :
-            this(default(Color))
+        public void SetTrigger(string name)
         {
+            Animator.SetTrigger(name);
+        }
+
+        public void ResetTrigger(string name)
+        {
+            Animator.ResetTrigger(name);
         }
     }
 }

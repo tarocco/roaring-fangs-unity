@@ -23,19 +23,18 @@ THE SOFTWARE.
 */
 
 #if UNITY_EDITOR
-using UnityEngine;
-using UnityEditor;
 
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
+using UnityEditor;
+using UnityEngine;
 
 namespace RoaringFangs.Editor
 {
     [InitializeOnLoad]
-    static class HierarchyIcons
+    internal static class HierarchyIcons
     {
         public enum KeyMode
         {
@@ -43,6 +42,7 @@ namespace RoaringFangs.Editor
             LowerCase,
             UpperCase
         }
+
         public static IDictionary<string, Texture2D> GetIcons(string class_name, KeyMode key_mode = KeyMode.Normal)
         {
             string label = class_name + ".HierarchyIcon";
@@ -53,6 +53,7 @@ namespace RoaringFangs.Editor
                 path => key_function(Path.GetFileName(path)),
                 path => AssetDatabase.LoadAssetAtPath<Texture2D>(path));
         }
+
         private static Func<string, string> GetKeyFunction(KeyMode key_mode)
         {
             switch (key_mode)
@@ -60,24 +61,30 @@ namespace RoaringFangs.Editor
                 default:
                 case KeyMode.Normal:
                     return Plain;
+
                 case KeyMode.LowerCase:
                     return ToLower;
+
                 case KeyMode.UpperCase:
                     return ToUpper;
             }
         }
+
         private static string Plain(string str)
         {
             return str;
         }
+
         private static string ToLower(string str)
         {
             return str.ToLower();
         }
+
         private static string ToUpper(string str)
         {
             return str.ToUpper();
         }
+
         private static void HandleHierarchyWindowItemOnGUI(int instance_id, Rect selection)
         {
             var @object = EditorUtility.InstanceIDToObject(instance_id);
@@ -95,10 +102,12 @@ namespace RoaringFangs.Editor
                 }
             }
         }
+
         static HierarchyIcons()
         {
             EditorApplication.hierarchyWindowItemOnGUI += HandleHierarchyWindowItemOnGUI;
         }
     }
 }
+
 #endif

@@ -24,7 +24,6 @@ THE SOFTWARE.
 
 using System;
 using UnityEngine;
-using System.Collections;
 
 namespace RoaringFangs.Utility
 {
@@ -33,10 +32,12 @@ namespace RoaringFangs.Utility
     {
         public string Text;
         public Color Color;
+
         public CoolText(string text) :
             this(text, Color.white)
         {
         }
+
         public CoolText(string text, Color color)
         {
             this.Text = text;

@@ -23,10 +23,9 @@ THE SOFTWARE.
 */
 
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
 
 namespace RoaringFangs.Utility
 {
@@ -37,6 +36,7 @@ namespace RoaringFangs.Utility
                 Path.DirectorySeparatorChar,
                 Path.AltDirectorySeparatorChar
             };
+
         public static readonly string DirectorySeparatorString =
             new String(Path.AltDirectorySeparatorChar, 1);
 
@@ -52,9 +52,11 @@ namespace RoaringFangs.Utility
                 {
                     case ".":
                         break;
+
                     case "..":
                         path_stack.Pop();
                         break;
+
                     default:
                         path_stack.Push(element);
                         break;

@@ -22,10 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace RoaringFangs.Utility
 {
@@ -34,6 +31,7 @@ namespace RoaringFangs.Utility
     {
         public T Key;
         public U Value;
+
         public KeyValuePair<T, U> Self
         {
             get
@@ -46,10 +44,11 @@ namespace RoaringFangs.Utility
                 Value = value.Value;
             }
         }
+
         public KVPWrap()
         {
-
         }
+
         public KVPWrap(KeyValuePair<T, U> self)
         {
             Key = self.Key;

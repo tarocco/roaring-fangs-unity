@@ -22,12 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-
-using RoaringFangs.Utility;
+using UnityEngine;
 
 namespace RoaringFangs.GUI
 {
@@ -35,12 +32,14 @@ namespace RoaringFangs.GUI
     public class Readout : MonoBehaviour
     {
         public UnityEngine.UI.Text Title;
+
         [Serializable]
         public class Entry
         {
             public UnityEngine.UI.Text LabelText;
             public UnityEngine.UI.Text ValueText;
             private object _Value;
+
             public object Value
             {
                 get
@@ -58,11 +57,11 @@ namespace RoaringFangs.GUI
         public Entry[] Entries;
         private Dictionary<string, Entry> NamedEntries = new Dictionary<string, Entry>();
 
-        void Start()
+        private void Start()
         {
         }
 
-        void Update()
+        private void Update()
         {
             if (Entries != null)
                 foreach (Entry entry in Entries)
@@ -71,6 +70,7 @@ namespace RoaringFangs.GUI
                         entry.ValueText = entry.LabelText.transform.GetChild(0).GetComponent<UnityEngine.UI.Text>();
                 }
         }
+
         /*
         public Entry RegisterEntry(string key, string label = null)
         {
@@ -87,6 +87,7 @@ namespace RoaringFangs.GUI
             return null;
         }
         */
+
         public Entry RegisterEntry(int index, string key, string label = null)
         {
             NamedEntries[key] = Entries[index];
@@ -96,18 +97,22 @@ namespace RoaringFangs.GUI
                 SetEntryLabel(key, key);
             return GetEntry(key);
         }
+
         public void UnregisterEntry(string key)
         {
             NamedEntries.Remove(key);
         }
+
         public void SetTitle(string title)
         {
             Title.text = title;
         }
+
         public void SetEntryLabel(string key, string label)
         {
             NamedEntries[key].LabelText.text = label;
         }
+
         public Entry GetEntry(string key)
         {
             // For some reason the regular KeyNotFoundException

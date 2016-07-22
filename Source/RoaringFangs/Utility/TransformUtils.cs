@@ -22,25 +22,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 namespace RoaringFangs.Utility
 {
     public class TransformUtils
     {
         #region Delegates
+
         public delegate T AddComponentDelegate<T>(GameObject game_object) where T : Component;
+
         public delegate void SetTransformParentDelegate(Transform t, Transform parent, bool worldPositionStays = true);
-        #endregion
+
+        #endregion Delegates
+
         #region Static Methods
+
         private static T AddComponent<T>(GameObject game_object) where T : Component
         {
             return game_object.AddComponent<T>();
         }
+
         public static IEnumerable<T> AddComponents<T>(
             IEnumerable<GameObject> game_objects,
             AddComponentDelegate<T> add_component = null)
@@ -60,6 +66,7 @@ namespace RoaringFangs.Utility
         {
             return GetAllDescendants((IEnumerable<Transform>)transforms);
         }
+
         public static IEnumerable<Transform> GetAllDescendants(IEnumerable<Transform> transforms)
         {
             foreach (Transform t in transforms)
@@ -74,38 +81,47 @@ namespace RoaringFangs.Utility
         }
 
         #region Interfaces
+
         public interface IHasDepth
         {
             int Depth { get; }
         }
+
         public interface IHasPath
         {
             string Path { get; }
         }
+
         public interface IHasTransform
         {
             Transform Transform { get; }
         }
+
         public interface ITransformD : IHasTransform, IHasDepth
         {
         }
+
         public interface ITransformDP : IHasTransform, IHasDepth, IHasPath
         {
         }
-        #endregion
+
+        #endregion Interfaces
 
         [Serializable]
         public struct TransformD : ITransformD
         {
             [SerializeField]
             private Transform _Transform;
+
             public Transform Transform
             {
                 get { return _Transform; }
                 private set { _Transform = value; }
             }
+
             [SerializeField]
             private int _Depth;
+
             public int Depth
             {
                 get { return _Depth; }
@@ -118,25 +134,31 @@ namespace RoaringFangs.Utility
                 _Depth = depth;
             }
         }
+
         [Serializable]
         public struct TransformDP : ITransformDP
         {
             [SerializeField]
             private Transform _Transform;
+
             public Transform Transform
             {
                 get { return _Transform; }
                 private set { _Transform = value; }
             }
+
             [SerializeField]
             private string _Path;
+
             public string Path
             {
                 get { return _Path; }
                 private set { _Path = value; }
             }
+
             [SerializeField]
             private int _Depth;
+
             public int Depth
             {
                 get { return _Depth; }
@@ -150,6 +172,7 @@ namespace RoaringFangs.Utility
                 _Path = path;
             }
         }
+
         public static string GetTransformPath(Transform parent, Transform child)
         {
             if (child.parent == null || child.parent == parent)
@@ -211,6 +234,13 @@ namespace RoaringFangs.Utility
                     yield return child;
             }
         }
+
+        public static IEnumerable<Transform> GetChildren(Transform parent)
+        {
+            foreach (Transform child in parent)
+                yield return child;
+        }
+
         public static List<Transform> GetMatchingTransforms(Transform transform, string prefix)
         {
             List<Transform> matching = new List<Transform>();
@@ -234,7 +264,7 @@ namespace RoaringFangs.Utility
                 yield return ((GameObject)@object).transform;
         }
 
-        public static T GetComponentInChildrenExclusively<T>(Transform self) where T : Component
+        public static T GetComponentInChildrenExclusively<T>(Transform self) where T : class
         {
             foreach (Transform t in self)
             {
@@ -245,7 +275,7 @@ namespace RoaringFangs.Utility
             return null;
         }
 
-        public static IEnumerable<T> GetComponentsInChildrenExclusively<T>(Transform self) where T : Component
+        public static IEnumerable<T> GetComponentsInChildrenExclusively<T>(Transform self) where T : class
         {
             foreach (Transform t in self)
             {
@@ -256,7 +286,7 @@ namespace RoaringFangs.Utility
             }
         }
 
-        public static IEnumerable<T> GetComponents<T>(IEnumerable<Transform> transforms) where T : Component
+        public static IEnumerable<T> GetComponents<T>(IEnumerable<Transform> transforms) where T : class
         {
             foreach (Transform t in transforms)
             {
@@ -267,7 +297,7 @@ namespace RoaringFangs.Utility
             }
         }
 
-        public static IEnumerable<T> GetComponentsInDescendants<T>(Transform root, bool include_all = false) where T : Component
+        public static IEnumerable<T> GetComponentsInDescendants<T>(Transform root, bool include_all = false) where T : class
         {
             foreach (Transform t in root)
             {
@@ -283,7 +313,16 @@ namespace RoaringFangs.Utility
             }
         }
 
-        public static T GetComponentInParent<T>(Transform transform, bool include_all = false) where T : Component
+        public static IEnumerable<T> GetComponentsInDescendants<T>(IEnumerable<Transform> transforms, bool include_all = false) where T : class
+        {
+            foreach (Transform t in transforms)
+            {
+                foreach (T c in GetComponentsInDescendants<T>(t, include_all))
+                    yield return c;
+            }
+        }
+
+        public static T GetComponentInParent<T>(Transform transform, bool include_all = false) where T : class
         {
             if (include_all || transform.gameObject.activeSelf)
             {
@@ -300,22 +339,26 @@ namespace RoaringFangs.Utility
         {
             public readonly T Self;
             private int _Depth;
+
             public int Depth
             {
                 get { return _Depth; }
                 private set { _Depth = value; }
             }
+
             public WithDepth(T self, int depth)
             {
                 Self = self;
                 _Depth = depth;
             }
         }
-        public static IEnumerable<WithDepth<T>> GetComponentsInDescendantsWithDepth<T>(Transform root, bool include_all = false) where T : Component
+
+        public static IEnumerable<WithDepth<T>> GetComponentsInDescendantsWithDepth<T>(Transform root, bool include_all = false) where T : class
         {
             return GetComponentsInDescendantsWithDepth<T>(root, include_all, 0);
         }
-        public static IEnumerable<WithDepth<T>> GetComponentsInDescendantsWithDepth<T>(Transform root, bool include_all, int depth) where T : Component
+
+        public static IEnumerable<WithDepth<T>> GetComponentsInDescendantsWithDepth<T>(Transform root, bool include_all, int depth) where T : class
         {
             foreach (Transform t in root)
             {
@@ -329,11 +372,13 @@ namespace RoaringFangs.Utility
                 }
             }
         }
+
         public static IEnumerable<GameObject> FindAll(params string[] paths)
         {
             foreach (string path in paths)
                 yield return GameObject.Find(path);
         }
+
         public static bool IsDescendant(Transform parent, Transform descendant)
         {
             if (descendant.parent == parent)
@@ -388,6 +433,25 @@ namespace RoaringFangs.Utility
             else
                 return path;
         }
-        #endregion
+
+        public static IEnumerable<Transform> Ancestors(Transform current)
+        {
+            while (current != null)
+            {
+                yield return current;
+                current = current.parent;
+            }
+        }
+
+        public static IEnumerable<Transform> Ancestors(IEnumerable<Transform> current)
+        {
+            foreach (Transform t in current)
+            {
+                foreach (Transform c in Ancestors(t))
+                    yield return c;
+            }
+        }
+
+        #endregion Static Methods
     }
 }

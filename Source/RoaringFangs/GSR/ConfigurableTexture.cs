@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
 using System;
+using UnityEngine;
 
 namespace RoaringFangs.GSR
 {
@@ -31,15 +31,20 @@ namespace RoaringFangs.GSR
     public class ConfigurableRenderTexture : ITexturable
     {
         public bool AutoResize;
+
         [Range(1, 16)]
         public int SquashPower = 8;
+
         [Range(1, 16)]
         public int StretchPower = 6;
+
         public RenderTexture Reference;
         private RenderTexture _Texture = null;
+
         public Texture Texture
         {
-            get {
+            get
+            {
                 if (_Texture != null)
                     return _Texture;
                 return Reference;
@@ -58,6 +63,7 @@ namespace RoaringFangs.GSR
                 */
             }
         }
+
         public void Resize()
         {
             StretchPower = Mathf.Min(SquashPower, StretchPower);

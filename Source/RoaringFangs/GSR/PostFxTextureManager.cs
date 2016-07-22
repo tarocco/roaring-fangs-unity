@@ -23,8 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System;
-using System.Collections;
 
 namespace RoaringFangs.GSR
 {
@@ -33,22 +31,25 @@ namespace RoaringFangs.GSR
     {
         [SerializeField]
         private ConfigurableRenderTexture _ConfigurableTexture;
+
         public ConfigurableRenderTexture ConfigurableTexture
         {
             get { return _ConfigurableTexture; }
             private set { _ConfigurableTexture = value; }
         }
+
         public override Texture Texture
         {
             get { return ConfigurableTexture.Texture; }
             set { ConfigurableTexture.Texture = value; }
         }
-        void Start()
+
+        private void Start()
         {
             ConfigurableTexture.Resize();
         }
 
-        void OnPreRender()
+        private void OnPreRender()
         {
             if (ConfigurableTexture.AutoResize)
                 ConfigurableTexture.Resize();

@@ -23,16 +23,13 @@ THE SOFTWARE.
 */
 
 #if SPRITES_AND_BONES
-using UnityEngine;
-using UnityEditor;
-using System.Collections;
-using System.Collections.Generic;
 
-using RoaringFangs.Animation.Extra;
-using RoaringFangs.Utility;
 using RoaringFangs.Editor;
-
+using RoaringFangs.Utility;
 using SpritesAndBones;
+using System.Collections.Generic;
+using UnityEditor;
+using UnityEngine;
 
 namespace RoaringFangs.Animation.Extra.Editor
 {
@@ -40,15 +37,16 @@ namespace RoaringFangs.Animation.Extra.Editor
     [CanEditMultipleObjects]
     public class SkeletonHelperEditor : UnityEditor.Editor
     {
-        SkeletonHelper Self;
-        GameObject AssimilationObject;
+        private SkeletonHelper Self;
+        private GameObject AssimilationObject;
 
-        bool HasBones;
-        
-        void OnEnable()
+        private bool HasBones;
+
+        private void OnEnable()
         {
             Self = (SkeletonHelper)target;
         }
+
         public override void OnInspectorGUI()
         {
             HasBones = Self.GetComponentsInChildren<Bone>().Length > 0;
@@ -74,15 +72,16 @@ namespace RoaringFangs.Animation.Extra.Editor
 
             bool has_bones_effectively = HasBones || Self.OptionOperateOnMatchingBones;
 
-            #endregion
+            #endregion Inspector Setup
 
             #region Operations
+
             EditorGUILayout.LabelField("Operations", GUIHelper.StyleLabelHeaderHint);
 
             #region Create Bones
 
             EditorGUILayout.BeginHorizontal();
-            
+
             UnityEngine.GUI.color = GUIHelper.Green;
             if (GUILayout.Button("Create Bones"))
             {
@@ -98,7 +97,7 @@ namespace RoaringFangs.Animation.Extra.Editor
 
             EditorGUILayout.EndHorizontal();
 
-            #endregion
+            #endregion Create Bones
 
             UnityEngine.GUI.enabled = gui_enabled && has_bones_effectively;
 
@@ -122,7 +121,7 @@ namespace RoaringFangs.Animation.Extra.Editor
 
             EditorGUILayout.EndHorizontal();
 
-            #endregion
+            #endregion Align Bones & Groups
 
             #region Linkage
 
@@ -134,7 +133,7 @@ namespace RoaringFangs.Animation.Extra.Editor
 
             if (GUILayout.Button("Link Bones"))
             {
-               OnLinkBones();
+                OnLinkBones();
             }
 
             UnityEngine.GUI.enabled = gui_enabled && has_bones_effectively;
@@ -146,7 +145,7 @@ namespace RoaringFangs.Animation.Extra.Editor
 
             EditorGUILayout.EndHorizontal();
 
-            #endregion
+            #endregion Bone Linkage
 
             #region Group Linkage
 
@@ -163,16 +162,16 @@ namespace RoaringFangs.Animation.Extra.Editor
 
             if (GUILayout.Button("Unlink Groups"))
             {
-               OnUnlinkGroups();
+                OnUnlinkGroups();
             }
 
             UnityEngine.GUI.enabled = gui_enabled;
 
             EditorGUILayout.EndHorizontal();
 
-            #endregion
+            #endregion Group Linkage
 
-            #endregion
+            #endregion Linkage
 
             #region Visibility
 
@@ -186,15 +185,15 @@ namespace RoaringFangs.Animation.Extra.Editor
             {
                 OnUnlockGroups();
             }
-            
+
             EditorGUILayout.EndHorizontal();
 
-            #endregion
+            #endregion Visibility
 
             Self.OptionOperateOnMatchingBones = EditorGUILayout.ToggleLeft(
                "Operate on Matching Bones and Groups", Self.OptionOperateOnMatchingBones);
 
-            #endregion
+            #endregion Operations
 
             #region Assimilation
 
@@ -212,7 +211,7 @@ namespace RoaringFangs.Animation.Extra.Editor
             Self.OptionAssimilateAlignGroups = EditorGUILayout.ToggleLeft(
                 "Align Groups", Self.OptionAssimilateAlignGroups);
 
-            #endregion
+            #endregion Assimilation
 
             #region Relationships
 
@@ -223,12 +222,12 @@ namespace RoaringFangs.Animation.Extra.Editor
             var group_relationships_property = serializedObject.FindProperty("GroupRelationships");
             EditorGUILayout.PropertyField(group_relationships_property, true);
 
-            #endregion
+            #endregion Relationships
 
             serializedObject.ApplyModifiedProperties();
         }
 
-        void OnAlignTransformsToFirstSpriteDescendant()
+        private void OnAlignTransformsToFirstSpriteDescendant()
         {
             // TODO: is there a better undo-register function for this?
             var affected = new List<Transform>(Self.AllDescendants);
@@ -240,20 +239,20 @@ namespace RoaringFangs.Animation.Extra.Editor
             EditorUtility.SetDirty(Self);
         }
 
-        void OnCreateBones()
+        private void OnCreateBones()
         {
             var bone_transforms = Self.GetBones(Self.BonePrefix, true);
             foreach (Transform bone_transform in bone_transforms)
                 AddComponent<Bone>(bone_transform.gameObject);
         }
 
-        void OnDestroyBones()
+        private void OnDestroyBones()
         {
             foreach (Bone bone in Self.GetComponentsInChildren<Bone>())
                 RemoveComponent(bone);
         }
-        
-        void OnOrientParentBones()
+
+        private void OnOrientParentBones()
         {
             IEnumerable<Transform> bones = Self.GetBones(Self.BonePrefix, Self.OptionOperateOnMatchingBones);
             foreach (Transform bone in bones)
@@ -273,7 +272,7 @@ namespace RoaringFangs.Animation.Extra.Editor
             EditorUtility.SetDirty(Self);
         }
 
-        void OnReachParentBones()
+        private void OnReachParentBones()
         {
             IEnumerable<Bone> bones = Self.GetComponentsInChildren<Bone>();
             foreach (Bone bone in bones)
@@ -289,7 +288,7 @@ namespace RoaringFangs.Animation.Extra.Editor
             EditorUtility.SetDirty(Self);
         }
 
-        void OnLinkBones()
+        private void OnLinkBones()
         {
             Undo.RegisterCompleteObjectUndo(Self, "Link Bones");
             var link_bones = SkeletonHelper.Link(
@@ -302,7 +301,7 @@ namespace RoaringFangs.Animation.Extra.Editor
             EditorUtility.SetDirty(Self);
         }
 
-        void OnUnlinkBones()
+        private void OnUnlinkBones()
         {
             Undo.RegisterCompleteObjectUndo(Self, "Unlink Bones");
 
@@ -319,7 +318,7 @@ namespace RoaringFangs.Animation.Extra.Editor
             EditorUtility.SetDirty(Self);
         }
 
-        void OnLinkGroups()
+        private void OnLinkGroups()
         {
             Undo.RegisterCompleteObjectUndo(Self, "Link Groups");
             var link_groups = SkeletonHelper.Link(
@@ -330,7 +329,7 @@ namespace RoaringFangs.Animation.Extra.Editor
             EditorUtility.SetDirty(Self);
         }
 
-        void OnUnlinkGroups()
+        private void OnUnlinkGroups()
         {
             Undo.RegisterCompleteObjectUndo(Self, "Unlink Groups");
 
@@ -345,7 +344,7 @@ namespace RoaringFangs.Animation.Extra.Editor
             EditorUtility.SetDirty(Self);
         }
 
-        void OnLockGroups(bool @lock = true)
+        private void OnLockGroups(bool @lock = true)
         {
             IEnumerable<Transform> groups = Self.GetGroups(Self.BonePrefix, Self.OptionOperateOnMatchingBones);
             IEnumerable<Transform> group_descendants = TransformUtils.GetAllDescendants(groups);
@@ -358,7 +357,7 @@ namespace RoaringFangs.Animation.Extra.Editor
             }
         }
 
-        void OnUnlockGroups()
+        private void OnUnlockGroups()
         {
             OnLockGroups(false);
         }
@@ -390,4 +389,5 @@ namespace RoaringFangs.Animation.Extra.Editor
         }
     }
 }
+
 #endif

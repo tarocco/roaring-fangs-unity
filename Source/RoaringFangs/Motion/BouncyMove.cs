@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
-using System.Collections;
 
 namespace RoaringFangs.Motion
 {
@@ -35,6 +34,7 @@ namespace RoaringFangs.Motion
         private int StaggerIndex = 0;
 
         public static readonly float TimeSubStepEpsilon = 0.001f;
+
         [Range(0.001f, 0.100f)] // CS0182
         public float TimeSubStep = 0.01f;
 
@@ -43,6 +43,7 @@ namespace RoaringFangs.Motion
         {
             public float Spring, Drag;
         }
+
         public SecondOrderCoefficients Coefficients = new SecondOrderCoefficients()
         {
             Spring = 1f,
@@ -50,6 +51,7 @@ namespace RoaringFangs.Motion
         };
 
         public Vector3 _TargetPosition;
+
         public Vector3 TargetPosition
         {
             get
@@ -70,12 +72,14 @@ namespace RoaringFangs.Motion
         protected Vector3 _Position;
         protected Vector3 _dPosition;
 
-        void Start()
+        private void Start()
         {
             _TargetPosition = transform.localPosition;
         }
-        float _dt;
-        void Update()
+
+        private float _dt;
+
+        private void Update()
         {
             // TimeSubStep must be reasonably greater than 0
             // or else it will create an infinite loop or lag
