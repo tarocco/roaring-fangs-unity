@@ -28,66 +28,34 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
-namespace RoaringFangs.Utility
+namespace RoaringFangs
 {
-    public class SceneLoader : MonoBehaviour
+    public class StatefulSceneLoader : SceneLoader
     {
-        #region Events
-
-        public class SceneLoadCompleteEventArgs : EventArgs
-        {
-            public readonly Scene Scene;
-
-            public SceneLoadCompleteEventArgs(Scene scene)
-            {
-                Scene = scene;
-            }
-        }
-
-        public delegate void SceneLoadCompletedHandler(object sender, SceneLoadCompleteEventArgs args);
-
         [Serializable]
-        public class SceneLoadCompleteEvent : UnityEvent<object, SceneLoadCompleteEventArgs> { }
-
-        #endregion Events
+        public class SceneLoadCompleteEvent : UnityEvent<object, Scenes.SceneLoadCompleteEventArgs> { }
 
         public SceneLoadCompleteEvent SceneLoadComplete = new SceneLoadCompleteEvent();
 
         public string SceneName;
         public Scenes.LoadMode Mode = Scenes.LoadMode.CheckAdd;
         public bool Async = true;
-        public bool LoadAtStart = true;
+        public bool LoadAtStart = false;
 
         private void Start()
         {
             if (LoadAtStart)
-                DoLoad();
+                Load();
         }
 
-        private void DoLoad()
+        public void Load()
         {
-            if (Async)
-                StartCoroutine(DoLoadAsync().GetEnumerator());
-            else
-            {
-                Scenes.Load(SceneName, Mode);
-                Scene loaded = SceneManager.GetSceneByName(SceneName);
-                SceneLoadComplete.Invoke(this, new SceneLoadCompleteEventArgs(loaded));
-            }
+            Load(SceneName, Mode, Async, SceneLoadComplete.Invoke);
         }
 
-        private IEnumerable DoLoadAsync()
+        public void OnLoadThisSceneNext(object sender, Scenes.SceneLoadCompleteEventArgs args)
         {
-            var operations = Scenes.LoadAsync(SceneName, Mode);
-            foreach (var y in operations)
-                yield return y;
-            Scene loaded = SceneManager.GetSceneByName(SceneName);
-            SceneLoadComplete.Invoke(this, new SceneLoadCompleteEventArgs(loaded));
-        }
-
-        public void OnLoadThisSceneNext(object sender, SceneLoadCompleteEventArgs args)
-        {
-            DoLoad();
+            Load();
         }
     }
 }

@@ -15,7 +15,7 @@ namespace RoaringFangs
 
         protected abstract void Run();
 
-        public virtual void OnSceneLoadCompleteRun(object sender, SceneLoader.SceneLoadCompleteEventArgs args)
+        public virtual void OnSceneLoadCompleteRun(object sender, Scenes.SceneLoadCompleteEventArgs args)
         {
             Run();
         }

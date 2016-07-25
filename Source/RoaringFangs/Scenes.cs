@@ -27,7 +27,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace RoaringFangs.Utility
+namespace RoaringFangs
 {
     public static class Scenes
     {
@@ -39,6 +39,22 @@ namespace RoaringFangs.Utility
             ReplaceActive,
             MergeWithActive,
         }
+
+        public class SceneLoadCompleteEventArgs : EventArgs
+        {
+            public readonly Scene PreviousActiveScene;
+            public readonly Scene LoadedScene;
+            public readonly LoadMode Mode;
+
+            public SceneLoadCompleteEventArgs(Scene previous_active_scene, Scene loaded_scene, Scenes.LoadMode mode)
+            {
+                PreviousActiveScene = previous_active_scene;
+                LoadedScene = loaded_scene;
+                Mode = mode;
+            }
+        }
+
+        public delegate void SceneLoadCompletedHandler(object sender, SceneLoadCompleteEventArgs args);
 
         public static void Load(string scene_name, LoadMode mode)
         {
@@ -109,6 +125,7 @@ namespace RoaringFangs.Utility
 
                 case LoadMode.ReplaceActive:
                     scene_originally_active_name = SceneManager.GetActiveScene().name;
+                    SceneManager.UnloadScene(scene_originally_active_name);
                     operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
                     break;
 
@@ -127,7 +144,6 @@ namespace RoaringFangs.Utility
                 case LoadMode.ReplaceActive:
                     scene_loaded = SceneManager.GetSceneByName(scene_name);
                     SceneManager.SetActiveScene(scene_loaded);
-                    SceneManager.UnloadScene(scene_originally_active_name);
                     break;
 
                 case LoadMode.MergeWithActive:
@@ -135,6 +151,46 @@ namespace RoaringFangs.Utility
                     SceneManager.MergeScenes(scene_loaded, SceneManager.GetActiveScene());
                     break;
             }
+        }
+
+        public static void Load(MonoBehaviour self, string scene_name, LoadMode mode, bool @async, SceneLoadCompletedHandler callback = null)
+        {
+            if (@async)
+                self.StartCoroutine(LoadAsync(self, scene_name, mode, callback).GetEnumerator());
+            else
+            {
+                Load(self, scene_name, mode, callback);
+            }
+        }
+
+        private static void Load(object self, string scene_name, LoadMode mode, SceneLoadCompletedHandler callback)
+        {
+            Scene active = SceneManager.GetActiveScene();
+            Load(scene_name, mode);
+            Scene loaded = SceneManager.GetSceneByName(scene_name);
+            if (callback != null)
+                callback(self, new SceneLoadCompleteEventArgs(active, loaded, mode));
+        }
+
+        private static IEnumerable LoadAsync(object self, string scene_name, LoadMode mode, SceneLoadCompletedHandler callback)
+        {
+            Scene active = SceneManager.GetActiveScene();
+            var operations = LoadAsync(scene_name, mode);
+            foreach (var y in operations)
+                yield return y;
+            Scene loaded = SceneManager.GetSceneByName(scene_name);
+            if (callback != null)
+                callback(self, new SceneLoadCompleteEventArgs(active, loaded, mode));
+        }
+
+        public static void Unload(string scene_name)
+        {
+            SceneManager.UnloadScene(scene_name);
+        }
+
+        public static void UnloadActive()
+        {
+            SceneManager.UnloadScene(SceneManager.GetActiveScene());
         }
     }
 }
