@@ -190,7 +190,7 @@ namespace RoaringFangs
 
         public static void UnloadActive()
         {
-            SceneManager.UnloadScene(SceneManager.GetActiveScene());
+            SceneManager.UnloadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
 }
