@@ -147,6 +147,21 @@ namespace RoaringFangs.Utility
             return value < 0 ? -1 : (value > 0 ? 1 : 0);
         }
 
+        public static int ModEuclidean(int a, int n)
+        {
+            return ((a % n) + n) % n;
+        }
+
+        public static int CircleDifference(int diff, int range)
+        {
+            int diff_lo = diff - range;
+            int diff_hi = (diff + range) % range;
+            if (Mathf.Abs(diff_lo) < Mathf.Abs(diff_hi))
+                return diff_lo;
+            else
+                return diff_hi;
+        }
+
         #endregion Misc
     }
 }
