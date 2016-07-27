@@ -64,7 +64,7 @@ namespace RoaringFangs.Editor
             {
                 foreach (var target in serialized_object.targetObjects)
                 {
-                    auto.Validate(serialized_object, target, true);
+                    auto.Validate(serialized_object, target, property.propertyPath, true);
                 }
             }
         }

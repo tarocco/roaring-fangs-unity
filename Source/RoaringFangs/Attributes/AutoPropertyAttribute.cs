@@ -58,6 +58,7 @@ namespace RoaringFangs.Attributes
         {
             public WeakReference AutoPropertyAttributeWR;
             public WeakReference TargetWR;
+            public string PropertyPath;
         }
 
         #endregion Types and Delegates
@@ -117,9 +118,16 @@ namespace RoaringFangs.Attributes
         private static Dictionary<PropertyInfoBindingKey, PropertyInfoBindingValue> CachedAutoPropertyBindings =
             new Dictionary<PropertyInfoBindingKey, PropertyInfoBindingValue>();
 
-        private const BindingFlags DefaultFlags =
+        private const BindingFlags PropertyBindingFlags =
             BindingFlags.GetProperty |
             BindingFlags.SetProperty |
+            BindingFlags.Public |
+            BindingFlags.NonPublic;
+
+        private const BindingFlags FieldBindingFlags =
+            BindingFlags.Instance |
+            BindingFlags.GetField |
+            BindingFlags.SetField |
             BindingFlags.Public |
             BindingFlags.NonPublic;
 
@@ -130,7 +138,7 @@ namespace RoaringFangs.Attributes
         /// <summary>
         /// Perform late binding on target and handlers
         /// </summary>
-        public void UpdateLateBindings(UnityEngine.Object target)
+        public void UpdateLateBindings(UnityEngine.Object target, string property_path)
         {
             // Key for binding
             var key = new PropertyInfoBindingKey()
@@ -168,15 +176,16 @@ namespace RoaringFangs.Attributes
                     {
                         AutoPropertyAttributeWR = new WeakReference(this),
                         TargetWR = new WeakReference(target),
+                        PropertyPath = property_path,
                     };
             }
         }
 
-        public void Validate(SerializedObject serialized_object, UnityEngine.Object target, bool with_undo)
+        public void Validate(SerializedObject serialized_object, UnityEngine.Object serialize_target, string property_path, bool with_undo)
         {
             //PreviouslySetPropertyValue = UpdatePropertyFromField(FieldInfo, PropertyInfo, serialized_object, target, with_undo, PreviouslySetPropertyValue);
-            UpdatePropertyFromField(FieldInfo, PropertyInfo, serialized_object, target, with_undo);
-            UpdateLateBindings(target);
+            UpdatePropertyFromField(FieldInfo, PropertyInfo, serialized_object, serialize_target, property_path, with_undo);
+            UpdateLateBindings(serialize_target, property_path);
         }
 
         #endregion Instance Methods
@@ -196,17 +205,93 @@ namespace RoaringFangs.Attributes
             return property_info;
         }
 
+        public class PropertyPath
+        {
+            public struct Element
+            {
+                private static System.Text.RegularExpressions.Regex FieldRegex =
+                    new System.Text.RegularExpressions.Regex("([^\\[]+)(?:\\[(\\d+)\\])?");
+                public string FieldName;
+                public int? ArrayIndex;
+                public Element(string field_element)
+                {
+                    var field_match = FieldRegex.Match(field_element);
+                    var field_groups = field_match.Groups;
+                    if (field_groups == null)
+                        throw new Exception("field_groups is null");
+                    var field_groups_count = field_groups.Count;
+                    if (field_groups_count <= 1)
+                        throw new Exception("field_groups did not match enough groups");
+                    else
+                    {
+                        FieldName = field_groups[1].Value;
+                        if (field_groups_count >= 2)
+                        {
+                            int array_index;
+                            if (int.TryParse(field_groups[1].Value, out array_index))
+                                ArrayIndex = array_index;
+                            else
+                                ArrayIndex = null;
+                        }
+                        else
+                            ArrayIndex = null;
+                    }
+                }
+
+                public object GetFieldValue(object @object, int depth)
+                {
+                    Type object_type = @object.GetType();
+                    FieldInfo field_info;
+                    while (depth > 0)
+                    {
+                        field_info = object_type.GetField(FieldName, FieldBindingFlags);
+                        if (field_info != null)
+                        {
+                            object field_value = field_info.GetValue(@object);
+                            if (ArrayIndex.HasValue)
+                                return ((object[])field_value)[ArrayIndex.Value];
+                            return field_value;
+                        }
+                        object_type = object_type.BaseType;
+                        depth--;
+                    }
+                    throw new Exception("Could not get field value.");
+                }
+
+                
+            }
+            public static IEnumerable<Element> Parse(string property_path)
+            {
+                property_path = property_path.Replace(".Array.data[", "[");
+                return property_path.Split('.').Select(e => new Element(e));
+            }
+        }
+        
+
+        private static object GetPropertyDeclaringObjectAtPath(object target, string property_path)
+        {
+            var path_elements = PropertyPath.Parse(property_path);
+            var path_elements_except_last = path_elements.Take(path_elements.Count() - 1);
+            object field_target = target;
+            foreach (var e in path_elements_except_last)
+                field_target = e.GetFieldValue(field_target, 4); // Surprise! It's actually a field.
+            return field_target;
+        }
+
         private static void UpdatePropertyFromField(
             FieldInfo field_info,
             PropertyInfo property_info,
             SerializedObject serialized_object,
             object target,
+            string property_path,
             //bool with_undo,
             //object previously_set_field_value)
             bool with_undo)
         {
+            // Get the object with this property at the given path for this target
+            var property_value_at_path = GetPropertyDeclaringObjectAtPath(target, property_path);
             // Get the value of the field before modifying
-            var field_value_before_apply = field_info.GetValue(target);
+            var field_value_before_apply = field_info.GetValue(property_value_at_path);
             // Whether the serialized property was directly modified
             if (with_undo)
                 serialized_object.ApplyModifiedProperties();
@@ -214,11 +299,11 @@ namespace RoaringFangs.Attributes
                 serialized_object.ApplyModifiedPropertiesWithoutUndo();
             object previous_value = field_value_before_apply; // Restore to value right before this application
             // Get the value of the field after applying modified properties
-            var current_value = field_info.GetValue(target);
+            var current_value = field_info.GetValue(property_value_at_path);
             // Restore the field to its previous value so that the property setter can act on changes to the backing field
-            field_info.SetValue(target, previous_value);
+            field_info.SetValue(property_value_at_path, previous_value);
             // Invoke the setter of the property
-            property_info.SetValue(target, current_value, null);
+            property_info.SetValue(property_value_at_path, current_value, null);
         }
 
         public static void ValidateAllCached(bool with_undo)
@@ -228,11 +313,12 @@ namespace RoaringFangs.Attributes
             {
                 var property_attribute_wr = e.Value.AutoPropertyAttributeWR;
                 var target_wr = e.Value.TargetWR;
+                var property_path = e.Value.PropertyPath;
                 if (property_attribute_wr.IsAlive)
                 {
                     var property_attribute = property_attribute_wr.Target as AutoPropertyAttribute;
                     var serialized_object = new SerializedObject(target_wr.Target as UnityEngine.Object);
-                    property_attribute.Validate(serialized_object, serialized_object.targetObject, with_undo);
+                    property_attribute.Validate(serialized_object, serialized_object.targetObject, property_path, with_undo);
                 }
                 else
                 {
@@ -381,7 +467,7 @@ namespace RoaringFangs.Attributes
         {
 #if UNITY_EDITOR
             if (type != null)
-                PropertyInfo = type.GetProperty(property_name, DefaultFlags);
+                PropertyInfo = type.GetProperty(property_name, PropertyBindingFlags);
 #endif
         }
 
