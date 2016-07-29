@@ -54,9 +54,7 @@ namespace JsonFx.JsonML
 
 			private static readonly Regex RegexWhitespace = new Regex(@"\s+",
 #if !SILVERLIGHT
-            //<edit>
-			//RegexOptions.Compiled|
-            //</edit>
+			RegexOptions.Compiled|
 #endif
 			RegexOptions.CultureInvariant|RegexOptions.ECMAScript);
 
