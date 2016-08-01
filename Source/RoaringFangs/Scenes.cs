@@ -101,6 +101,7 @@ namespace RoaringFangs
 
         public static IEnumerable LoadAsync(string scene_name, LoadMode mode)
         {
+            yield return new WaitForEndOfFrame();
             // This is here because of a Mono bug...
             YieldInstruction operation = null;
             string scene_originally_active_name = null;
