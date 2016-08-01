@@ -59,9 +59,7 @@ namespace JsonFx.Model.Filters
 		private const string MSAjaxDatePattern = @"^/Date\(([+\-]?\d+?)([+\-]\d{4})?\)/$";
 		private static readonly Regex MSAjaxDateRegex = new Regex(MSAjaxDatePattern,
 #if !SILVERLIGHT
-            //<edit>
-			//RegexOptions.Compiled|
-            //</edit>
+			RegexOptions.Compiled|
 #endif
 			RegexOptions.CultureInvariant|RegexOptions.ECMAScript);
 

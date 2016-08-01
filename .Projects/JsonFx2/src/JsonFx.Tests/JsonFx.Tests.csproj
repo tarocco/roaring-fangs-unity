@@ -11,7 +11,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>JsonFx</RootNamespace>
     <AssemblyName>JsonFx.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <OutputAssemblyLabel>$(Configuration)_$(TargetFrameworkVersion)</OutputAssemblyLabel>
     <OutputAssemblyLabel Condition=" '$(TargetFrameworkIdentifier)' != '' ">$(Configuration)_$(TargetFrameworkVersion)_$(TargetFrameworkIdentifier)</OutputAssemblyLabel>
     <OutputAssemblyLabel Condition=" '$(TargetFrameworkProfile)' != '' And '$(TargetFrameworkProfile)' != 'Client' ">$(Configuration)_$(TargetFrameworkVersion)_$(TargetFrameworkProfile)</OutputAssemblyLabel>
@@ -22,7 +22,7 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <TargetFrameworkProfile />
+    <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>

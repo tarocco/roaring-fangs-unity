@@ -174,7 +174,7 @@ namespace JsonFx.Json
 							scanner.Pop();
 							if (needsValueDelim == NeedsValueDelim.CurrentIsDelim)
 							{
-								//throw new DeserializationException(JsonTokenizer.ErrorExtraValueDelim, scanner.Index, scanner.Line, scanner.Column);
+								throw new DeserializationException(JsonTokenizer.ErrorExtraValueDelim, scanner.Index, scanner.Line, scanner.Column);
 							}
 
 							yield return ModelGrammar.TokenArrayEnd;
@@ -202,7 +202,7 @@ namespace JsonFx.Json
 							scanner.Pop();
 							if (needsValueDelim == NeedsValueDelim.CurrentIsDelim)
 							{
-								//throw new DeserializationException(JsonTokenizer.ErrorExtraValueDelim, scanner.Index, scanner.Line, scanner.Column);
+								throw new DeserializationException(JsonTokenizer.ErrorExtraValueDelim, scanner.Index, scanner.Line, scanner.Column);
 							}
 
 							yield return ModelGrammar.TokenObjectEnd;
@@ -247,7 +247,7 @@ namespace JsonFx.Json
 
 							if (needsValueDelim != NeedsValueDelim.Required)
 							{
-								//throw new DeserializationException(JsonTokenizer.ErrorExtraValueDelim, scanner.Index, scanner.Line, scanner.Column);
+								throw new DeserializationException(JsonTokenizer.ErrorExtraValueDelim, scanner.Index, scanner.Line, scanner.Column);
 							}
 
 							needsValueDelim = NeedsValueDelim.CurrentIsDelim;

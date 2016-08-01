@@ -1,0 +1,9 @@
+*.suo
+build
+external
+*.csproj.user
+*.lnk
+*.DS_Store
+_ReSharper.*
+*.resharper.user
+*.resharper

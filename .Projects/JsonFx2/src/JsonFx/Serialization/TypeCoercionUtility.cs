@@ -728,16 +728,23 @@ namespace JsonFx.Serialization
 
 					if (genericType == typeof(IList<>) ||
 						genericType == typeof(IEnumerable<>) ||
-#if !NET20 && !NET30 && !WINDOWS_PHONE
+#if !NET20 && !NET30 && !NET35 && !WINDOWS_PHONE
 						genericType == typeof(IQueryable<>) ||
 						genericType == typeof(IOrderedQueryable<>) ||
 #endif
-						genericType == typeof(ICollection<>))
+                        genericType == typeof(ICollection<>))
 					{
 						Type[] genericArgs = targetType.GetGenericArguments();
 						targetType = typeof(List<>).MakeGenericType(genericArgs);
 					}
-					else if (genericType == typeof(IDictionary<,>))
+#if !NET20 && !NET30 && !NET35 && !WINDOWS_PHONE
+                    else if (genericType == typeof(ISet<>))
+					{
+						Type[] genericArgs = targetType.GetGenericArguments();
+						targetType = typeof(HashSet<>).MakeGenericType(genericArgs);
+					}
+#endif
+                    else if (genericType == typeof(IDictionary<,>))
 					{
 						Type[] genericArgs = targetType.GetGenericArguments();
 						if (genericArgs.Length == 2 &&
