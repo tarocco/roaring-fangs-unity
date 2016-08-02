@@ -37,7 +37,10 @@ namespace RoaringFangs.Editor
         /// </summary>
         private AutoPropertyAttribute.PropertyFieldHandler _DrawPropertyField = null;
 
-        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+        public override void OnGUI(
+            Rect position,
+            SerializedProperty property,
+            GUIContent label)
         {
             // Get the AutoPropertyDrawer associated with the field
             var auto = (AutoPropertyAttribute)attribute;
@@ -46,7 +49,9 @@ namespace RoaringFangs.Editor
             // Lazily initialize/cache the field info to the attribute
             auto.FieldInfo = auto.FieldInfo ?? fieldInfo;
             // Lazily initialize/cache the property info to the attribute
-            auto.PropertyInfo = auto.PropertyInfo ?? AutoPropertyAttribute.GetPropertyInfoAuto(fieldInfo);
+            auto.PropertyInfo =
+                auto.PropertyInfo ??
+                    fieldInfo.DeclaringType.GetProperty(auto.PropertyName);
             // Lazily initialize/cache the property field drawer for this property
             _DrawPropertyField =
                 auto.DrawPropertyField ??
@@ -64,9 +69,18 @@ namespace RoaringFangs.Editor
             {
                 foreach (var target in serialized_object.targetObjects)
                 {
-                    auto.Validate(serialized_object, target, property.propertyPath, true);
+                    auto.Validate(
+                        serialized_object,
+                        target,
+                        property.propertyPath,
+                        true);
                 }
             }
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.GetPropertyHeight(property, label);
         }
 
         public AutoPropertyDrawer() :

@@ -81,18 +81,36 @@ namespace RoaringFangs.Attributes
         public FieldInfo FieldInfo
         {
             get { return _FieldInfo; }
-            set { _FieldInfo = value; }
+            set
+            {
+                if (String.IsNullOrEmpty(_PropertyName))
+                {
+                    string property_name = value.Name;
+                    _PropertyName = property_name.TrimStart(_AutoPropertyTrimChars);
+                }
+                _FieldInfo = value;
+            }
+        }
+
+        private string _PropertyName;
+        public string PropertyName
+        {
+            get { return _PropertyName; }
+            private set { _PropertyName = value; }
         }
 
         private PropertyInfo _PropertyInfo;
-
         /// <summary>
         /// PropertyInfo for property associated with the field with this drawer's AutoPropertyAttribute
         /// </summary>
         public PropertyInfo PropertyInfo
         {
             get { return _PropertyInfo; }
-            set { _PropertyInfo = value; }
+            set
+            {
+                _PropertyInfo = value;
+                _PropertyName = _PropertyInfo.Name;
+            }
         }
 
         private PropertyFieldHandler _DrawPropertyField = null;
@@ -192,19 +210,6 @@ namespace RoaringFangs.Attributes
 
         #region Static Methods
 
-        /// <summary>
-        /// Gets the target's property info from field info and AutoPropertyAttribute
-        /// </summary>
-        public static PropertyInfo GetPropertyInfoAuto(FieldInfo field_info)
-        {
-            var field_name = field_info.Name;
-            var field_type = field_info.FieldType;
-            var field_declaring_type = field_info.DeclaringType;
-            var auto_property_name = field_name.TrimStart(_AutoPropertyTrimChars);
-            var property_info = field_declaring_type.GetProperty(auto_property_name, field_type);
-            return property_info;
-        }
-
         public class PropertyPath
         {
             public struct Element
@@ -258,7 +263,7 @@ namespace RoaringFangs.Attributes
                     throw new Exception("Could not get field value.");
                 }
 
-                
+
             }
             public static IEnumerable<Element> Parse(string property_path)
             {
@@ -266,7 +271,7 @@ namespace RoaringFangs.Attributes
                 return property_path.Split('.').Select(e => new Element(e));
             }
         }
-        
+
 
         private static object GetPropertyDeclaringObjectAtPath(object target, string property_path)
         {
@@ -462,12 +467,11 @@ namespace RoaringFangs.Attributes
         {
         }
 
-        public AutoPropertyAttribute(Type type, string property_name) :
+        public AutoPropertyAttribute(string property_name) :
             this()
         {
 #if UNITY_EDITOR
-            if (type != null)
-                PropertyInfo = type.GetProperty(property_name, PropertyBindingFlags);
+            PropertyName = property_name;
 #endif
         }
 
