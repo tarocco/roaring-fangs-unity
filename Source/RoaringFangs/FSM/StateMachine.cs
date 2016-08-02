@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using RoaringFangs.Attributes;
 using RoaringFangs.Utility;
 using System;
 using System.Collections.Generic;
@@ -123,6 +124,31 @@ namespace RoaringFangs.FSM
 
         #endregion Serialization
 
+        [SerializeField]
+        private StateInfo.Event _AnyStateEntry;
+        public StateInfo.Event AnyStateEntry
+        {
+            get { return _AnyStateEntry; }
+            protected set { _AnyStateEntry = value; }
+        }
+
+        [SerializeField]
+        private StateInfo.Event _AnyStateBody;
+        public StateInfo.Event AnyStateBody
+        {
+            get { return _AnyStateBody; }
+            protected set { _AnyStateBody = value; }
+        }
+
+        [SerializeField]
+        private StateInfo.Event _AnyStateExit;
+        public StateInfo.Event AnyStateExit
+        {
+            get { return _AnyStateExit; }
+            protected set { _AnyStateExit = value; }
+        }
+
+
         private Dictionary<TStateEnum, StateInfo> _States;
 
         protected Dictionary<TStateEnum, StateInfo> States
@@ -196,7 +222,6 @@ namespace RoaringFangs.FSM
 
         protected virtual void Start()
         {
-            CurrentState = default(TStateEnum);
             PopulateStates(ref _States);
         }
 
@@ -205,27 +230,28 @@ namespace RoaringFangs.FSM
         public TStateEnum CurrentState
         {
             get { return _CurrentState; }
-            protected set { _CurrentState = value; }
+            set
+            {
+                _CurrentState = ChangeState(_CurrentState, value);
+            }
         }
 
-        public virtual void ChangeState(TStateEnum to_state)
+        protected virtual TStateEnum ChangeState(TStateEnum current_state, TStateEnum to_state)
         {
-            StateInfo current_state_info = GetStateInfo(CurrentState);
-            if (current_state_info.ExitAction != null)
-                current_state_info.ExitAction.Invoke(this);
-
-            var destinations = Transitions[CurrentState];
-
+            var destinations = Transitions[current_state];
             if (destinations.Contains(to_state))
             {
+                StateInfo current_state_info = GetStateInfo(current_state);
+                if (current_state_info.ExitAction != null)
+                    current_state_info.ExitAction.Invoke(this);
                 StateInfo next_state_info = GetStateInfo(to_state);
                 if (next_state_info.EntryAction != null)
                     next_state_info.EntryAction.Invoke(this);
-                CurrentState = to_state;
+                return to_state;
             }
             else
                 throw new InvalidOperationException(
-                    "Cannot transition from state " + CurrentState + " to state " + to_state);
+                    "Cannot transition from state " + current_state + " to state " + to_state);
         }
 
         public virtual void Update()

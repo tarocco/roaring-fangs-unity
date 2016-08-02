@@ -29,8 +29,6 @@ namespace RoaringFangs.FSM
     public interface IStateManager<TStateEnum> : IDisposable
         where TStateEnum : struct, IConvertible
     {
-        void ChangeState(TStateEnum next_state);
-
-        //bool CheckState(int id);
+        TStateEnum CurrentState { get; set; }
     }
 }
