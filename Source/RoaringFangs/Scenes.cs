@@ -25,6 +25,7 @@ THE SOFTWARE.
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace RoaringFangs
@@ -39,22 +40,6 @@ namespace RoaringFangs
             ReplaceActive,
             MergeWithActive,
         }
-
-        public class SceneLoadCompleteEventArgs : EventArgs
-        {
-            public readonly Scene PreviousActiveScene;
-            public readonly Scene LoadedScene;
-            public readonly LoadMode Mode;
-
-            public SceneLoadCompleteEventArgs(Scene previous_active_scene, Scene loaded_scene, Scenes.LoadMode mode)
-            {
-                PreviousActiveScene = previous_active_scene;
-                LoadedScene = loaded_scene;
-                Mode = mode;
-            }
-        }
-
-        public delegate void SceneLoadCompletedHandler(object sender, SceneLoadCompleteEventArgs args);
 
         public static void Load(string scene_name, LoadMode mode)
         {

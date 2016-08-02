@@ -30,29 +30,22 @@ using UnityEngine.SceneManagement;
 
 namespace RoaringFangs
 {
-    public class StatefulSceneLoader : SceneLoader
+    public class SceneLoadCompleteEventArgs : EventArgs
     {
-        public SceneLoadCompleteEvent SceneLoadComplete;
+        public readonly Scene PreviousActiveScene;
+        public readonly Scene LoadedScene;
+        public readonly Scenes.LoadMode Mode;
 
-        public string SceneName;
-        public Scenes.LoadMode Mode = Scenes.LoadMode.CheckAdd;
-        public bool Async = true;
-        public bool RunAtStart = false;
-
-        public void Load()
+        public SceneLoadCompleteEventArgs(Scene previous_active_scene, Scene loaded_scene, Scenes.LoadMode mode)
         {
-            Scenes.Load(this, SceneName, Mode, Async, SceneLoadComplete.Invoke);
-        }
-
-        private void Start()
-        {
-            if (RunAtStart)
-                Load();
-        }
-
-        public void OnLoadThisSceneNext(object sender, SceneLoadCompleteEventArgs args)
-        {
-            Load();
+            PreviousActiveScene = previous_active_scene;
+            LoadedScene = loaded_scene;
+            Mode = mode;
         }
     }
+
+    public delegate void SceneLoadCompletedHandler(object sender, SceneLoadCompleteEventArgs args);
+
+    [Serializable]
+    public class SceneLoadCompleteEvent : UnityEvent<object, SceneLoadCompleteEventArgs> { }
 }

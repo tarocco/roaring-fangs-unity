@@ -32,7 +32,7 @@ namespace RoaringFangs
 {
     public class SceneLoader : MonoBehaviour
     {
-        public void Load(string scene_name, Scenes.LoadMode mode, bool @async, Scenes.SceneLoadCompletedHandler callback = null)
+        public void Load(string scene_name, Scenes.LoadMode mode, bool @async, SceneLoadCompletedHandler callback = null)
         {
             Scenes.Load(this, scene_name, mode, @async, callback);
         }

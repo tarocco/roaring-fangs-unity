@@ -5,7 +5,7 @@ namespace RoaringFangs
 {
     public abstract class ConfiguratorBase : MonoBehaviour
     {
-        public bool RunAtStart = true;
+        public bool RunAtStart = false;
 
         protected virtual void Start()
         {
@@ -13,9 +13,9 @@ namespace RoaringFangs
                 Run();
         }
 
-        protected abstract void Run();
+        public abstract void Run();
 
-        public virtual void OnSceneLoadCompleteRun(object sender, Scenes.SceneLoadCompleteEventArgs args)
+        public virtual void OnSceneLoadCompleteRun(object sender, SceneLoadCompleteEventArgs args)
         {
             Run();
         }

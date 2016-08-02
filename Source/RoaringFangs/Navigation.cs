@@ -57,7 +57,7 @@ namespace RoaringFangs
             _SceneStack.Push(SceneManager.GetActiveScene().name);
         }
 
-        protected void HandleLoadedNext(object sender, Scenes.SceneLoadCompleteEventArgs args)
+        protected void HandleLoadedNext(object sender, SceneLoadCompleteEventArgs args)
         {
             SceneManager.SetActiveScene(args.LoadedScene);
             PushScene(args.LoadedScene.name);
@@ -68,7 +68,7 @@ namespace RoaringFangs
             Scenes.Load(this, name, Scenes.LoadMode.ReplaceActive, true, HandleLoadedNext);
         }
 
-        protected void HandleLoadedAndReset(object sender, Scenes.SceneLoadCompleteEventArgs args)
+        protected void HandleLoadedAndReset(object sender, SceneLoadCompleteEventArgs args)
         {
             SceneManager.SetActiveScene(args.LoadedScene);
             ResetToActiveScene();
@@ -79,7 +79,7 @@ namespace RoaringFangs
             Scenes.Load(this, name, Scenes.LoadMode.ReplaceActive, true, HandleLoadedAndReset);
         }
 
-        protected void HandleLoadedPrevious(object sender, Scenes.SceneLoadCompleteEventArgs args)
+        protected void HandleLoadedPrevious(object sender, SceneLoadCompleteEventArgs args)
         {
             SceneManager.SetActiveScene(args.LoadedScene);
             PopScene();
