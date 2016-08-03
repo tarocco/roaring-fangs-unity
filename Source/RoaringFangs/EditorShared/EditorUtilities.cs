@@ -1,4 +1,4 @@
-/*
+﻿/*
 The MIT License (MIT)
 
 Copyright (c) 2016 Roaring Fangs Entertainment
@@ -22,21 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
-
-namespace RoaringFangs.FSM
+namespace RoaringFangs.EditorShared
 {
-    [Serializable]
-    public class StateInfoEntry
+    static class EditorUtilities
     {
-        [ReadOnly]
-        public string State;
-        public StateInfo Info;
-
-        public StateInfoEntry(string state, StateInfo info)
+        public static void SetDirty(UnityEngine.Object target)
         {
-            State = state;
-            Info = info;
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(target);
+#endif
         }
     }
 }

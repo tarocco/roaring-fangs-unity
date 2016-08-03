@@ -83,9 +83,7 @@ namespace RoaringFangs.FSM
                 .Select(
                     e => new StateInfoEntry(
                         e.Key.ToString(),
-                        e.Value != null ?
-                            e.Value.ToSurrogate() :
-                            default(StateInfo.Surrogate)))
+                        e.Value ?? default(StateInfo)))
                 .ToList();
             _TransitionsList = Transitions
                 .SelectMany(
@@ -124,30 +122,14 @@ namespace RoaringFangs.FSM
 
         #endregion Serialization
 
-        [SerializeField]
-        private StateInfo.Event _AnyStateEntry;
-        public StateInfo.Event AnyStateEntry
-        {
-            get { return _AnyStateEntry; }
-            protected set { _AnyStateEntry = value; }
-        }
 
         [SerializeField]
-        private StateInfo.Event _AnyStateBody;
-        public StateInfo.Event AnyStateBody
+        private StateInfo _AnyState;
+        public StateInfo AnyState
         {
-            get { return _AnyStateBody; }
-            protected set { _AnyStateBody = value; }
+            get { return _AnyState; }
+            protected set { _AnyState = value; }
         }
-
-        [SerializeField]
-        private StateInfo.Event _AnyStateExit;
-        public StateInfo.Event AnyStateExit
-        {
-            get { return _AnyStateExit; }
-            protected set { _AnyStateExit = value; }
-        }
-
 
         private Dictionary<TStateEnum, StateInfo> _States;
 
@@ -225,7 +207,8 @@ namespace RoaringFangs.FSM
             PopulateStates(ref _States);
         }
 
-        private TStateEnum _CurrentState = default(TStateEnum);
+        [SerializeField, AutoProperty]
+        private TStateEnum _CurrentState;
 
         public TStateEnum CurrentState
         {
@@ -242,11 +225,11 @@ namespace RoaringFangs.FSM
             if (destinations.Contains(to_state))
             {
                 StateInfo current_state_info = GetStateInfo(current_state);
-                if (current_state_info.ExitAction != null)
-                    current_state_info.ExitAction.Invoke(this);
+                current_state_info.Exit.Invoke(this);
+                AnyState.Exit.Invoke(this);
                 StateInfo next_state_info = GetStateInfo(to_state);
-                if (next_state_info.EntryAction != null)
-                    next_state_info.EntryAction.Invoke(this);
+                next_state_info.Entry.Invoke(this);
+                AnyState.Entry.Invoke(this);
                 return to_state;
             }
             else
@@ -258,8 +241,8 @@ namespace RoaringFangs.FSM
         {
             StateInfo active_state_info;
             active_state_info = GetStateInfo(CurrentState);
-            if (active_state_info.BodyAction != null)
-                active_state_info.BodyAction.Invoke(this);
+            active_state_info.Body.Invoke(this);
+            AnyState.Body.Invoke(this);
         }
 
         /*

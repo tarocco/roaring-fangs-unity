@@ -33,74 +33,30 @@ namespace RoaringFangs.FSM
     public class StateInfo
     {
         [Serializable]
-        public class Event : UnityEvent<UnityEngine.Object>
-        {
-        }
+        public class Event : UnityEvent<UnityEngine.Object> { }
 
-        [Serializable]
-        public struct Surrogate
+        [SerializeField]
+        private Event _Entry = new Event();
+        public Event Entry
         {
-            public ActionSurrogate EntryAction, BodyAction, ExitAction;
+            get { return _Entry; }
+            protected set { _Entry = value; }
         }
 
         [SerializeField]
-        private Action<UnityEngine.Object> _EntryAction;
-        public Action<UnityEngine.Object> EntryAction
+        private Event _Body = new Event();
+        public Event Body
         {
-            get { return _EntryAction; }
-            set { _EntryAction = value; }
+            get { return _Body; }
+            protected set { _Body = value; }
         }
 
         [SerializeField]
-        private Action<UnityEngine.Object> _BodyAction = null;
-        public Action<UnityEngine.Object> BodyAction
+        private Event _Exit = new Event();
+        public Event Exit
         {
-            get { return _BodyAction; }
-            set { _BodyAction = value; }
-        }
-
-        [SerializeField]
-        private Action<UnityEngine.Object> _ExitAction = null;
-        public Action<UnityEngine.Object> ExitAction
-        {
-            get { return _ExitAction; }
-            set { _ExitAction = value; }
-        }
-
-        
-        public static StateInfo FromSurrogate(Surrogate surrogate)
-        {
-            return new StateInfo(
-                surrogate.EntryAction.ToAction<UnityEngine.Object>(),
-                surrogate.BodyAction.ToAction<UnityEngine.Object>(),
-                surrogate.ExitAction.ToAction<UnityEngine.Object>());
-        }
-
-        public Surrogate ToSurrogate()
-        {
-            Surrogate surrogate = new Surrogate();
-            if(EntryAction != null)
-                surrogate.EntryAction = ActionSurrogate.FromAction(EntryAction);
-            if (BodyAction != null)
-                surrogate.BodyAction = ActionSurrogate.FromAction(BodyAction);
-            if(ExitAction != null)
-                surrogate.ExitAction = ActionSurrogate.FromAction(ExitAction);
-            return surrogate;
-        }
-
-        public StateInfo(
-            Action<UnityEngine.Object> on_enter,
-            Action<UnityEngine.Object> while_in,
-            Action<UnityEngine.Object> on_exit)
-        {
-            EntryAction = on_enter;
-            BodyAction = while_in;
-            ExitAction = on_exit;
-        }
-
-        public StateInfo() :
-            this(null, null, null)
-        {
+            get { return _Exit; }
+            protected set { _Exit = value; }
         }
     }
 }

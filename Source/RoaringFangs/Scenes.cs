@@ -41,6 +41,11 @@ namespace RoaringFangs
             MergeWithActive,
         }
 
+        public class CoroutineProcessor : MonoBehaviour
+        {
+            // Dummy MonoBahaviour
+        }
+
         public static void Load(string scene_name, LoadMode mode)
         {
             Scene scene_loaded;
@@ -172,6 +177,26 @@ namespace RoaringFangs
         public static void Unload(string scene_name)
         {
             SceneManager.UnloadScene(scene_name);
+        }
+
+        public static IEnumerable UnloadAsync(MonoBehaviour self, string scene_name, SceneUnloadCompletedHandler callback)
+        {
+            yield return new WaitForEndOfFrame();
+            SceneManager.UnloadScene(scene_name);
+            if (callback != null)
+                callback(self, new SceneUnloadCompleteEventArgs(scene_name));
+        }
+
+        public static void Unload(MonoBehaviour self, string scene_name, bool @async, SceneUnloadCompletedHandler callback)
+        {
+            if (@async)
+                self.StartCoroutine(UnloadAsync(self, scene_name, callback).GetEnumerator());
+            else
+            {
+                Unload(scene_name);
+                if (callback != null)
+                    callback(self, new SceneUnloadCompleteEventArgs(scene_name));
+            }
         }
 
         public static void UnloadActive()

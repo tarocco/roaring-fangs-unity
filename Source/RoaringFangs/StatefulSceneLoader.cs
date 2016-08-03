@@ -30,24 +30,60 @@ using UnityEngine.SceneManagement;
 
 namespace RoaringFangs
 {
-    public class StatefulSceneLoader : SceneLoader
+    public class StatefulSceneLoader : MonoBehaviour
     {
+        private class SceneUnloadCoroutineProcessor : MonoBehaviour { }
+
         public SceneLoadCompleteEvent SceneLoadComplete;
 
-        public string SceneName;
+        [SerializeField]
+        private string _SceneName;
+        public string SceneName
+        {
+            get { return _SceneName; }
+            protected set { _SceneName = value; }
+        }
+
         public Scenes.LoadMode Mode = Scenes.LoadMode.CheckAdd;
-        public bool Async = true;
-        public bool RunAtStart = false;
+
+        [Header("Only Async mode permitted")]
+        [SerializeField, ReadOnly]
+        private bool _Async = true;
+
+        private GameObject _CoroutineObject;
+        private Scenes.CoroutineProcessor _CoroutineProcessor;
+
+        public bool LoadOnStart = false;
+        public bool UnloadOnDestroy = false;
 
         public void Load()
         {
-            Scenes.Load(this, SceneName, Mode, Async, SceneLoadComplete.Invoke);
+            Scenes.Load(_CoroutineProcessor, SceneName, Mode, _Async, SceneLoadComplete.Invoke);
+        }
+
+        public void Unload()
+        {
+            // TODO: callback
+            if(_CoroutineObject != null)
+                Scenes.Unload(_CoroutineProcessor, SceneName, _Async, (s, a) => Destroy(_CoroutineObject));
         }
 
         private void Start()
         {
-            if (RunAtStart)
+            _CoroutineObject = new GameObject("Scene Unloader");
+            _CoroutineObject.hideFlags = HideFlags.HideInHierarchy;
+            _CoroutineProcessor = _CoroutineObject.AddComponent<Scenes.CoroutineProcessor>();
+            DontDestroyOnLoad(_CoroutineObject);
+            if (LoadOnStart)
                 Load();
+        }
+
+        public void OnDestroy()
+        {
+            if (UnloadOnDestroy)
+                Unload();
+            else
+                Destroy(_CoroutineObject);
         }
 
         public void OnLoadThisSceneNext(object sender, SceneLoadCompleteEventArgs args)

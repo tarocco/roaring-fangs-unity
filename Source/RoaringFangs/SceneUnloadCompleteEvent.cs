@@ -30,11 +30,17 @@ using UnityEngine.SceneManagement;
 
 namespace RoaringFangs
 {
-    public class SceneLoader : MonoBehaviour
+    public class SceneUnloadCompleteEventArgs : EventArgs
     {
-        public void Load(string scene_name, Scenes.LoadMode mode, bool @async, SceneLoadCompletedHandler callback = null)
+        public readonly string UnloadedSceneName;
+        public SceneUnloadCompleteEventArgs(string unloaded_scene_name)
         {
-            Scenes.Load(this, scene_name, mode, @async, callback);
+            UnloadedSceneName = unloaded_scene_name;
         }
     }
+
+    public delegate void SceneUnloadCompletedHandler(object sender, SceneUnloadCompleteEventArgs args);
+
+    [Serializable]
+    public class SceneUnloadCompleteEvent : UnityEvent<object, SceneUnloadCompleteEventArgs> { }
 }

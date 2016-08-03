@@ -24,9 +24,6 @@ THE SOFTWARE.
 
 using UnityEngine;
 
-#if UNITY_EDITOR
-#endif
-
 namespace RoaringFangs.Editor
 {
     public interface IHasHierarchyIcons
