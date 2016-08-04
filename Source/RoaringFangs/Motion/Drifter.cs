@@ -48,9 +48,9 @@ namespace RoaringFangs.Motion
         {
             for (;;)
             {
-                GetComponent<BouncyMove>().Target = TargetA;
+                GetComponent<BouncyMove>().TargetPositionWorld = TargetA.transform.position;
                 yield return Interval;
-                GetComponent<BouncyMove>().Target = TargetB;
+                GetComponent<BouncyMove>().TargetPositionWorld = TargetB.transform.position;
                 yield return Interval;
             }
         }

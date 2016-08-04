@@ -22,59 +22,112 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using RoaringFangs.Attributes;
 using UnityEngine;
 
 namespace RoaringFangs.Motion
 {
-    public class BouncyMove : MonoBehaviour, IHasTarget, IHasTargetPosition<Vector3>
+    public class BouncyMove : MonoBehaviour
     {
-        public Transform _Target;
-        public Transform Target { get { return _Target; } set { _Target = value; } }
-        public int Stagger = 1;
-        private int StaggerIndex = 0;
-
         public static readonly float TimeSubStepEpsilon = 0.001f;
 
-        [Range(0.001f, 0.100f)] // CS0182
-        public float TimeSubStep = 0.01f;
+        [Range(1f, 5000f)]
+        public float Spring = 50f;
 
-        [System.Serializable]
-        public struct SecondOrderCoefficients
+        [Range(1f, 100f)]
+        public float Drag = 5f;
+
+        [SerializeField]
+        private Vector3 _TargetPositionLocal;
+
+        public Vector3 TargetPositionLocal
         {
-            public float Spring, Drag;
+            get { return _TargetPositionLocal; }
+            set { _TargetPositionLocal = value; }
         }
 
-        public SecondOrderCoefficients Coefficients = new SecondOrderCoefficients()
-        {
-            Spring = 1f,
-            Drag = 1f
-        };
-
-        public Vector3 _TargetPosition;
-
-        public Vector3 TargetPosition
+        public Vector3 TargetPositionWorld
         {
             get
             {
-                if (Target == null)
-                    return _TargetPosition;
-                if (transform.parent == null)
-                    return Target.position;
-                return transform.parent.InverseTransformPoint(Target.position);
+                if (!transform.parent)
+                    return _TargetPositionLocal;
+                else
+                    return transform.parent.TransformPoint(_TargetPositionLocal);
             }
             set
             {
-                if (Target == null)
-                    _TargetPosition = value;
+                if (transform.parent == null)
+                    _TargetPositionLocal = value;
+                else
+                    _TargetPositionLocal = transform.parent.InverseTransformPoint(value);
             }
         }
 
-        protected Vector3 _Position;
-        protected Vector3 _dPosition;
+        [SerializeField, AutoProperty]
+        private bool _UseWorldPosition = false;
+
+        public bool UseWorldPosition
+        {
+            get { return _UseWorldPosition; }
+            set
+            {
+                Vector3 target_position = TargetPosition;
+                _UseWorldPosition = value;
+                Vector3 difference = TargetPosition - target_position;
+                _PreviousPosition += difference;
+                _PreviousPosition2 += difference;
+            }
+        }
+
+        private Vector3 _PreviousPosition;
+        private Vector3 _PreviousPosition2;
+        private Vector3 _IntegratedVelocity;
+
+        protected Vector3 Position
+        {
+            get
+            {
+                if (UseWorldPosition)
+                    return transform.position;
+                else
+                    return transform.localPosition;
+            }
+            set
+            {
+                if (UseWorldPosition)
+                    transform.position = value;
+                else
+                    transform.localPosition = value;
+            }
+        }
+
+        protected Vector3 TargetPosition
+        {
+            get
+            {
+                if (UseWorldPosition)
+                    return TargetPositionWorld;
+                else
+                    return TargetPositionLocal;
+            }
+            set
+            {
+                if (UseWorldPosition)
+                    TargetPositionWorld = value;
+                else
+                    TargetPositionLocal = value;
+            }
+        }
+
+        [Range(0.001f, 0.100f)]
+        public float TimeSubStep = 0.01f;
+
+        public int Stagger = 1;
+        private int StaggerIndex = 0;
 
         private void Start()
         {
-            _TargetPosition = transform.localPosition;
         }
 
         private float _dt;
@@ -88,19 +141,20 @@ namespace RoaringFangs.Motion
             _dt += Time.deltaTime;
             if (StaggerIndex % Stagger == 0)
             {
-                // TODO: Model this as a differential equation and use RK4 solver
+                Vector3 position = Position;
                 for (; _dt > 0f; _dt -= TimeSubStep)
                 {
                     float d = Mathf.Min(TimeSubStep, _dt);
-                    _TargetPosition = TargetPosition;
-                    Vector3 drag = Coefficients.Drag * (transform.localPosition - _Position);
-                    Vector3 force = Coefficients.Spring * (_TargetPosition - transform.localPosition);
+                    Vector3 drag = Drag * (_PreviousPosition - _PreviousPosition2);
+                    Vector3 force = Spring * (TargetPosition - _PreviousPosition);
                     Vector3 force_dt = force * d;
 
-                    _Position = transform.localPosition;
-                    transform.localPosition += (0.5f * force_dt + _dPosition - drag) * d;
-                    _dPosition += force_dt - drag;
+                    _PreviousPosition2 = _PreviousPosition;
+                    position = _PreviousPosition + (0.5f * force_dt + _IntegratedVelocity - drag) * d;
+                    _PreviousPosition = position;
+                    _IntegratedVelocity += force_dt - drag;
                 }
+                Position = position;
                 _dt = 0f;
             }
             StaggerIndex = (StaggerIndex + 1) % Stagger;

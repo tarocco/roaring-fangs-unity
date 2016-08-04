@@ -27,36 +27,27 @@ using UnityEngine;
 namespace RoaringFangs.Motion
 {
     [RequireComponent(typeof(BouncyMove))]
-    public class BouncyMoveAutoScale : MonoBehaviour
+    public class BouncyFollower : MonoBehaviour
     {
-        private BouncyMove Self;
-        public Rigidbody2D Target;
-        public BouncyMove.SecondOrderCoefficients Coefficients;
-        public BouncyMove.SecondOrderCoefficients DeltaSpeed;
+        [SerializeField]
+        private BouncyMove _BouncyMove;
 
-        public float SpeedSmoothRateP = 10;
-        public float SpeedSmoothRateV = 4;
-
-        public AnimationCurve SpeedCurve;
-
-        private Vector2 TargetPosition;
-        private Vector2 TargetVelocity;
-
-        private void Start()
+        [SerializeField]
+        private Transform _Target;
+        public Transform Target
         {
-            Self = GetComponent<BouncyMove>();
+            get { return _Target; }
+            protected set { _Target = value; }
         }
 
-        // Update is called once per frame
-        private void Update()
+        void Start()
         {
-            TargetPosition = Vector2.Lerp(TargetPosition, Target.position, SpeedSmoothRateP * Time.smoothDeltaTime);
-            TargetVelocity = Vector2.Lerp(TargetVelocity, Target.velocity, SpeedSmoothRateV * Time.smoothDeltaTime);
+            _BouncyMove = _BouncyMove ?? GetComponent<BouncyMove>();
+        }
 
-            float speed = TargetVelocity.magnitude;
-            float curve = SpeedCurve.Evaluate(speed);
-            Self.Coefficients.Drag = Coefficients.Drag + DeltaSpeed.Drag * curve;
-            Self.Coefficients.Spring = Coefficients.Spring + DeltaSpeed.Spring * curve;
+        void Update()
+        {
+            _BouncyMove.TargetPositionWorld = Target.position;
         }
     }
 }
