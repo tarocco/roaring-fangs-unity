@@ -23,6 +23,8 @@ THE SOFTWARE.
 */
 
 using UnityEngine.Events;
+using System;
+using UnityEngine;
 
 #if UNITY_EDITOR
 
@@ -34,12 +36,28 @@ namespace RoaringFangs.Utility
 {
     public static class Events
     {
+        private static readonly string MessageWarnFallbackAdd =
+@"Attempted to add event listener with non-UnityEngine.Object target to UnityEvent.
+AddListenerAuto will use non-persistent fallback.";
+
+        private static readonly string MessageWarnFallbackRemove =
+@"Attempted to remove event listener with non-UnityEngine.Object target to UnityEvent.
+AddListenerAuto will use non-persistent fallback for.";
+
         #region Add
 
         public static void AddListenerAuto(UnityEvent @event, UnityAction listener)
         {
 #if UNITY_EDITOR
-            UnityEventTools.AddPersistentListener(@event, listener);
+            try
+            {
+                UnityEventTools.AddPersistentListener(@event, listener);
+            }
+            catch(ArgumentException)
+            {
+                Debug.LogWarning(MessageWarnFallbackAdd);
+                @event.AddListener(listener);
+            }
 #else
             @event.AddListener(listener);
 #endif
@@ -48,7 +66,15 @@ namespace RoaringFangs.Utility
         public static void AddListenerAuto<T0>(UnityEvent<T0> @event, UnityAction<T0> listener)
         {
 #if UNITY_EDITOR
-            UnityEventTools.AddPersistentListener(@event, listener);
+            try
+            {
+                UnityEventTools.AddPersistentListener(@event, listener);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning(MessageWarnFallbackAdd);
+                @event.AddListener(listener);
+            }
 #else
             @event.AddListener(listener);
 #endif
@@ -57,7 +83,15 @@ namespace RoaringFangs.Utility
         public static void AddListenerAuto<T0, T1>(UnityEvent<T0, T1> @event, UnityAction<T0, T1> listener)
         {
 #if UNITY_EDITOR
-            UnityEventTools.AddPersistentListener(@event, listener);
+            try
+            {
+                UnityEventTools.AddPersistentListener(@event, listener);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning(MessageWarnFallbackAdd);
+                @event.AddListener(listener);
+            }
 #else
             @event.AddListener(listener);
 #endif
@@ -66,7 +100,15 @@ namespace RoaringFangs.Utility
         public static void AddListenerAuto<T0, T1, T2>(UnityEvent<T0, T1, T2> @event, UnityAction<T0, T1, T2> listener)
         {
 #if UNITY_EDITOR
-            UnityEventTools.AddPersistentListener(@event, listener);
+            try
+            {
+                UnityEventTools.AddPersistentListener(@event, listener);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning(MessageWarnFallbackAdd);
+                @event.AddListener(listener);
+            }
 #else
             @event.AddListener(listener);
 #endif
@@ -75,7 +117,15 @@ namespace RoaringFangs.Utility
         public static void AddListenerAuto<T0, T1, T2, T3>(UnityEvent<T0, T1, T2, T3> @event, UnityAction<T0, T1, T2, T3> listener)
         {
 #if UNITY_EDITOR
-            UnityEventTools.AddPersistentListener(@event, listener);
+            try
+            {
+                UnityEventTools.AddPersistentListener(@event, listener);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning(MessageWarnFallbackAdd);
+                @event.AddListener(listener);
+            }
 #else
             @event.AddListener(listener);
 #endif
@@ -88,7 +138,15 @@ namespace RoaringFangs.Utility
         public static void RemoveListenerAuto(UnityEvent @event, UnityAction listener)
         {
 #if UNITY_EDITOR
-            UnityEventTools.RemovePersistentListener(@event, listener);
+            try
+            {
+                UnityEventTools.RemovePersistentListener(@event, listener);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning(MessageWarnFallbackRemove);
+                @event.RemoveListener(listener);
+            }
 #else
             @event.RemoveListener(listener);
 #endif
@@ -97,7 +155,15 @@ namespace RoaringFangs.Utility
         public static void RemoveListenerAuto<T0>(UnityEvent<T0> @event, UnityAction<T0> listener)
         {
 #if UNITY_EDITOR
-            UnityEventTools.RemovePersistentListener(@event, listener);
+            try
+            {
+                UnityEventTools.RemovePersistentListener(@event, listener);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning(MessageWarnFallbackRemove);
+                @event.RemoveListener(listener);
+            }
 #else
             @event.RemoveListener(listener);
 #endif
@@ -106,7 +172,15 @@ namespace RoaringFangs.Utility
         public static void RemoveListenerAuto<T0, T1>(UnityEvent<T0, T1> @event, UnityAction<T0, T1> listener)
         {
 #if UNITY_EDITOR
-            UnityEventTools.RemovePersistentListener(@event, listener);
+            try
+            {
+                UnityEventTools.RemovePersistentListener(@event, listener);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning(MessageWarnFallbackRemove);
+                @event.RemoveListener(listener);
+            }
 #else
             @event.RemoveListener(listener);
 #endif
@@ -115,7 +189,15 @@ namespace RoaringFangs.Utility
         public static void RemoveListenerAuto<T0, T1, T2>(UnityEvent<T0, T1, T2> @event, UnityAction<T0, T1, T2> listener)
         {
 #if UNITY_EDITOR
-            UnityEventTools.RemovePersistentListener(@event, listener);
+            try
+            {
+                UnityEventTools.RemovePersistentListener(@event, listener);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning(MessageWarnFallbackRemove);
+                @event.RemoveListener(listener);
+            }
 #else
             @event.RemoveListener(listener);
 #endif
@@ -124,7 +206,15 @@ namespace RoaringFangs.Utility
         public static void RemoveListenerAuto<T0, T1, T2, T3>(UnityEvent<T0, T1, T2, T3> @event, UnityAction<T0, T1, T2, T3> listener)
         {
 #if UNITY_EDITOR
-            UnityEventTools.RemovePersistentListener(@event, listener);
+            try
+            {
+                UnityEventTools.RemovePersistentListener(@event, listener);
+            }
+            catch (ArgumentException)
+            {
+                Debug.LogWarning(MessageWarnFallbackRemove);
+                @event.RemoveListener(listener);
+            }
 #else
             @event.RemoveListener(listener);
 #endif
