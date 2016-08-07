@@ -24,7 +24,12 @@ THE SOFTWARE.
 
 using Midi;
 using Midi.Chunks;
+using Midi.Events;
+using Midi.Events.ChannelEvents;
+using Midi.Events.MetaEvents;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 namespace RoaringFangs.Formats.MIDI
 {
@@ -39,14 +44,8 @@ namespace RoaringFangs.Formats.MIDI
 
         protected override List<MIDIEventHelper> pEvents
         {
-            get
-            {
-                return _Events;
-            }
-            set
-            {
-                _Events = value;
-            }
+            get { return _Events; }
+            set { _Events = value; }
         }
 
         private string _Name;
@@ -59,14 +58,8 @@ namespace RoaringFangs.Formats.MIDI
 
         protected override string pName
         {
-            get
-            {
-                return Name;
-            }
-            set
-            {
-                Name = value;
-            }
+            get { return Name; }
+            set { Name = value; }
         }
 
         public bool GetEvent(int index, out MIDIEventHelper @event)
@@ -144,60 +137,93 @@ namespace RoaringFangs.Formats.MIDI
                 yield return @event;
         }
 
+        private bool MIDIEventListFilter(MidiEvent @event)
+        {
+            return
+                @event is NoteOnEvent ||
+                @event is NoteOffEvent ||
+                @event is SequenceOrTrackNameEvent;
+        }
+
         public MIDIEventList(MidiData midi_data, TrackChunk track, MIDIEventFilter filter)
         {
-            // Calculate the time scale as the reciprocal of the MIDI time_division
-            // time_division is also known as PPQ https://en.wikipedia.org/wiki/Pulses_per_quarter_note
-            float time_scale = 1f / (float)(midi_data.header.time_division);
+            // TODO: get beats per measure by reading all
+            // Midi.Events.MetaEvents.TimeSignatureEvents
+            // along with the notes in the track (i.e.
+            // time signature changes, etc.)
+            float beats_per_measure = 4f;
+
+            // Calculate the time scale as the reciprocal
+            // of the MIDI time_division
+            // time_division is also known as PPQ
+            // https://en.wikipedia.org/wiki/Pulses_per_quarter_note
+            float time_beats_scale = 1f / midi_data.header.time_division;
+            float time_beats_to_measures_scale = 1f / beats_per_measure;
+
             // Instatiate the event list
             pEvents = new List<MIDIEventHelper>();
-            // Starting from time 0.0
-            float time = 0.0f;
-            // Keep track of the last note-on events and match them with note-off events that follow,
-            // then store the time between the events as the duration in the event helper
+            // Starting from time zero
+            float time_beats = 0f;
+            float time_measures = 0f;
+            // Keep track of the last note-on events and
+            // match them with note-off events that follow,
+            // then store the time between the events as
+            // the duration in the event helper
             MIDIEventHelper[] notes_on_last = new MIDIEventHelper[256];
             // Keep track of the valid event index
             int index = 0;
             // Add all of the events needed for this track to the backing list (pEvents)
-            foreach (var enum_midi_event in track.events)
+            MIDIEventHelper previous_helper = null;
+            var track_filtered = track.events.Where(MIDIEventListFilter);
+            foreach (var midi_event in track_filtered)
             {
-                // Calculate the event time based on delta_time
-                // delta_time is measured in ticks
-                time += time_scale * (float)enum_midi_event.delta_time;
-                if (filter.Accepts(enum_midi_event))
+                if (filter.Accepts(midi_event))
                 {
+                    // Calculate the event time based on delta_time
+                    // delta_time is measured in ticks
+                    float delta_time = (float)midi_event.delta_time;
+                    time_beats += time_beats_scale * delta_time;
+                    // Quantize to 32nd notes
+                    time_beats = Quantize(time_beats, 32);
+                    time_measures += time_beats_to_measures_scale * time_beats;
+
                     // Create an event helper (wrapper for event and details)
-                    MIDIEventHelper current_event_helper =
-                        new MIDIEventHelper(enum_midi_event, (int)index, time);
+                    MIDIEventHelper current_event_helper = new MIDIEventHelper()
+                    {
+                        MIDIEvent = midi_event,
+                        Index = index,
+                        TimeBeats = time_beats,
+                        TimeMeasures = time_measures,
+                        DurationBeats = 0f,
+                    };
                     // Add the event helper to the backing list
                     pEvents.Add(current_event_helper);
                     // If this event is a note off event
-                    if (enum_midi_event is Midi.Events.ChannelEvents.NoteOffEvent)
+                    if (midi_event is NoteOffEvent)
                     {
-                        var note_off = enum_midi_event as Midi.Events.ChannelEvents.NoteOffEvent;
+                        var note_off = midi_event as NoteOffEvent;
                         int number = note_off.note_number;
                         var on_event_helper = notes_on_last[number];
                         if (on_event_helper != null)
                         {
-                            float duration = time - on_event_helper.TimeBeats;
+                            float duration = time_beats - on_event_helper.TimeBeats;
                             on_event_helper.DurationBeats = duration;
                             current_event_helper.DurationBeats = duration;
                         }
                         // The note off event is not accounted for when consolidating
                     }
                     //  If this event is a note on event
-                    else if (enum_midi_event is Midi.Events.ChannelEvents.NoteOnEvent)
+                    else if (midi_event is NoteOnEvent)
                     {
                         // Store it as the last note-on event for this note number
-                        var note_on = enum_midi_event as Midi.Events.ChannelEvents.NoteOnEvent;
-                        // Quantize the time to 16th notes
-                        current_event_helper.TimeBeats = Quantization(current_event_helper.TimeBeats, 16);
+                        var note_on = midi_event as NoteOnEvent;
                         int number = note_on.note_number;
                         notes_on_last[number] = current_event_helper;
                     }
                     index++;
+                    previous_helper = current_event_helper;
                 }
-                else if (MIDIEventFilter.TrackNameFilter.Accepts(enum_midi_event))
+                else if (MIDIEventFilter.TrackNameFilter.Accepts(midi_event))
                 {
                     Name = track.chunk_ID ?? "";
 
@@ -209,14 +235,10 @@ namespace RoaringFangs.Formats.MIDI
             }
         }
 
-        //Quick Quantization function without rounding function
-        //Basically "round 'n' to the nearest increment of '1/b'"
-        private float Quantization(float n, int b)
+        // Basically "round 'n' to the nearest increment of '1/b'"
+        private static float Quantize(float n, int b)
         {
-            float q = n * b;
-            float r = q % 1;
-            float s = (r * 2) - (r * 2) % 1;
-            return (q - r + s) / b;
+            return Mathf.Round(b * n) / b;
         }
     }
 }

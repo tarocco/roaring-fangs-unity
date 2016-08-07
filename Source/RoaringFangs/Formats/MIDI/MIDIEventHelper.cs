@@ -40,7 +40,7 @@ namespace RoaringFangs.Formats.MIDI
         public MidiEvent MIDIEvent
         {
             get { return _Event; }
-            protected set { _Event = value; }
+            set { _Event = value; }
         }
 
         [SerializeField]
@@ -54,6 +54,15 @@ namespace RoaringFangs.Formats.MIDI
             get { return _TimeBeats; }
             set { _TimeBeats = value; }
         }
+
+        [SerializeField]
+        private float _TimeMeasures;
+        public float TimeMeasures
+        {
+            get { return _TimeMeasures; }
+            set { _TimeMeasures = value; }
+        }
+
 
         [SerializeField]
         private float _DurationBeats = 0;
@@ -76,15 +85,14 @@ namespace RoaringFangs.Formats.MIDI
         public int Index
         {
             get { return _Index; }
-            private set { _Index = value; }
+            set { _Index = value; }
         }
 
-        public MIDIEventHelper(MidiEvent m_e, int index, float time_beats, float duration_beats = 0)
+        public static bool IsInSameMeasure(MIDIEventHelper a, MIDIEventHelper b)
         {
-            MIDIEvent = m_e;
-            _Index = index;
-            _TimeBeats = time_beats;
-            _DurationBeats = duration_beats;
+            int measure_a = Mathf.FloorToInt(a.TimeMeasures);
+            int measure_b = Mathf.FloorToInt(b.TimeMeasures);
+            return measure_a == measure_b;
         }
 
         public override string ToString()
