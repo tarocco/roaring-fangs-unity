@@ -32,14 +32,18 @@ namespace RoaringFangs.Utility
         public Quaternion Rotation;
         public Vector3 Scale;
 
-        public static TRS Create(ref Matrix4x4 m)
+        public TRS(ref Matrix4x4 m)
         {
-            return new TRS()
-            {
-                Position = GetPosition(ref m),
-                Rotation = GetRotation(ref m),
-                Scale = GetScale(ref m)
-            };
+            Position = GetPosition(ref m);
+            Rotation = GetRotation(ref m);
+            Scale = GetScale(ref m);
+        }
+
+        public TRS(Matrix4x4 m)
+        {
+            Position = GetPosition(ref m);
+            Rotation = GetRotation(ref m);
+            Scale = GetScale(ref m);
         }
 
         public static Vector3 GetPosition(ref Matrix4x4 m)
@@ -49,9 +53,19 @@ namespace RoaringFangs.Utility
 
         public static Quaternion GetRotation(ref Matrix4x4 m)
         {
-            return Quaternion.LookRotation(
-                    m.GetColumn(2),
-                    m.GetColumn(1));
+            //return Quaternion.LookRotation(
+            //        m.GetColumn(2),
+            //        m.GetColumn(1));
+            float w_unscaled = Mathf.Sqrt(1f + m[0, 0] + m[1, 1] + m[2, 2]);
+            Vector4 v4 = new Vector4()
+            {
+                w = 0.5f * w_unscaled,
+                x = (m[2, 1] - m[1, 2]) / (2f * w_unscaled),
+                y = (m[0, 2] - m[2, 0]) / (2f * w_unscaled),
+                z = (m[1, 0] - m[0, 1]) / (2f * w_unscaled),
+            };
+            v4.Normalize();
+            return new Quaternion(v4.x, v4.y, v4.z, v4.w);
         }
 
         public static Vector3 GetScale(ref Matrix4x4 m)
@@ -60,6 +74,11 @@ namespace RoaringFangs.Utility
                     m.GetColumn(0).magnitude,
                     m.GetColumn(1).magnitude,
                     m.GetColumn(2).magnitude);
+        }
+
+        public Matrix4x4 ToMatrix()
+        {
+            return Matrix4x4.TRS(Position, Rotation, Scale);
         }
     }
 }
