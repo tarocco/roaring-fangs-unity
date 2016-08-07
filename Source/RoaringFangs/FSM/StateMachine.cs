@@ -155,6 +155,14 @@ namespace RoaringFangs.FSM
             return States[state];
         }
 
+        public StateInfo this[TStateEnum state]
+        {
+            get
+            {
+                return GetStateInfo(state);
+            }
+        }
+
         protected void SetStateInfo(TStateEnum state, StateInfo info)
         {
             States[state] = info;
