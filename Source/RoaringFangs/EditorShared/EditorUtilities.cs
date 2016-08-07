@@ -22,7 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-namespace RoaringFangs.EditorShared
+#if UNITY_EDITOR
+using System.Reflection;
+using UnityEditor;
+#endif
+
+namespace RoaringFangs.Editor
 {
     static class EditorUtilities
     {
@@ -31,6 +36,21 @@ namespace RoaringFangs.EditorShared
 #if UNITY_EDITOR
             UnityEditor.EditorUtility.SetDirty(target);
 #endif
+        }
+        public static bool AreGizmosVisible()
+        {
+#if UNITY_EDITOR
+            var asm = Assembly.GetAssembly(typeof(UnityEditor.Editor));
+            var type = asm.GetType("UnityEditor.GameView");
+            if (type != null)
+            {
+                var window = EditorWindow.GetWindow(type);
+                var gizmosField = type.GetField("m_Gizmos", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (gizmosField != null)
+                    return (bool)gizmosField.GetValue(window);
+            }
+#endif
+            return false;
         }
     }
 }
