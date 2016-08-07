@@ -136,13 +136,14 @@ namespace RoaringFangs.Attributes
         private static Dictionary<PropertyInfoBindingKey, PropertyInfoBindingValue> CachedAutoPropertyBindings =
             new Dictionary<PropertyInfoBindingKey, PropertyInfoBindingValue>();
 
-        private const BindingFlags PropertyBindingFlags =
+        public const BindingFlags PropertyBindingFlags =
+            BindingFlags.Instance |
             BindingFlags.GetProperty |
             BindingFlags.SetProperty |
             BindingFlags.Public |
             BindingFlags.NonPublic;
 
-        private const BindingFlags FieldBindingFlags =
+        public const BindingFlags FieldBindingFlags =
             BindingFlags.Instance |
             BindingFlags.GetField |
             BindingFlags.SetField |

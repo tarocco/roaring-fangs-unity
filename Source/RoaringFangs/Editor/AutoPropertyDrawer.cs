@@ -51,7 +51,9 @@ namespace RoaringFangs.Editor
             // Lazily initialize/cache the property info to the attribute
             auto.PropertyInfo =
                 auto.PropertyInfo ??
-                    fieldInfo.DeclaringType.GetProperty(auto.PropertyName);
+                    fieldInfo.DeclaringType.GetProperty(
+                        auto.PropertyName,
+                        AutoPropertyAttribute.PropertyBindingFlags);
             // Lazily initialize/cache the property field drawer for this property
             _DrawPropertyField =
                 auto.DrawPropertyField ??
