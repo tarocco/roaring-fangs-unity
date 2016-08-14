@@ -2,6 +2,7 @@ using UnityEngine;
 
 using System;
 using System.Linq;
+using RoaringFangs.Adapters.FluffyUnderware.Curvy;
 
 #if FLUFFYUNDERWARE_CURVY
 using FluffyUnderware.Curvy;
@@ -33,32 +34,17 @@ namespace RoaringFangs.Visuals
             }
         }
 
-        [SerializeField, AutoProperty]
-#if FLUFFYUNDERWARE_CURVY
-        private CurvySpline _PathSpline;
-        public CurvySpline PathSpline
-        {
-            get { return _PathSpline; }
-            set
-            {
-                _PathSpline = value;
-                _WeightsDirty = true;
-            }
-        }
-#else
-        private ICurvySpline _PathSpline;
-
+        [SerializeField, AutoProperty("PathSpline")]
+        private MonoBehaviour _PathSplineBehavior;
         public ICurvySpline PathSpline
         {
-            get { return _PathSpline; }
+            get { return (ICurvySpline)_PathSplineBehavior; }
             set
             {
-                _PathSpline = value;
+                _PathSplineBehavior = (MonoBehaviour)value;
                 _WeightsDirty = true;
             }
         }
-
-#endif
 
         [SerializeField, AutoProperty]
         private float _SegmentPathPosition = 0f;
@@ -207,10 +193,11 @@ namespace RoaringFangs.Visuals
         {
             if (PathSpline != null)
             {
-                if (PathSpline.Dirty)
+                bool was_dirty = PathSpline.Dirty;
+                if (was_dirty)
                     PathSpline.Refresh();
-                int spline_points_checksum = CurvyControlPointsHash(PathSpline);
-                if (_SplinePointsChecksum != spline_points_checksum || _WeightsDirty)
+                int spline_points_checksum = CurvyControlPointsHash((ICurvySpline)PathSpline);
+                if (was_dirty || _SplinePointsChecksum != spline_points_checksum || _WeightsDirty)
                 {
                     UpdateMeshWeights(true, true, _WeightsDirty);
                     _SplinePointsChecksum = spline_points_checksum;
@@ -218,32 +205,17 @@ namespace RoaringFangs.Visuals
             }
         }
 
-#if FLUFFYUNDERWARE_CURVY
-        private static int CurvySplineSegmentHash(CurvySplineSegment s)
-        {
-            return s.transform.localToWorldMatrix.GetHashCode();
-        }
-        private static int CurvyControlPointsHash(CurvySpline spline)
-        {
-            return spline.ControlPoints
-                .Select((Func<CurvySplineSegment, int>)CurvySplineSegmentHash)
-                .Aggregate((a, b) => a ^ b);
-        }
-#else
-
         private static int CurvySplineSegmentHash(ICurvySplineSegment s)
         {
             return s.transform.localToWorldMatrix.GetHashCode();
         }
-
         private static int CurvyControlPointsHash(ICurvySpline spline)
         {
             return spline.ControlPoints
+                .Where(p => p != null)
                 .Select((Func<ICurvySplineSegment, int>)CurvySplineSegmentHash)
                 .Aggregate((a, b) => a ^ b);
         }
-
-#endif
 
         public void UpdateMeshWeights()
         {

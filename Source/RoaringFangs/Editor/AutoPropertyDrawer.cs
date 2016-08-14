@@ -53,7 +53,7 @@ namespace RoaringFangs.Editor
                 auto.PropertyInfo ??
                     fieldInfo.DeclaringType.GetProperty(
                         auto.PropertyName,
-                        AutoPropertyAttribute.PropertyBindingFlags);
+                        AutoPropertyAttribute.DefaultPropertyBindingFlags);
             // Lazily initialize/cache the property field drawer for this property
             _DrawPropertyField =
                 auto.DrawPropertyField ??

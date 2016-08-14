@@ -65,7 +65,7 @@ namespace RoaringFangs
 
         public virtual void NavigateScene(string name)
         {
-            Scenes.Load(this, name, Scenes.LoadMode.ReplaceActive, true, HandleLoadedNext);
+            Scenes.StartLoadAsync(this, name, Scenes.LoadMode.ReplaceActive, HandleLoadedNext);
         }
 
         protected void HandleLoadedAndReset(object sender, SceneLoadCompleteEventArgs args)
@@ -76,7 +76,7 @@ namespace RoaringFangs
 
         public virtual void ResetToScene(string name)
         {
-            Scenes.Load(this, name, Scenes.LoadMode.ReplaceActive, true, HandleLoadedAndReset);
+            Scenes.StartLoadAsync(this, name, Scenes.LoadMode.ReplaceActive, HandleLoadedAndReset);
         }
 
         protected void HandleLoadedPrevious(object sender, SceneLoadCompleteEventArgs args)
@@ -89,7 +89,7 @@ namespace RoaringFangs
         {
             try
             {
-                Scenes.Load(this, PreviousSceneName, Scenes.LoadMode.ReplaceActive, true, HandleLoadedPrevious);
+                Scenes.StartLoadAsync(this, PreviousSceneName, Scenes.LoadMode.ReplaceActive, HandleLoadedPrevious);
             }
             catch(InvalidOperationException ex)
             {

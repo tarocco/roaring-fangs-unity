@@ -43,7 +43,7 @@ namespace RoaringFangs.Utility
                 RecipByteMaxF * (argb >> 24));
         }
 
-        public static Color ARGB32ToColor(string argb_string)
+        public static Color HexStringToColor(string argb_string)
         {
             if (argb_string.Length == 6)
                 argb_string = "FF" + argb_string;
@@ -59,7 +59,7 @@ namespace RoaringFangs.Utility
                 | Mathf.FloorToInt(ByteMaxF * color.b);
         }
 
-        public static string ColorToARGB32String(Color color)
+        public static string ColorToHexString(Color color)
         {
             return ColorToARGB32(color).ToString("X");
         }

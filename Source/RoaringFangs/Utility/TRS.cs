@@ -51,6 +51,11 @@ namespace RoaringFangs.Utility
             return m.GetColumn(3);
         }
 
+        public static Vector3 GetPosition(Matrix4x4 m)
+        {
+            return GetPosition(ref m);
+        }
+
         public static Quaternion GetRotation(ref Matrix4x4 m)
         {
             //return Quaternion.LookRotation(
@@ -68,12 +73,22 @@ namespace RoaringFangs.Utility
             return new Quaternion(v4.x, v4.y, v4.z, v4.w);
         }
 
+        public static Quaternion GetRotation(Matrix4x4 m)
+        {
+            return GetRotation(ref m);
+        }
+
         public static Vector3 GetScale(ref Matrix4x4 m)
         {
             return new Vector3(
                     m.GetColumn(0).magnitude,
                     m.GetColumn(1).magnitude,
                     m.GetColumn(2).magnitude);
+        }
+
+        public static Vector3 GetScale(Matrix4x4 m)
+        {
+            return GetScale(ref m);
         }
 
         public Matrix4x4 ToMatrix()

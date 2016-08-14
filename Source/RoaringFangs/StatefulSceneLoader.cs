@@ -48,7 +48,7 @@ namespace RoaringFangs
 
         [Header("Only Async mode permitted")]
         [SerializeField, ReadOnly]
-        private bool _Async = true;
+        private readonly bool _Async = true;
 
         private GameObject _CoroutineObject;
         private Scenes.CoroutineProcessor _CoroutineProcessor;
@@ -58,14 +58,14 @@ namespace RoaringFangs
 
         public void Load()
         {
-            Scenes.Load(_CoroutineProcessor, SceneName, Mode, _Async, SceneLoadComplete.Invoke);
+            Scenes.StartLoadAsync(_CoroutineProcessor, SceneName, Mode, SceneLoadComplete.Invoke);
         }
 
         public void Unload()
         {
             // TODO: callback
             if(_CoroutineObject != null)
-                Scenes.Unload(_CoroutineProcessor, SceneName, _Async, (s, a) => Destroy(_CoroutineObject));
+                Scenes.StartUnloadAsync(_CoroutineProcessor, SceneName, (s, a) => Destroy(_CoroutineObject));
         }
 
         private void Start()

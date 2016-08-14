@@ -452,6 +452,15 @@ namespace RoaringFangs.Utility
             }
         }
 
+        public static GameObject FindGameObject(Transform parent, string name)
+        {
+            if (parent.name == name)
+                return parent.gameObject;
+            foreach (Transform t in parent)
+                return FindGameObject(t, name);
+            return null;
+        }
+
         #endregion Static Methods
     }
 }

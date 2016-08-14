@@ -24,12 +24,16 @@ THE SOFTWARE.
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace RoaringFangs
 {
+    /// <summary>
+    /// Use this as a COMPLETE replacement for <see cref="UnityEngine.Scenemanagement.SceneManager"/>
+    /// </summary>
     public static class Scenes
     {
         public enum LoadMode
@@ -46,47 +50,62 @@ namespace RoaringFangs
             // Dummy MonoBahaviour
         }
 
-        public static void Load(string scene_name, LoadMode mode)
+        private struct SceneInfo
         {
-            Scene scene_loaded;
-            switch (mode)
+            public readonly Scene Scene;
+            public readonly LoadSceneMode LoadSceneMode;
+
+            public SceneInfo(Scene scene, LoadSceneMode mode)
             {
-                default:
-                case LoadMode.Add:
-                    SceneManager.LoadScene(scene_name, LoadSceneMode.Additive);
-                    break;
-
-                case LoadMode.CheckAdd:
-                    if (!SceneManager.GetSceneByName(scene_name).isLoaded)
-                        SceneManager.LoadScene(scene_name, LoadSceneMode.Additive);
-                    // else throw an exception (should it?)
-                    break;
-
-                case LoadMode.UnloadAdd:
-                    SceneManager.UnloadScene(scene_name);
-                    SceneManager.LoadScene(scene_name, LoadSceneMode.Additive);
-                    break;
-
-                case LoadMode.ReplaceActive:
-                    // Uhh...
-                    // http://forum.unity3d.com/threads/unity-hangs-on-scenemanager-unloadscene.380116/
-                    throw new InvalidOperationException("Cannot replace active scene using blocking method. Use LoadAsync for LoadMode.ReplaceActive.");
-                /*
-                string scene_originally_active_name = SceneManager.GetActiveScene().name;
-                SceneManager.LoadScene(scene_name, LoadSceneMode.Additive);
-                scene_loaded = SceneManager.GetSceneByName(scene_name);
-                SceneManager.SetActiveScene(scene_loaded);
-                SceneManager.UnloadScene(scene_originally_active_name);
-                break;
-                */
-                case LoadMode.MergeWithActive:
-                    scene_loaded = SceneManager.GetSceneByName(scene_name);
-                    if (!scene_loaded.isLoaded)
-                        SceneManager.LoadScene(scene_name, LoadSceneMode.Additive);
-                    scene_loaded = SceneManager.GetSceneByName(scene_name);
-                    SceneManager.MergeScenes(scene_loaded, SceneManager.GetActiveScene());
-                    break;
+                Scene = scene;
+                LoadSceneMode = mode;
             }
+        }
+
+        private static List<string> ScenesLoading = new List<string>();
+
+        private static List<SceneInfo> ScenesLoaded = new List<SceneInfo>();
+
+        static Scenes()
+        {
+            var scene_count = SceneManager.sceneCount;
+            for (int i = 0; i < scene_count; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                var scene_info = new SceneInfo(scene, LoadSceneMode.Single);
+                ScenesLoaded.Add(scene_info);
+            }
+            SceneManager.sceneLoaded += HandleSceneLoaded;
+            SceneManager.sceneUnloaded += HandleSceneUnloaded;
+            var active_scene = SceneManager.GetActiveScene();
+            ScenesLoaded.Add(new SceneInfo(active_scene, LoadSceneMode.Single));
+        }
+
+        private static void HandleSceneUnloaded(Scene scene)
+        {
+            ScenesLoading.RemoveAll(s => s == scene.name); // Just in case?
+            ScenesLoaded.RemoveAll(i => i.Scene == scene);
+        }
+
+        private static void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            ScenesLoading.RemoveAll(s => s == scene.name);
+            ScenesLoaded.Add(new SceneInfo(scene, mode));
+        }
+
+        private static bool IsSceneLoading(string scene_name)
+        {
+            return ScenesLoading.Any(s => s == scene_name);
+        }
+
+        private static bool IsSceneLoaded(string scene_name)
+        {
+            return ScenesLoaded.Any(i => i.Scene.name == scene_name);
+        }
+
+        private static bool IsSceneLoadingOrLoaded(string scene_name)
+        {
+            return IsSceneLoading(scene_name) || IsSceneLoaded(scene_name);
         }
 
         public static IEnumerable LoadAsync(string scene_name, LoadMode mode)
@@ -101,32 +120,45 @@ namespace RoaringFangs
                 default:
                 case LoadMode.Add:
                     operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
+                    ScenesLoading.Add(scene_name);
                     break;
 
                 case LoadMode.CheckAdd:
-                    if (!SceneManager.GetSceneByName(scene_name).isLoaded)
+                    if (!IsSceneLoadingOrLoaded(scene_name))
+                    {
                         operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
+                        ScenesLoading.Add(scene_name);
+                    }
                     // TODO: else throw an exception (should it?)
                     break;
 
                 case LoadMode.UnloadAdd:
                     SceneManager.UnloadScene(scene_name);
                     operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
+                    ScenesLoading.Add(scene_name);
                     break;
 
                 case LoadMode.ReplaceActive:
-                    scene_originally_active_name = SceneManager.GetActiveScene().name;
-                    SceneManager.UnloadScene(scene_originally_active_name);
-                    operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
+                    if (!IsSceneLoadingOrLoaded(scene_name))
+                    {
+                        scene_originally_active_name = SceneManager.GetActiveScene().name;
+                        SceneManager.UnloadScene(scene_originally_active_name);
+                        operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
+                        ScenesLoading.Add(scene_name);
+                    }
                     break;
 
                 case LoadMode.MergeWithActive:
                     scene_loaded = SceneManager.GetSceneByName(scene_name);
-                    if (!scene_loaded.isLoaded)
+                    if (!IsSceneLoadingOrLoaded(scene_name))
+                    {
                         operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
+                        ScenesLoading.Add(scene_name);
+                    }
                     break;
             }
             yield return operation;
+            ScenesLoading.RemoveAll(s => s == scene_name);
             switch (mode)
             {
                 default:
@@ -144,26 +176,7 @@ namespace RoaringFangs
             }
         }
 
-        public static void Load(MonoBehaviour self, string scene_name, LoadMode mode, bool @async, SceneLoadCompletedHandler callback = null)
-        {
-            if (@async)
-                self.StartCoroutine(LoadAsync(self, scene_name, mode, callback).GetEnumerator());
-            else
-            {
-                Load(self, scene_name, mode, callback);
-            }
-        }
-
-        private static void Load(object self, string scene_name, LoadMode mode, SceneLoadCompletedHandler callback)
-        {
-            Scene active = SceneManager.GetActiveScene();
-            Load(scene_name, mode);
-            Scene loaded = SceneManager.GetSceneByName(scene_name);
-            if (callback != null)
-                callback(self, new SceneLoadCompleteEventArgs(active, loaded, mode));
-        }
-
-        private static IEnumerable LoadAsync(object self, string scene_name, LoadMode mode, SceneLoadCompletedHandler callback)
+        public static IEnumerable LoadAsync(object self, string scene_name, LoadMode mode, SceneLoadCompletedHandler callback)
         {
             Scene active = SceneManager.GetActiveScene();
             var operations = LoadAsync(scene_name, mode);
@@ -174,12 +187,12 @@ namespace RoaringFangs
                 callback(self, new SceneLoadCompleteEventArgs(active, loaded, mode));
         }
 
-        public static void Unload(string scene_name)
+        public static void StartLoadAsync(MonoBehaviour self, string scene_name, LoadMode mode, SceneLoadCompletedHandler callback = null)
         {
-            SceneManager.UnloadScene(scene_name);
+            self.StartCoroutine(LoadAsync(self, scene_name, mode, callback).GetEnumerator());
         }
 
-        public static IEnumerable UnloadAsync(MonoBehaviour self, string scene_name, SceneUnloadCompletedHandler callback)
+        public static IEnumerable UnloadAsync(object self, string scene_name, SceneUnloadCompletedHandler callback)
         {
             yield return new WaitForEndOfFrame();
             SceneManager.UnloadScene(scene_name);
@@ -187,21 +200,9 @@ namespace RoaringFangs
                 callback(self, new SceneUnloadCompleteEventArgs(scene_name));
         }
 
-        public static void Unload(MonoBehaviour self, string scene_name, bool @async, SceneUnloadCompletedHandler callback)
+        public static void StartUnloadAsync(MonoBehaviour self, string scene_name, SceneUnloadCompletedHandler callback)
         {
-            if (@async)
-                self.StartCoroutine(UnloadAsync(self, scene_name, callback).GetEnumerator());
-            else
-            {
-                Unload(scene_name);
-                if (callback != null)
-                    callback(self, new SceneUnloadCompleteEventArgs(scene_name));
-            }
-        }
-
-        public static void UnloadActive()
-        {
-            SceneManager.UnloadScene(SceneManager.GetActiveScene().buildIndex);
+            self.StartCoroutine(UnloadAsync(self, scene_name, callback).GetEnumerator());
         }
     }
 }

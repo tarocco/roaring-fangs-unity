@@ -78,14 +78,11 @@ namespace RoaringFangs.Utility
         /// transforms of this component's transform
         /// </summary>
         /// <returns>Enumerable over a given child GameObject</returns>
-        protected IEnumerable<GameObject> PoolElements()
+        protected IEnumerable<GameObject> GetPoolElements()
         {
             foreach (Transform t in transform)
             {
-                if (t.gameObject != null)
-                    yield return t.gameObject;
-                else
-                    Debug.LogWarning("Skipping transform without gameObject property in pool");
+                yield return t.gameObject;
             }
         }
 
@@ -151,12 +148,18 @@ namespace RoaringFangs.Utility
         {
             for (;;)
             {
-                foreach (GameObject game_object in PoolElements())
+                var elements = GetPoolElements().ToArray();
+                if (elements.Count() > 0)
                 {
-                    game_object.SetActive(true);
-                    PoolData[game_object] = new ElementData() { Expiry = Time.time + ElementTTL };
-                    yield return game_object;
+                    foreach (GameObject game_object in elements)
+                    {
+                        game_object.SetActive(true);
+                        PoolData[game_object] = new ElementData() { Expiry = Time.time + ElementTTL };
+                        yield return game_object;
+                    }
                 }
+                else
+                    yield return null;
             }
         }
 

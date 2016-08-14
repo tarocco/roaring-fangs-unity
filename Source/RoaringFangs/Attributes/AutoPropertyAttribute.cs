@@ -136,14 +136,14 @@ namespace RoaringFangs.Attributes
         private static Dictionary<PropertyInfoBindingKey, PropertyInfoBindingValue> CachedAutoPropertyBindings =
             new Dictionary<PropertyInfoBindingKey, PropertyInfoBindingValue>();
 
-        public const BindingFlags PropertyBindingFlags =
+        public const BindingFlags DefaultPropertyBindingFlags =
             BindingFlags.Instance |
             BindingFlags.GetProperty |
             BindingFlags.SetProperty |
             BindingFlags.Public |
             BindingFlags.NonPublic;
 
-        public const BindingFlags FieldBindingFlags =
+        public const BindingFlags DefaultFieldBindingFlags =
             BindingFlags.Instance |
             BindingFlags.GetField |
             BindingFlags.SetField |
@@ -250,7 +250,7 @@ namespace RoaringFangs.Attributes
                     FieldInfo field_info;
                     while (depth > 0)
                     {
-                        field_info = object_type.GetField(FieldName, FieldBindingFlags);
+                        field_info = object_type.GetField(FieldName, DefaultFieldBindingFlags);
                         if (field_info != null)
                         {
                             object field_value = field_info.GetValue(@object);
@@ -304,12 +304,13 @@ namespace RoaringFangs.Attributes
             else
                 serialized_object.ApplyModifiedPropertiesWithoutUndo();
             object previous_value = field_value_before_apply; // Restore to value right before this application
-            // Get the value of the field after applying modified properties
-            var current_value = field_info.GetValue(property_value_at_path);
+            // Get the values of the field and property after applying modified properties
+            var current_field_value = field_info.GetValue(property_value_at_path);
+            var current_property_value = property_info.GetValue(property_value_at_path, null);
             // Restore the field to its previous value so that the property setter can act on changes to the backing field
             field_info.SetValue(property_value_at_path, previous_value);
             // Invoke the setter of the property
-            property_info.SetValue(property_value_at_path, current_value, null);
+            property_info.SetValue(property_value_at_path, current_property_value, null);
         }
 
         public static void ValidateAllCached(bool with_undo)
@@ -373,9 +374,67 @@ namespace RoaringFangs.Attributes
             return EditorGUI.PropertyField(position, property, label, true);
         }
 
+        private static bool RangeField(
+            Rect position,
+            SerializedProperty property,
+            GUIContent label,
+            float min,
+            float max,
+            string min_prop_name,
+            string max_prop_name)
+        {
+            bool has_min_prop = !String.IsNullOrEmpty(min_prop_name);
+            bool has_max_prop = !String.IsNullOrEmpty(max_prop_name);
+            if (has_min_prop || has_max_prop)
+            {
+                var serialized_object = property.serializedObject;
+                var targets = serialized_object.targetObjects;
+                var property_path = property.propertyPath;
+                foreach (var target in targets)
+                {
+                    var declaring_property = GetPropertyDeclaringObjectAtPath(target, property_path);
+                    var declaring_type = declaring_property.GetType();
+                    // It's a long shot
+                    if (has_min_prop)
+                    {
+                        var min_prop = declaring_type.GetProperty(min_prop_name, DefaultPropertyBindingFlags);
+                        var min_prop_value = min_prop.GetValue(declaring_property, null);
+                        min = Convert.ToSingle(min_prop_value);
+                    }
+                    if (has_max_prop)
+                    {
+                        var max_prop = declaring_type.GetProperty(max_prop_name, DefaultPropertyBindingFlags);
+                        var max_prop_value = max_prop.GetValue(declaring_property, null);
+                        max = Convert.ToSingle(max_prop_value);
+                    }
+                }
+            }
+            return RangeField(position, property, label, min, max);
+        }
+
         public static PropertyFieldHandler RangeField(float min, float max)
         {
-            return (a, b, c) => RangeField(a, b, c, min, max);
+            return (a, b, c) => RangeField(a, b, c,
+                min, max);
+        }
+
+        public static PropertyFieldHandler RangeField(string min_prop_name, float max)
+        {
+
+            return (a, b, c) => RangeField(a, b, c,
+                float.NegativeInfinity, max, min_prop_name, null);
+        }
+
+        public static PropertyFieldHandler RangeField(float min, string max_prop_name)
+        {
+            return (a, b, c) => RangeField(a, b, c,
+                min, float.PositiveInfinity, null, max_prop_name);
+        }
+
+        public static PropertyFieldHandler RangeField(string min_prop_name, string max_prop_name)
+        {
+            return (a, b, c) => RangeField(a, b, c,
+                float.NegativeInfinity, float.PositiveInfinity, min_prop_name, max_prop_name);
         }
 
         public static bool MinMaxField(Rect position, SerializedProperty property, GUIContent label, float min, float max)
