@@ -11,7 +11,11 @@ namespace RoaringFangs.Adapters.FluffyUnderware.Curvy
 
         Vector3 Interpolate(float tf);
 
+        Vector3 InterpolateFast(float tf);
+
         Vector3 GetTangent(float tf);
+
+        Vector3 GetTangentFast(float tf);
 
         float Length { get; }
         List<ICurvySplineSegment> ControlPoints { get; }

@@ -211,10 +211,12 @@ namespace RoaringFangs.Visuals
         }
         private static int CurvyControlPointsHash(ICurvySpline spline)
         {
-            return spline.ControlPoints
+            var hash_codes = spline.ControlPoints
                 .Where(p => p != null)
                 .Select((Func<ICurvySplineSegment, int>)CurvySplineSegmentHash)
-                .Aggregate((a, b) => a ^ b);
+                .ToArray();
+            int xor_hash = hash_codes.Aggregate((a, b) => a ^ b);
+            return xor_hash;
         }
 
         public void UpdateMeshWeights()
@@ -244,8 +246,8 @@ namespace RoaringFangs.Visuals
                             t = SegmentPathPosition + SegmentLength * x_max;
                         if (UseUniformSpacing)
                             t = PathSpline.DistanceToTF(PathSpline.Length * t);
-                        tangent = PathSpline.GetTangent(t);
-                        point = PathSpline.Interpolate(t);
+                        tangent = PathSpline.GetTangentFast(t);
+                        point = PathSpline.InterpolateFast(t);
                         if (x < x_min)
                             point += (x - x_min) * SegmentLength * PathSpline.Length * tangent;
                         else
@@ -256,8 +258,8 @@ namespace RoaringFangs.Visuals
                         t = SegmentPathPosition + SegmentLength * x;
                         if (UseUniformSpacing)
                             t = PathSpline.DistanceToTF(PathSpline.Length * t);
-                        tangent = PathSpline.GetTangent(t);
-                        point = PathSpline.Interpolate(t);
+                        tangent = PathSpline.GetTangentFast(t);
+                        point = PathSpline.InterpolateFast(t);
                     }
                     rotation_initial = Quaternion.AngleAxis(SegmentAngle, SegmentForwardVector);
                     if (SegmentFlipWeightDirection)
