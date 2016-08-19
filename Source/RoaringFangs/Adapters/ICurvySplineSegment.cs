@@ -1,9 +1,9 @@
-﻿using UnityEngine;
+﻿using RoaringFangs.Utility;
+using UnityEngine;
 
 namespace RoaringFangs.Adapters.FluffyUnderware.Curvy
 {
-    public interface ICurvySplineSegment
+    public interface ICurvySplineSegment : IHasTransform
     {
-        Transform transform { get; }
     }
 }

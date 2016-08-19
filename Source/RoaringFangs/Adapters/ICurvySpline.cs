@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using RoaringFangs.Utility;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace RoaringFangs.Adapters.FluffyUnderware.Curvy
 {
-    public interface ICurvySpline
+    public interface ICurvySpline : IHasTransform
     {
         float GetNearestPointTF(Vector3 point);
 

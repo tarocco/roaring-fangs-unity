@@ -3,6 +3,7 @@ using UnityEngine;
 using System;
 using System.Linq;
 using RoaringFangs.Adapters.FluffyUnderware.Curvy;
+using RoaringFangs.Utility;
 
 #if FLUFFYUNDERWARE_CURVY
 using FluffyUnderware.Curvy;
@@ -19,6 +20,7 @@ namespace RoaringFangs.Visuals
     [ExecuteInEditMode]
     public class CurvySplineMeshDeformer : MonoBehaviour
     {
+
         #region Properties
 
         [SerializeField, AutoProperty]
@@ -34,14 +36,14 @@ namespace RoaringFangs.Visuals
             }
         }
 
-        [SerializeField, AutoProperty("PathSpline")]
-        private MonoBehaviour _PathSplineBehavior;
-        public ICurvySpline PathSpline
+        [SerializeField, AutoProperty("TargetPathSpline")]
+        private MonoBehaviour _TargetPathSplineBehavior;
+        public ICurvySpline TargetPathSpline
         {
-            get { return (ICurvySpline)_PathSplineBehavior; }
+            get { return (ICurvySpline)_TargetPathSplineBehavior; }
             set
             {
-                _PathSplineBehavior = (MonoBehaviour)value;
+                _TargetPathSplineBehavior = (MonoBehaviour)value;
                 _WeightsDirty = true;
             }
         }
@@ -178,6 +180,19 @@ namespace RoaringFangs.Visuals
             }
         }
 
+        [SerializeField]
+        private Positioning _Positioning;
+
+        public Positioning Positioning
+        {
+            get { return _Positioning; }
+            set
+            {
+                _Positioning = value;
+                _WeightsDirty = true;
+            }
+        }
+
         private bool _WeightsDirty;
 
         #endregion Properties
@@ -191,12 +206,12 @@ namespace RoaringFangs.Visuals
 
         private void Update()
         {
-            if (PathSpline != null)
+            if (TargetPathSpline != null)
             {
-                bool was_dirty = PathSpline.Dirty;
+                bool was_dirty = TargetPathSpline.Dirty;
                 if (was_dirty)
-                    PathSpline.Refresh();
-                int spline_points_checksum = CurvyControlPointsHash((ICurvySpline)PathSpline);
+                    TargetPathSpline.Refresh();
+                int spline_points_checksum = CurvyControlPointsHash((ICurvySpline)TargetPathSpline);
                 if (was_dirty || _SplinePointsChecksum != spline_points_checksum || _WeightsDirty)
                 {
                     UpdateMeshWeights(true, true, _WeightsDirty);
@@ -226,7 +241,7 @@ namespace RoaringFangs.Visuals
 
         public void UpdateMeshWeights(bool affect_position, bool affect_rotation, bool affect_scale)
         {
-            if (PathSpline != null && Weights != null)
+            if (TargetPathSpline != null && Weights != null)
             {
                 float weights_length_m1 = (float)Weights.Length - 1f;
                 Vector3 point, tangent;
@@ -245,21 +260,21 @@ namespace RoaringFangs.Visuals
                         else
                             t = SegmentPathPosition + SegmentLength * x_max;
                         if (UseUniformSpacing)
-                            t = PathSpline.DistanceToTF(PathSpline.Length * t);
-                        tangent = PathSpline.GetTangentFast(t);
-                        point = PathSpline.InterpolateFast(t);
+                            t = TargetPathSpline.DistanceToTF(TargetPathSpline.Length * t);
+                        tangent = TargetPathSpline.GetTangentFast(t);
+                        point = TargetPathSpline.InterpolateFast(t);
                         if (x < x_min)
-                            point += (x - x_min) * SegmentLength * PathSpline.Length * tangent;
+                            point += (x - x_min) * SegmentLength * TargetPathSpline.Length * tangent;
                         else
-                            point += (x - x_max) * SegmentLength * PathSpline.Length * tangent;
+                            point += (x - x_max) * SegmentLength * TargetPathSpline.Length * tangent;
                     }
                     else
                     {
                         t = SegmentPathPosition + SegmentLength * x;
                         if (UseUniformSpacing)
-                            t = PathSpline.DistanceToTF(PathSpline.Length * t);
-                        tangent = PathSpline.GetTangentFast(t);
-                        point = PathSpline.InterpolateFast(t);
+                            t = TargetPathSpline.DistanceToTF(TargetPathSpline.Length * t);
+                        tangent = TargetPathSpline.GetTangentFast(t);
+                        point = TargetPathSpline.InterpolateFast(t);
                     }
                     rotation_initial = Quaternion.AngleAxis(SegmentAngle, SegmentForwardVector);
                     if (SegmentFlipWeightDirection)
@@ -273,18 +288,27 @@ namespace RoaringFangs.Visuals
                     }
                     else
                     {
-                        rotation = rotation_initial * PathSpline.GetOrientationFast(t);
+                        rotation = rotation_initial * TargetPathSpline.GetOrientationFast(t);
                     }
 
                     point += rotation * SegmentNormalShift;
 
                     Transform weight = Weights[i];
-                    if (affect_position)
-                        weight.localPosition = point;
-                    if (affect_rotation)
-                        weight.localRotation = rotation;
-                    if (affect_scale)
-                        weight.localScale = SegmentScale;
+
+                    if (Positioning == Positioning.WorldSpace)
+                    {
+                        weight.position = point;
+                        weight.rotation = rotation;
+                    }
+                    else if (Positioning == Positioning.LocalSpace)
+                    {
+                        if (affect_position)
+                            weight.localPosition = point;
+                        if (affect_rotation)
+                            weight.localRotation = rotation;
+                        if (affect_scale)
+                            weight.localScale = SegmentScale;
+                    }
                 }
                 _WeightsDirty = false;
             }
