@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 namespace RoaringFangs.Utility
 {
@@ -44,6 +45,7 @@ namespace RoaringFangs.Utility
         public class ChecklistCompleteEventArgs : EventArgs
         {
             public IEnumerable<SceneLoadCompleteEventArgs> SceneLoadArgs;
+
             public ChecklistCompleteEventArgs(
                 IEnumerable<SceneLoadCompleteEventArgs> scene_load_args)
             {
@@ -60,10 +62,24 @@ namespace RoaringFangs.Utility
 
         [SerializeField, AutoProperty]
         private List<ChecklistEntry> _Checklist;
+
         public IEnumerable<ChecklistEntry> Checklist
         {
             get { return _Checklist; }
             protected set { _Checklist = value.ToList(); }
+        }
+
+        private void Start()
+        {
+            var active_scene = SceneManager.GetActiveScene();
+            foreach (var info in Scenes.ScenesLoaded)
+            {
+                var args = new SceneLoadCompleteEventArgs(
+                    active_scene,
+                    info.Scene,
+                    Scenes.LoadMode.Editor);
+                OnSceneLoad(this, args);
+            }
         }
 
         public void OnSceneLoad(
@@ -72,7 +88,7 @@ namespace RoaringFangs.Utility
         {
             string loaded_scene_name = args.LoadedScene.name;
             var entries_to_check = Checklist
-                .Where(c => c.Name == args.LoadedScene.name);
+                .Where(c => c.Name == loaded_scene_name);
             foreach (var entry in entries_to_check)
             {
                 entry.Check = true;

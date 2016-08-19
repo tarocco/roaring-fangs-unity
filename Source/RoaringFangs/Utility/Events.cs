@@ -46,7 +46,7 @@ AddListenerAuto will use non-persistent fallback for.";
 
         #region Add
 
-        public static void AddListenerAuto(UnityEvent @event, UnityAction listener)
+        public static void AddListenerAuto(this UnityEvent @event, UnityAction listener)
         {
 #if UNITY_EDITOR
             try
@@ -63,7 +63,7 @@ AddListenerAuto will use non-persistent fallback for.";
 #endif
         }
 
-        public static void AddListenerAuto<T0>(UnityEvent<T0> @event, UnityAction<T0> listener)
+        public static void AddListenerAuto<T0>(this UnityEvent<T0> @event, UnityAction<T0> listener)
         {
 #if UNITY_EDITOR
             try
@@ -80,7 +80,7 @@ AddListenerAuto will use non-persistent fallback for.";
 #endif
         }
 
-        public static void AddListenerAuto<T0, T1>(UnityEvent<T0, T1> @event, UnityAction<T0, T1> listener)
+        public static void AddListenerAuto<T0, T1>(this UnityEvent<T0, T1> @event, UnityAction<T0, T1> listener)
         {
 #if UNITY_EDITOR
             try
@@ -97,7 +97,7 @@ AddListenerAuto will use non-persistent fallback for.";
 #endif
         }
 
-        public static void AddListenerAuto<T0, T1, T2>(UnityEvent<T0, T1, T2> @event, UnityAction<T0, T1, T2> listener)
+        public static void AddListenerAuto<T0, T1, T2>(this UnityEvent<T0, T1, T2> @event, UnityAction<T0, T1, T2> listener)
         {
 #if UNITY_EDITOR
             try
@@ -114,7 +114,7 @@ AddListenerAuto will use non-persistent fallback for.";
 #endif
         }
 
-        public static void AddListenerAuto<T0, T1, T2, T3>(UnityEvent<T0, T1, T2, T3> @event, UnityAction<T0, T1, T2, T3> listener)
+        public static void AddListenerAuto<T0, T1, T2, T3>(this UnityEvent<T0, T1, T2, T3> @event, UnityAction<T0, T1, T2, T3> listener)
         {
 #if UNITY_EDITOR
             try
@@ -135,7 +135,7 @@ AddListenerAuto will use non-persistent fallback for.";
 
         #region Remove
 
-        public static void RemoveListenerAuto(UnityEvent @event, UnityAction listener)
+        public static void RemoveListenerAuto(this UnityEvent @event, UnityAction listener)
         {
 #if UNITY_EDITOR
             try
@@ -152,7 +152,7 @@ AddListenerAuto will use non-persistent fallback for.";
 #endif
         }
 
-        public static void RemoveListenerAuto<T0>(UnityEvent<T0> @event, UnityAction<T0> listener)
+        public static void RemoveListenerAuto<T0>(this UnityEvent<T0> @event, UnityAction<T0> listener)
         {
 #if UNITY_EDITOR
             try
@@ -169,7 +169,7 @@ AddListenerAuto will use non-persistent fallback for.";
 #endif
         }
 
-        public static void RemoveListenerAuto<T0, T1>(UnityEvent<T0, T1> @event, UnityAction<T0, T1> listener)
+        public static void RemoveListenerAuto<T0, T1>(this UnityEvent<T0, T1> @event, UnityAction<T0, T1> listener)
         {
 #if UNITY_EDITOR
             try
@@ -186,7 +186,7 @@ AddListenerAuto will use non-persistent fallback for.";
 #endif
         }
 
-        public static void RemoveListenerAuto<T0, T1, T2>(UnityEvent<T0, T1, T2> @event, UnityAction<T0, T1, T2> listener)
+        public static void RemoveListenerAuto<T0, T1, T2>(this UnityEvent<T0, T1, T2> @event, UnityAction<T0, T1, T2> listener)
         {
 #if UNITY_EDITOR
             try
@@ -203,7 +203,7 @@ AddListenerAuto will use non-persistent fallback for.";
 #endif
         }
 
-        public static void RemoveListenerAuto<T0, T1, T2, T3>(UnityEvent<T0, T1, T2, T3> @event, UnityAction<T0, T1, T2, T3> listener)
+        public static void RemoveListenerAuto<T0, T1, T2, T3>(this UnityEvent<T0, T1, T2, T3> @event, UnityAction<T0, T1, T2, T3> listener)
         {
 #if UNITY_EDITOR
             try
@@ -224,31 +224,31 @@ AddListenerAuto will use non-persistent fallback for.";
 
         #region Set
 
-        public static void RemAddListenerAuto(UnityEvent @event, UnityAction listener)
+        public static void RemAddListenerAuto(this UnityEvent @event, UnityAction listener)
         {
             RemoveListenerAuto(@event, listener);
             AddListenerAuto(@event, listener);
         }
 
-        public static void RemAddListenerAuto<T0>(UnityEvent<T0> @event, UnityAction<T0> listener)
+        public static void RemAddListenerAuto<T0>(this UnityEvent<T0> @event, UnityAction<T0> listener)
         {
             RemoveListenerAuto(@event, listener);
             AddListenerAuto(@event, listener);
         }
 
-        public static void RemAddListenerAuto<T0, T1>(UnityEvent<T0, T1> @event, UnityAction<T0, T1> listener)
+        public static void RemAddListenerAuto<T0, T1>(this UnityEvent<T0, T1> @event, UnityAction<T0, T1> listener)
         {
             RemoveListenerAuto(@event, listener);
             AddListenerAuto(@event, listener);
         }
 
-        public static void RemAddListenerAuto<T0, T1, T2>(UnityEvent<T0, T1, T2> @event, UnityAction<T0, T1, T2> listener)
+        public static void RemAddListenerAuto<T0, T1, T2>(this UnityEvent<T0, T1, T2> @event, UnityAction<T0, T1, T2> listener)
         {
             RemoveListenerAuto(@event, listener);
             AddListenerAuto(@event, listener);
         }
 
-        public static void RemAddListenerAuto<T0, T1, T2, T3>(UnityEvent<T0, T1, T2, T3> @event, UnityAction<T0, T1, T2, T3> listener)
+        public static void RemAddListenerAuto<T0, T1, T2, T3>(this UnityEvent<T0, T1, T2, T3> @event, UnityAction<T0, T1, T2, T3> listener)
         {
             RemoveListenerAuto(@event, listener);
             AddListenerAuto(@event, listener);
