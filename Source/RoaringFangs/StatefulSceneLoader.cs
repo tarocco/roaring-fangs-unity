@@ -68,12 +68,16 @@ namespace RoaringFangs
                 Scenes.StartUnloadAsync(_CoroutineProcessor, SceneName, (s, a) => Destroy(_CoroutineObject));
         }
 
-        private void Start()
+        private void Awake()
         {
             _CoroutineObject = new GameObject("Scene Unloader");
             _CoroutineObject.hideFlags = HideFlags.HideInHierarchy;
             _CoroutineProcessor = _CoroutineObject.AddComponent<Scenes.CoroutineProcessor>();
             DontDestroyOnLoad(_CoroutineObject);
+        }
+
+        private void Start()
+        {
             if (LoadOnStart)
                 Load();
         }
