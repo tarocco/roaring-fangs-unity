@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace RoaringFangs.Visuals
 {
+    [ExecuteInEditMode]
     public class CurvySplineBlendTree : MonoBehaviour, ICurvySpline
     {
         [SerializeField, AutoProperty("Splines")]
@@ -226,8 +227,17 @@ namespace RoaringFangs.Visuals
         {
             foreach (var spline in Splines)
                 spline.Refresh();
-            _Dirty = false;
         }
+
+        void LateUpdate()
+        {
+            if (_Dirty)
+            {
+                Refresh();
+                _Dirty = false;
+            }
+        }
+
 #if UNITY_EDITOR
         [SerializeField, AutoRange(1f, 64f)]
         private int _PreviewSegments = 24;

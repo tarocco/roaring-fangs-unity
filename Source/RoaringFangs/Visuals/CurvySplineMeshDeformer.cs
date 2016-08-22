@@ -4,9 +4,9 @@ using System;
 using System.Linq;
 using RoaringFangs.Adapters.FluffyUnderware.Curvy;
 using RoaringFangs.Utility;
+using System.Collections;
 
 #if FLUFFYUNDERWARE_CURVY
-using FluffyUnderware.Curvy;
 #else
 
 using RoaringFangs.Adapters.FluffyUnderware.Curvy;
@@ -20,8 +20,71 @@ namespace RoaringFangs.Visuals
     [ExecuteInEditMode]
     public class CurvySplineMeshDeformer : MonoBehaviour
     {
-
         #region Properties
+
+        [SerializeField]
+        private Renderer _Renderer;
+
+        public Renderer Renderer
+        {
+            get { return _Renderer; }
+            set { _Renderer = value; }
+        }
+
+        [SerializeField, AutoProperty]
+        private Material _ReferenceMaterial;
+
+        public Material ReferenceMaterial
+        {
+            get
+            {
+                return _ReferenceMaterial;
+            }
+            set
+            {
+                _ReferenceMaterial = value;
+                if (Application.isPlaying)
+                    Renderer.sharedMaterial = new Material(value);
+                else
+                    Renderer.sharedMaterial = value;
+            }
+        }
+
+        public Material Material
+        {
+            get
+            {
+                return Renderer.sharedMaterial;
+            }
+        }
+
+        [SerializeField, AutoProperty]
+        private Color _Color;
+
+        public Color Color
+        {
+            get { return _Color; }
+            set
+            {
+                Material.color = value;
+                _Color = value;
+            }
+        }
+
+        [SerializeField, AutoProperty]
+        private Vector2 _StretchFactor;
+
+        public Vector2 StretchFactor
+        {
+            get { return _StretchFactor; }
+            set
+            {
+                Material.SetFloat("_StretchX", value.x);
+                Material.SetFloat("_StretchY", value.y * _SegmentLength);
+                _StretchFactor = value;
+                //StraightenEnds = _StraightenEnds;
+            }
+        }
 
         [SerializeField, AutoProperty]
         private Transform[] _Weights;
@@ -38,6 +101,7 @@ namespace RoaringFangs.Visuals
 
         [SerializeField, AutoProperty("TargetPathSpline")]
         private MonoBehaviour _TargetPathSplineBehavior;
+
         public ICurvySpline TargetPathSpline
         {
             get { return (ICurvySpline)_TargetPathSplineBehavior; }
@@ -69,6 +133,7 @@ namespace RoaringFangs.Visuals
             get { return _SegmentLength; }
             set
             {
+                Material.SetFloat("_StretchY", _StretchFactor.y * value);
                 _SegmentLength = value;
                 _WeightsDirty = true;
             }
@@ -200,6 +265,8 @@ namespace RoaringFangs.Visuals
         private void Start()
         {
             _WeightsDirty = true;
+            // Lazy initialize
+            ReferenceMaterial = ReferenceMaterial;
         }
 
         private int _SplinePointsChecksum;
@@ -208,11 +275,8 @@ namespace RoaringFangs.Visuals
         {
             if (TargetPathSpline != null)
             {
-                bool was_dirty = TargetPathSpline.Dirty;
-                if (was_dirty)
-                    TargetPathSpline.Refresh();
                 int spline_points_checksum = CurvyControlPointsHash((ICurvySpline)TargetPathSpline);
-                if (was_dirty || _SplinePointsChecksum != spline_points_checksum || _WeightsDirty)
+                if (TargetPathSpline.Dirty || _SplinePointsChecksum != spline_points_checksum || _WeightsDirty)
                 {
                     UpdateMeshWeights(true, true, _WeightsDirty);
                     _SplinePointsChecksum = spline_points_checksum;
@@ -224,6 +288,7 @@ namespace RoaringFangs.Visuals
         {
             return s.transform.localToWorldMatrix.GetHashCode();
         }
+
         private static int CurvyControlPointsHash(ICurvySpline spline)
         {
             var hash_codes = spline.ControlPoints
@@ -297,8 +362,10 @@ namespace RoaringFangs.Visuals
 
                     if (Positioning == Positioning.WorldSpace)
                     {
-                        weight.position = point;
-                        weight.rotation = rotation;
+                        if(affect_position)
+                            weight.position = point;
+                        if(affect_rotation)
+                            weight.rotation = rotation;
                     }
                     else if (Positioning == Positioning.LocalSpace)
                     {
@@ -306,9 +373,9 @@ namespace RoaringFangs.Visuals
                             weight.localPosition = point;
                         if (affect_rotation)
                             weight.localRotation = rotation;
-                        if (affect_scale)
-                            weight.localScale = SegmentScale;
                     }
+                    if (affect_scale)
+                        weight.localScale = SegmentScale;
                 }
                 _WeightsDirty = false;
             }
