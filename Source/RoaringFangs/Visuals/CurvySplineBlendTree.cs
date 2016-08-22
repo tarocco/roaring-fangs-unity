@@ -231,7 +231,7 @@ namespace RoaringFangs.Visuals
 
         void LateUpdate()
         {
-            if (_Dirty)
+            if (Dirty)
             {
                 Refresh();
                 _Dirty = false;
