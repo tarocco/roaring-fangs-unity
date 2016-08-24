@@ -171,21 +171,44 @@ namespace RoaringFangs.Animation.Editor
                 // Override group position with the position of the first path knot
                 var path_knots = path.SubpathRecords
                     .Where(r => r is PenToolPathResource.SubpathBezierKnotRecord)
-                    .Cast<PenToolPathResource.SubpathBezierKnotRecord>();
-                var first_knot = path_knots.First();
-                var second_knot = path_knots.Skip(1).First();
-                var point_anchor = first_knot.Anchor;
-                var point_fwd = second_knot.Anchor;
-                var position_normalized = new Vector2(point_anchor.X, -point_anchor.Y);
-                var direction_normalized = new Vector2(point_fwd.X, -point_fwd.Y) - position_normalized;
-                Vector3 position = position_normalized / settings.PixelsToUnitSize;
-                position.Scale(size);
-                Vector3 direction = direction_normalized / settings.PixelsToUnitSize;
-                direction.Scale(size);
-                // TODO: adjust this in case bone axis option is re-implemented
-                Quaternion rotation = Quaternion.LookRotation(Vector3.forward, direction_normalized);
-                Matrix4x4 groupM = Matrix4x4.TRS(position, rotation, Vector3.one);
-                return groupM;
+                    .Cast<PenToolPathResource.SubpathBezierKnotRecord>()
+                    .Take(2)
+                    .ToArray();
+                if (path_knots.Length > 0)
+                {
+                    Vector2 direction_normalized;
+                    var first_knot = path_knots[0];
+                    var point_anchor = first_knot.Anchor;
+                    var position_normalized = new Vector2(point_anchor.X, -point_anchor.Y);
+                    if (path_knots.Length > 1)
+                    {
+                        var second_knot = path_knots.Skip(1).First();
+                        var point_fwd = second_knot.Anchor;
+                        direction_normalized = new Vector2(point_fwd.X, -point_fwd.Y) - position_normalized;
+                    }
+                    else
+                    {
+                        Debug.LogWarning(
+                            "Bone path matching group is missing second direction point (using default value):\n" +
+                            path.Name);
+                        direction_normalized = Vector2.up;
+                    }
+                    Vector3 position = position_normalized / settings.PixelsToUnitSize;
+                    position.Scale(size);
+                    Vector3 direction = direction_normalized / settings.PixelsToUnitSize;
+                    direction.Scale(size);
+                    // TODO: adjust this in case bone axis option is re-implemented
+                    Quaternion rotation = Quaternion.LookRotation(Vector3.forward, direction_normalized);
+                    Matrix4x4 groupM = Matrix4x4.TRS(position, rotation, Vector3.one);
+                    return groupM;
+                }
+                else
+                {
+                    Debug.LogWarning(
+                        "Bone path matching group contains 0 points (using default GetGroupMatrix behavior):\n" + path.Name +
+                        path.Name);
+                    return base.GetGroupMatrix(rootM__worldToLocal, groupRoot, alignment);
+                }
             }
             else
                 return base.GetGroupMatrix(rootM__worldToLocal, groupRoot, alignment);
@@ -256,58 +279,80 @@ namespace RoaringFangs.Animation.Editor
                 var path = matching_paths.First();
                 var path_knots = path.SubpathRecords
                     .Where(r => r is PenToolPathResource.SubpathBezierKnotRecord)
-                    .Cast<PenToolPathResource.SubpathBezierKnotRecord>();
-                var first_knot = path_knots.First();
-                var second_knot = path_knots.Skip(1).First();
-                var point_anchor = first_knot.Anchor;
-                var point_fwd = second_knot.Anchor;
-                var position_normalized = new Vector2(point_anchor.X, -point_anchor.Y);
-                var direction_normalized = new Vector2(point_fwd.X, -point_fwd.Y) - position_normalized;
-                Vector3 position = position_normalized / settings.PixelsToUnitSize;
-                position.Scale(size);
-                Vector3 direction = direction_normalized / settings.PixelsToUnitSize;
-                direction.Scale(size);
-                Bone bone = groupParent.AddComponent<Bone>();
-                // TODO: restore this in case bone axis option is re-implemented
-                // bone.boneAxis = Bone.BoneAxis.Y;
-                //bone.Direction = direction;
-                bone.length = direction.magnitude;
-
-                // Read metadata by parsing the JSON from the original group name
-                var metadata = GetFirstMetadata(groupParent_name_orig);
-                if (metadata != null)
+                    .Cast<PenToolPathResource.SubpathBezierKnotRecord>()
+                    .Take(2)
+                    .ToArray();
+                if (path_knots.Length > 0)
                 {
-                    var ik_metadata = metadata.IK;
-                    if (ik_metadata != null)
+                    var first_knot = path_knots.First();
+                    var point_anchor = first_knot.Anchor;
+                    var position_normalized = new Vector2(point_anchor.X, -point_anchor.Y);
+                    Vector3 position = position_normalized / settings.PixelsToUnitSize;
+                    position.Scale(size);
+                    Vector3 direction;
+                    if (path_knots.Length > 1)
                     {
-                        var ik = groupParent.AddComponent<InverseKinematics>();
-                        ik.chainLength = ik_metadata.ChainLength;
-                        var target = new GameObject(groupParent.name + " IK");
-                        var helper = target.AddComponent<Helper>();
-                        var target_transform = target.transform;
-
-                        // Bone (group) position and rotation have not been updated yet,
-                        // so we will need to get the group matrix using GetGroupMatrix()
-                        var groupParent_m = GetGroupMatrix(root_transform_m_local, groupParent, settings.Pivot);
-                        var groupParent_m_world = root_transform_m_world * groupParent_m;
-                        var groupParent_position = TRS.GetPosition(ref groupParent_m_world);
-                        var groupParent_rotation = TRS.GetRotation(ref groupParent_m_world);
-                        var target_position_offset = groupParent_rotation * new Vector3(0f, bone.length, 0f);
-
-                        target_transform.rotation = groupParent_rotation;
-                        target_transform.position = groupParent_position + target_position_offset;
-                        target_transform.SetParent(root_transform, true);
-
-                        ik.target = target_transform;
-                        _IKData.Add(new IKWithMetadata()
-                        {
-                            IK = ik,
-                            Metadata = ik_metadata
-                        });
-                        _IKDestinations[target.name] = target.transform;
+                        var second_knot = path_knots.Skip(1).First();
+                        var point_fwd = second_knot.Anchor;
+                        var direction_normalized = new Vector2(point_fwd.X, -point_fwd.Y) - position_normalized;
+                        direction = direction_normalized / settings.PixelsToUnitSize;
+                        direction.Scale(size);
                     }
+                    else
+                    {
+                        Debug.LogWarning(
+                            "Bone path matching group is missing second direction point (using default value):\n" +
+                            path.Name);
+                        direction = Vector2.up;
+                    }
+
+                    Bone bone = groupParent.AddComponent<Bone>();
+                    // TODO: restore this in case bone axis option is re-implemented
+                    // bone.boneAxis = Bone.BoneAxis.Y;
+                    //bone.Direction = direction;
+                    bone.length = direction.magnitude;
+
+                    // Read metadata by parsing the JSON from the original group name
+                    var metadata = GetFirstMetadata(groupParent_name_orig);
+                    if (metadata != null)
+                    {
+                        var ik_metadata = metadata.IK;
+                        if (ik_metadata != null)
+                        {
+                            var ik = groupParent.AddComponent<InverseKinematics>();
+                            ik.chainLength = ik_metadata.ChainLength;
+                            var target = new GameObject(groupParent.name + " IK");
+                            var helper = target.AddComponent<Helper>();
+                            var target_transform = target.transform;
+
+                            // Bone (group) position and rotation have not been updated yet,
+                            // so we will need to get the group matrix using GetGroupMatrix()
+                            var groupParent_m = GetGroupMatrix(root_transform_m_local, groupParent, settings.Pivot);
+                            var groupParent_m_world = root_transform_m_world * groupParent_m;
+                            var groupParent_position = TRS.GetPosition(ref groupParent_m_world);
+                            var groupParent_rotation = TRS.GetRotation(ref groupParent_m_world);
+                            var target_position_offset = groupParent_rotation * new Vector3(0f, bone.length, 0f);
+
+                            target_transform.rotation = groupParent_rotation;
+                            target_transform.position = groupParent_position + target_position_offset;
+                            target_transform.SetParent(root_transform, true);
+
+                            ik.target = target_transform;
+                            _IKData.Add(new IKWithMetadata()
+                            {
+                                IK = ik,
+                                Metadata = ik_metadata
+                            });
+                            _IKDestinations[target.name] = target.transform;
+                        }
+                    }
+                    _IKDestinations[groupParent.name] = groupParent.transform;
                 }
-                _IKDestinations[groupParent.name] = groupParent.transform;
+                else
+                {
+                    Debug.Log("Bone path matching group contains 0 points (using default HandleGroupOpen behavior):\n" + path.Name);
+                    base.HandleGroupOpen(groupParent);
+                }
             }
         }
 
