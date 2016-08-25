@@ -43,8 +43,14 @@ namespace RoaringFangs.Animation
     {
         public bool Active
         {
-            get { return gameObject.activeSelf; }
+            get { return gameObject.activeInHierarchy; }
             set { gameObject.SetActive(value); }
+        }
+
+        public string Name
+        {
+            get { return gameObject.name; }
+            set { gameObject.name = value; }
         }
 
         protected virtual void OnEnable()

@@ -30,6 +30,7 @@ namespace RoaringFangs.Animation
     public interface ITargetGroup
     {
         bool Active { get; set; }
+        string Name { get; }
         TargetGroupMode Mode { get; }
         IEnumerable<TransformUtils.ITransformD> Targets { get; }
 

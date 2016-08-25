@@ -32,12 +32,48 @@ using UnityEditor;
 
 using System;
 using System.Collections.Generic;
+using RoaringFangs.Attributes;
+using RoaringFangs.Utility;
+using System.Linq;
 
 namespace RoaringFangs.Animation
 {
     [ExecuteInEditMode]
     public class MutexHelper : MonoBehaviour
     {
+        [SerializeField, AutoRange(0f, "NumberOfControls")]
+        private float _ControlSelect;
+
+        public float ControlSelect
+        {
+            get { return _ControlSelect; }
+            set
+            {
+                _CachedControls = Controls.ToArray();
+                if (_CachedControls.Length > 0)
+                {
+                    Selected = GetControlByInterpolant(_CachedControls, value);
+                    _ControlSelect = value;
+                }
+            }
+        }
+
+        private ITargetGroup GetControlByInterpolant(ITargetGroup[] target_groups, float interpolant)
+        {
+            int index = Mathf.Clamp(Mathf.FloorToInt(interpolant), 0, target_groups.Length - 1);
+            return target_groups[index];
+        }
+
+        private int NumberOfControls
+        {
+            get
+            {
+                return (int)Controls.LongCount();
+            }
+        }
+
+        private ITargetGroup[] _CachedControls;
+
         public IEnumerable<ITargetGroup> Controls
         {
             get
@@ -51,26 +87,47 @@ namespace RoaringFangs.Animation
             }
         }
 
+        private ITargetGroup _Selected;
+
         public ITargetGroup Selected
         {
             get
             {
-                foreach (Transform t in transform)
-                {
-                    ITargetGroup ac = t.GetComponent<ITargetGroup>();
-                    if (ac != null && ac.Active)
-                        return ac;
-                }
-                return null;
+                if (_Selected == null)
+                    ControlSelect = ControlSelect; // Lazy initialize
+                return _Selected;
             }
             set
             {
-                foreach (Transform t in transform)
-                {
-                    ITargetGroup ac = t.GetComponent<ITargetGroup>();
-                    if (ac != null)
-                        ac.Active = ac == value;
-                }
+                _CachedControls = Controls.ToArray();
+                if (!_CachedControls.Contains(value))
+                    throw new ArgumentException("Cannot select non-child target group");
+                if (!(value is MonoBehaviour))
+                    throw new ArgumentException("Selected target group must inherit MonoBehaviour");
+                _Selected = value;
+                _ControlSelect = Array.IndexOf(_CachedControls, _Selected);
+                SetVisibleGroup(_CachedControls, value);
+            }
+        }
+
+        private void SetVisibleGroup(ITargetGroup[] target_groups, ITargetGroup selected)
+        {
+            foreach (ITargetGroup control in target_groups)
+                control.Active = false;
+            selected.Active = true;
+        }
+
+        void Start()
+        {
+            ControlSelect = ControlSelect; // Lazy initialize
+        }
+
+        void LateUpdate()
+        {
+            if (_CachedControls != null && _CachedControls.Length > 0)
+            {
+                _Selected = GetControlByInterpolant(_CachedControls, _ControlSelect);
+                SetVisibleGroup(_CachedControls, _Selected);
             }
         }
 

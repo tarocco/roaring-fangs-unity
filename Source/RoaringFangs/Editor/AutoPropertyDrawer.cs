@@ -59,7 +59,7 @@ namespace RoaringFangs.Editor
                 auto.DrawPropertyField ??
                 _DrawPropertyField ??
                 AutoPropertyAttribute.GetPropertyFieldDrawer(
-                    auto.PropertyInfo.DeclaringType, auto.Delayed);
+                    auto.PropertyInfo.PropertyType, auto.Delayed);
             // Begin checking for changes
             EditorGUI.BeginChangeCheck();
             // Draw the property field
