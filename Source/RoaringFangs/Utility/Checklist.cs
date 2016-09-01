@@ -1,4 +1,4 @@
-/*
+﻿/*
 The MIT License (MIT)
 
 Copyright (c) 2016 Roaring Fangs Entertainment
@@ -23,42 +23,56 @@ THE SOFTWARE.
 */
 
 using System;
-using UnityEngine;
-using UnityEngine.Events;
+using System.Collections.Generic;
 
-namespace RoaringFangs.FSM
+namespace RoaringFangs.Utility
 {
     [Serializable]
-    public class StateInfo
+    public class Checklist<T>
     {
-        [Serializable]
-        public class Event : UnityEvent<object> { }
-
-        [SerializeField]
-        private Event _Entry = new Event();
-
-        public Event Entry
+        public class CompleteEventArgs : EventArgs
         {
-            get { return _Entry; }
-            protected set { _Entry = value; }
+            public readonly IEnumerable<T> Items;
+
+            public CompleteEventArgs(IEnumerable<T> items)
+            {
+                Items = items;
+            }
         }
 
-        [SerializeField]
-        private Event _While = new Event();
+        public event EventHandler<CompleteEventArgs> Complete;
 
-        public Event While
+        private List<T> _IncompletedItems;
+        private List<T> _CompletedItems;
+
+        public IEnumerable<T> IncompletedItems
         {
-            get { return _While; }
-            protected set { _While = value; }
+            get { return _IncompletedItems; }
         }
 
-        [SerializeField]
-        private Event _Exit = new Event();
-
-        public Event Exit
+        public IEnumerable<T> CompletedItems
         {
-            get { return _Exit; }
-            protected set { _Exit = value; }
+            get { return _CompletedItems; }
+        }
+
+        public Checklist(params T[] items)
+        {
+            _IncompletedItems = new List<T>(items);
+            _CompletedItems = new List<T>();
+        }
+
+        public void CheckItem(T item)
+        {
+            _IncompletedItems.Remove(item);
+            _CompletedItems.Add(item);
+            if (_IncompletedItems.Count == 0)
+            {
+                if (Complete != null)
+                {
+                    var args = new CompleteEventArgs(CompletedItems);
+                    Complete(this, args);
+                }
+            }
         }
     }
 }

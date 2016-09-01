@@ -23,12 +23,13 @@ THE SOFTWARE.
 */
 
 using System;
+using UnityEngine.Events;
+using UnityObject = UnityEngine.Object;
 
 namespace RoaringFangs.FSM
 {
-    public interface IStateManager<TStateEnum>
-        where TStateEnum : struct, IConvertible
+    [Serializable]
+    public class StateChangeEvent : UnityEvent<UnityObject>
     {
-        TStateEnum CurrentState { get; set; }
     }
 }

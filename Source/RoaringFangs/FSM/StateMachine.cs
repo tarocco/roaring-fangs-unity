@@ -33,9 +33,9 @@ using UnityEngine.Events;
 
 namespace RoaringFangs.FSM
 {
-#if UNITY_EDITOR
-    [ExecuteInEditMode]
-#endif
+//#if UNITY_EDITOR
+//    [ExecuteInEditMode]
+//#endif
     [Serializable]
     public abstract class StateMachine<TStateEnum> :
         MonoBehaviour, IStateManager<TStateEnum>, ISerializationCallbackReceiver
@@ -122,9 +122,26 @@ namespace RoaringFangs.FSM
 
         #endregion Serialization
 
+        [SerializeField]
+        private StateChangeEvent _BeforeStateChange;
+
+        public StateChangeEvent BeforeStateChange
+        {
+            get { return _BeforeStateChange; }
+            protected set { _BeforeStateChange = value; }
+        }
 
         [SerializeField]
-        private StateInfo _AnyState;
+        private StateChangeEvent _AfterStateChange;
+
+        public StateChangeEvent AfterStateChange
+        {
+            get { return _AfterStateChange; }
+            protected set { _AfterStateChange = value; }
+        }
+
+        [SerializeField]
+        private StateInfo _AnyState = new StateInfo();
         public StateInfo AnyState
         {
             get { return _AnyState; }
@@ -210,58 +227,80 @@ namespace RoaringFangs.FSM
             }
         }
 
+        public IEnumerable<TStateEnum> GetNextStates
+        {
+            get
+            {
+                return Transitions[CurrentState];
+            }
+        }
+
         protected virtual void Start()
         {
             PopulateStates(ref _States);
+            StateInfo active_state_info = GetStateInfo(CurrentState);
+
+            OnBeforeChangeState();
+            active_state_info.Entry.Invoke(this);
+            AnyState.Entry.Invoke(this);
+            OnAfterChangeState();
         }
 
         [SerializeField, AutoProperty]
         private TStateEnum _CurrentState;
 
-        public TStateEnum CurrentState
+        public virtual TStateEnum CurrentState
         {
             get { return _CurrentState; }
             set
             {
-                _CurrentState = ChangeState(_CurrentState, value);
+#if UNITY_EDITOR
+                if (Application.isPlaying)
+                {
+#endif
+                    var destinations = Transitions[_CurrentState];
+                    if (!destinations.Contains(value))
+                        throw new InvalidOperationException(
+                            "Cannot transition from state " + _CurrentState + " to state " + value);
+                    OnBeforeChangeState();
+                    ChangeState(_CurrentState, value);
+                    OnAfterChangeState();
+#if UNITY_EDITOR
+                }
+                else
+                    _CurrentState = value;
+#endif
             }
         }
 
-        protected virtual TStateEnum ChangeState(TStateEnum current_state, TStateEnum to_state)
+        protected virtual void OnBeforeChangeState()
         {
-            var destinations = Transitions[current_state];
-            if (destinations.Contains(to_state))
-            {
-                StateInfo current_state_info = GetStateInfo(current_state);
-                current_state_info.Exit.Invoke(this);
-                AnyState.Exit.Invoke(this);
-                StateInfo next_state_info = GetStateInfo(to_state);
-                next_state_info.Entry.Invoke(this);
-                AnyState.Entry.Invoke(this);
-                return to_state;
-            }
-            else
-                throw new InvalidOperationException(
-                    "Cannot transition from state " + current_state + " to state " + to_state);
+            BeforeStateChange.Invoke(this);
+        }
+
+        protected virtual void OnAfterChangeState()
+        {
+            AfterStateChange.Invoke(this);
+        }
+
+        protected virtual void ChangeState(TStateEnum from_state, TStateEnum to_state)
+        {
+            Debug.Assert(_CurrentState.Equals(from_state), "Transitioned from non-current state");
+            StateInfo current_state_info = GetStateInfo(from_state);
+            current_state_info.Exit.Invoke(this);
+            AnyState.Exit.Invoke(this);
+            _CurrentState = to_state;
+            StateInfo next_state_info = GetStateInfo(to_state);
+            next_state_info.Entry.Invoke(this);
+            AnyState.Entry.Invoke(this);
         }
 
         public virtual void Update()
         {
             StateInfo active_state_info;
             active_state_info = GetStateInfo(CurrentState);
-            active_state_info.Body.Invoke(this);
-            AnyState.Body.Invoke(this);
-        }
-
-        /*
-        public virtual bool CheckState(int id)
-        {
-            return _transitions.ContainsKey(TransitionKey.GetHashCode(_activeState, id));
-        }
-        */
-
-        public virtual void Dispose()
-        {
+            active_state_info.While.Invoke(this);
+            AnyState.While.Invoke(this);
         }
     }
 }

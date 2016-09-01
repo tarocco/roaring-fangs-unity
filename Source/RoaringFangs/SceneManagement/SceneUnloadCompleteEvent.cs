@@ -1,4 +1,4 @@
-/*
+﻿/*
 The MIT License (MIT)
 
 Copyright (c) 2016 Roaring Fangs Entertainment
@@ -23,12 +23,22 @@ THE SOFTWARE.
 */
 
 using System;
+using UnityEngine.Events;
 
-namespace RoaringFangs.FSM
+namespace RoaringFangs.SceneManagement
 {
-    public interface IStateManager<TStateEnum>
-        where TStateEnum : struct, IConvertible
+    public class SceneUnloadCompleteEventArgs : EventArgs
     {
-        TStateEnum CurrentState { get; set; }
+        public readonly string UnloadedSceneName;
+
+        public SceneUnloadCompleteEventArgs(string unloaded_scene_name)
+        {
+            UnloadedSceneName = unloaded_scene_name;
+        }
     }
+
+    public delegate void SceneUnloadCompleteHandler(object sender, SceneUnloadCompleteEventArgs args);
+
+    [Serializable]
+    public class SceneUnloadCompleteEvent : UnityEvent<object, SceneUnloadCompleteEventArgs> { }
 }

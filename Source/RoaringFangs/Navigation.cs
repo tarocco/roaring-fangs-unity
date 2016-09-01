@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace RoaringFangs
+namespace RoaringFangs.SceneManagement
 {
     public class Navigation : MonoBehaviour
     {
@@ -99,7 +99,7 @@ namespace RoaringFangs
 
         void Start()
         {
-            ResetToActiveScene();
+            //ResetToActiveScene();
         }
 
 #if UNITY_EDITOR

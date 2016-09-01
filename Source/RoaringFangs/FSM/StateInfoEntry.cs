@@ -23,13 +23,13 @@ THE SOFTWARE.
 */
 
 using System;
+using UnityEngine;
 
 namespace RoaringFangs.FSM
 {
     [Serializable]
     public class StateInfoEntry
     {
-        [ReadOnly]
         public string State;
         public StateInfo Info;
 

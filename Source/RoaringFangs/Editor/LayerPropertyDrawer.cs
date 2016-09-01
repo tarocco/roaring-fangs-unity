@@ -6,7 +6,7 @@ namespace RoaringFangs.Editor
     using UnityEngine;
 
     [CustomPropertyDrawer(typeof(LayerAttribute))]
-    public class LayerDrawer : PropertyDrawer
+    public class LayerPropertyDrawer : PropertyDrawer
     {
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {

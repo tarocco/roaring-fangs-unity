@@ -22,11 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using RoaringFangs.SceneManagement;
 
 namespace RoaringFangs
 {
@@ -40,6 +42,7 @@ namespace RoaringFangs
             Add,
             CheckAdd,
             UnloadAdd,
+            SetActive,
             ReplaceActive,
             MergeWithActive,
             Editor = 0xFFFF,
@@ -148,6 +151,14 @@ namespace RoaringFangs
                     _ScenesLoading.Add(scene_name);
                     break;
 
+                case LoadMode.SetActive:
+                    if (!IsSceneLoadingOrLoaded(scene_name))
+                    {
+                        operation = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
+                        _ScenesLoading.Add(scene_name);
+                    }
+                    break;
+
                 case LoadMode.ReplaceActive:
                     if (!IsSceneLoadingOrLoaded(scene_name))
                     {
@@ -174,6 +185,7 @@ namespace RoaringFangs
                 default:
                     break;
 
+                case LoadMode.SetActive:
                 case LoadMode.ReplaceActive:
                     scene_loaded = SceneManager.GetSceneByName(scene_name);
                     SceneManager.SetActiveScene(scene_loaded);
@@ -186,7 +198,7 @@ namespace RoaringFangs
             }
         }
 
-        public static IEnumerable LoadAsync(object self, string scene_name, LoadMode mode, SceneLoadCompletedHandler callback)
+        public static IEnumerable LoadAsync(object self, string scene_name, LoadMode mode, SceneLoadCompleteHandler callback)
         {
             Scene active = SceneManager.GetActiveScene();
             var operations = LoadAsync(scene_name, mode);
@@ -197,12 +209,56 @@ namespace RoaringFangs
                 callback(self, new SceneLoadCompleteEventArgs(active, loaded, mode));
         }
 
-        public static void StartLoadAsync(MonoBehaviour self, string scene_name, LoadMode mode, SceneLoadCompletedHandler callback = null)
+        public static void StartLoadAsync(MonoBehaviour self, string scene_name, LoadMode mode, SceneLoadCompleteHandler callback = null)
         {
             self.StartCoroutine(LoadAsync(self, scene_name, mode, callback).GetEnumerator());
         }
 
-        public static IEnumerable UnloadAsync(object self, string scene_name, SceneUnloadCompletedHandler callback)
+        public static void StartLoadMany(MonoBehaviour self, LoadMode mode, SceneLoadManyCompletedHandler callback, params string[] scene_names)
+        {
+            var scene_names_list = new List<string>(scene_names);
+            var scenes_loaded_args = new List<SceneLoadCompleteEventArgs>();
+            SceneLoadCompleteHandler scene_load_callback = (object sender, SceneLoadCompleteEventArgs args) =>
+            {
+                scene_names_list.Remove(args.LoadedScene.name);
+                scenes_loaded_args.Add(args);
+                if (scene_names_list.Count == 0)
+                {
+                    if (callback != null)
+                    {
+                        var collection = scenes_loaded_args.ToArray();
+                        var args_many = new SceneLoadManyCompleteEventArgs(collection);
+                        callback(self, args_many);
+                    }
+                }
+            };
+            foreach (string scene_name in scene_names)
+                StartLoadAsync(self, scene_name, mode, scene_load_callback);
+        }
+
+        public static void StartUnloadMany(MonoBehaviour self, SceneUnloadManyCompletedHandler callback, params string[] scene_names)
+        {
+            var scene_names_list = new List<string>(scene_names);
+            var scenes_unloaded_args = new List<SceneUnloadCompleteEventArgs>();
+            SceneUnloadCompleteHandler scene_unload_callback = (object sender, SceneUnloadCompleteEventArgs args) =>
+            {
+                scene_names_list.Remove(args.UnloadedSceneName);
+                scenes_unloaded_args.Add(args);
+                if (scene_names_list.Count == 0)
+                {
+                    if (callback != null)
+                    {
+                        var collection = scenes_unloaded_args.ToArray();
+                        var args_many = new SceneUnloadManyCompleteEventArgs(collection);
+                        callback(self, args_many);
+                    }
+                }
+            };
+            foreach (string scene_name in scene_names)
+                StartUnloadAsync(self, scene_name, scene_unload_callback);
+        }
+
+        public static IEnumerable UnloadAsync(object self, string scene_name, SceneUnloadCompleteHandler callback)
         {
             yield return new WaitForEndOfFrame();
             SceneManager.UnloadScene(scene_name);
@@ -210,7 +266,7 @@ namespace RoaringFangs
                 callback(self, new SceneUnloadCompleteEventArgs(scene_name));
         }
 
-        public static void StartUnloadAsync(MonoBehaviour self, string scene_name, SceneUnloadCompletedHandler callback)
+        public static void StartUnloadAsync(MonoBehaviour self, string scene_name, SceneUnloadCompleteHandler callback)
         {
             self.StartCoroutine(UnloadAsync(self, scene_name, callback).GetEnumerator());
         }

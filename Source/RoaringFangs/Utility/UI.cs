@@ -1,4 +1,4 @@
-﻿/*
+/*
 The MIT License (MIT)
 
 Copyright (c) 2016 Roaring Fangs Entertainment
@@ -22,30 +22,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
-using System.Collections;
-using UnityEngine;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine.Events;
-using UnityEngine.SceneManagement;
 
-namespace RoaringFangs
+namespace RoaringFangs.Utility
 {
-    public class SceneLoadCompleteEventArgs : EventArgs
+    public static class UI
     {
-        public readonly Scene PreviousActiveScene;
-        public readonly Scene LoadedScene;
-        public readonly Scenes.LoadMode Mode;
-
-        public SceneLoadCompleteEventArgs(Scene previous_active_scene, Scene loaded_scene, Scenes.LoadMode mode)
+        public static void BindButtonAction(
+            IEnumerable<UnityEngine.UI.Button> all_buttons,
+            string button_name,
+            UnityAction handler,
+            bool remove_existing_handlers = false)
         {
-            PreviousActiveScene = previous_active_scene;
-            LoadedScene = loaded_scene;
-            Mode = mode;
+            var buttons_matching = all_buttons
+                .Where(b => b.name == button_name);
+            foreach (var button in buttons_matching)
+            {
+                if (remove_existing_handlers)
+                    button.onClick.RemoveAllListeners();
+                Events.RemAddListenerAuto(button.onClick, handler);
+            }
         }
     }
-
-    public delegate void SceneLoadCompletedHandler(object sender, SceneLoadCompleteEventArgs args);
-
-    [Serializable]
-    public class SceneLoadCompleteEvent : UnityEvent<object, SceneLoadCompleteEventArgs> { }
 }
