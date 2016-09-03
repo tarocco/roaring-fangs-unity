@@ -41,39 +41,6 @@ namespace RoaringFangs.Animation
     [ExecuteInEditMode]
     public class MutexHelper : MonoBehaviour
     {
-        [SerializeField, AutoRange(0f, "NumberOfControls")]
-        private float _ControlSelect;
-
-        public float ControlSelect
-        {
-            get { return _ControlSelect; }
-            set
-            {
-                _CachedControls = Controls.ToArray();
-                if (_CachedControls.Length > 0)
-                {
-                    Selected = GetControlByInterpolant(_CachedControls, value);
-                    _ControlSelect = value;
-                }
-            }
-        }
-
-        private ITargetGroup GetControlByInterpolant(ITargetGroup[] target_groups, float interpolant)
-        {
-            int index = Mathf.Clamp(Mathf.FloorToInt(interpolant), 0, target_groups.Length - 1);
-            return target_groups[index];
-        }
-
-        private int NumberOfControls
-        {
-            get
-            {
-                return (int)Controls.LongCount();
-            }
-        }
-
-        private ITargetGroup[] _CachedControls;
-
         public IEnumerable<ITargetGroup> Controls
         {
             get
@@ -82,32 +49,64 @@ namespace RoaringFangs.Animation
                 {
                     ITargetGroup ac = t.GetComponent<ITargetGroup>();
                     if (ac != null)
+                    {
                         yield return ac;
+                    }
                 }
             }
         }
 
-        private ITargetGroup _Selected;
+        private ITargetGroup[] _CachedControls;
+
+        private ITargetGroup[] CachedControls
+        {
+            get
+            {
+                if(_CachedControls == null)
+                    _CachedControls = Controls.ToArray();
+                return _CachedControls;
+            }
+        }
+
+        public ITargetGroup GetCachedControlByIndex(int index)
+        {
+            return CachedControls[index];
+        }
+
+        public int NumberOfCachedControls
+        {
+            get
+            {
+                return (int)CachedControls.LongCount();
+            }
+        }
+
+        [SerializeField, HideInInspector]
+        private MonoBehaviour _SelectedBehavior;
 
         public ITargetGroup Selected
         {
             get
             {
-                if (_Selected == null)
-                    ControlSelect = ControlSelect; // Lazy initialize
-                return _Selected;
+                if (_SelectedBehavior == null)
+                    SetSelected(CachedControls.First());
+                return (ITargetGroup)_SelectedBehavior;
             }
             set
             {
-                _CachedControls = Controls.ToArray();
-                if (!_CachedControls.Contains(value))
-                    throw new ArgumentException("Cannot select non-child target group");
-                if (!(value is MonoBehaviour))
-                    throw new ArgumentException("Selected target group must inherit MonoBehaviour");
-                _Selected = value;
-                _ControlSelect = Array.IndexOf(_CachedControls, _Selected);
-                SetVisibleGroup(_CachedControls, value);
+                _CachedControls = null;
+                SetSelected(value);
             }
+        }
+
+        private void SetSelected(ITargetGroup value)
+        {
+            if (!CachedControls.Contains(value))
+                throw new ArgumentException("Cannot select non-child target group");
+            if (!(value is MonoBehaviour))
+                throw new ArgumentException("Selected target group must inherit MonoBehaviour");
+            _SelectedBehavior = (MonoBehaviour)value;
+            SetVisibleGroup(CachedControls, value);
         }
 
         private void SetVisibleGroup(ITargetGroup[] target_groups, ITargetGroup selected)
@@ -119,16 +118,6 @@ namespace RoaringFangs.Animation
 
         void Start()
         {
-            ControlSelect = ControlSelect; // Lazy initialize
-        }
-
-        void LateUpdate()
-        {
-            if (_CachedControls != null && _CachedControls.Length > 0)
-            {
-                _Selected = GetControlByInterpolant(_CachedControls, _ControlSelect);
-                SetVisibleGroup(_CachedControls, _Selected);
-            }
         }
 
 #if UNITY_EDITOR

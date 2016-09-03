@@ -53,13 +53,13 @@ namespace RoaringFangs.Animation.Editor
             _OnInspectorGUI();
         }
 
-        protected void _OnInspectorGUI(params string[] propertyToExclude)
+        protected virtual void _OnInspectorGUI(params string[] properties_to_exclude)
         {
             serializedObject.Update();
             MutexHelper self = (MutexHelper)target;
             TargetGroupBase[] groups = self.Controls.OfType<TargetGroupBase>().ToArray();
             DrawSelector(self, groups);
-            DrawPropertiesExcluding(serializedObject, propertyToExclude);
+            DrawPropertiesExcluding(serializedObject, properties_to_exclude);
             serializedObject.ApplyModifiedProperties();
         }
     }
