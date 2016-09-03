@@ -23,19 +23,13 @@ THE SOFTWARE.
 */
 
 using RoaringFangs.Attributes;
-using RoaringFangs.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace RoaringFangs.FSM
 {
-//#if UNITY_EDITOR
-//    [ExecuteInEditMode]
-//#endif
     [Serializable]
     public abstract class StateMachine<TStateEnum> :
         MonoBehaviour, IStateManager<TStateEnum>, ISerializationCallbackReceiver
@@ -142,6 +136,7 @@ namespace RoaringFangs.FSM
 
         [SerializeField]
         private StateInfo _AnyState = new StateInfo();
+
         public StateInfo AnyState
         {
             get { return _AnyState; }
