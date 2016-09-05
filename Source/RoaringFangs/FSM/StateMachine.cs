@@ -230,36 +230,22 @@ namespace RoaringFangs.FSM
             }
         }
 
-        protected virtual void Start()
-        {
-            PopulateStates(ref _States);
-            StateInfo active_state_info = GetStateInfo(CurrentState);
-
-            OnBeforeChangeState();
-            active_state_info.Entry.Invoke(this);
-            AnyState.Entry.Invoke(this);
-            OnAfterChangeState();
-        }
-
         [SerializeField, AutoProperty]
         private TStateEnum _CurrentState;
 
         public virtual TStateEnum CurrentState
         {
-            get { return _CurrentState; }
+            get
+            {
+                return _CurrentState;
+            }
             set
             {
 #if UNITY_EDITOR
                 if (Application.isPlaying)
                 {
 #endif
-                    var destinations = Transitions[_CurrentState];
-                    if (!destinations.Contains(value))
-                        throw new InvalidOperationException(
-                            "Cannot transition from state " + _CurrentState + " to state " + value);
-                    OnBeforeChangeState();
-                    ChangeState(_CurrentState, value);
-                    OnAfterChangeState();
+                    SetCurrentState(_CurrentState, value);
 #if UNITY_EDITOR
                 }
                 else
@@ -268,26 +254,64 @@ namespace RoaringFangs.FSM
             }
         }
 
-        protected virtual void OnBeforeChangeState()
+        private void SetCurrentState(TStateEnum from_state, TStateEnum to_state)
+        {
+            Debug.Assert(_CurrentState.Equals(from_state), "Transitioned from non-current state");
+            var destinations = Transitions[from_state];
+            if (!destinations.Contains(to_state))
+                throw new InvalidOperationException(
+                    "Cannot transition from state " + from_state + " to state " + to_state);
+            OnBeforeStateChange();
+            OnStateExit(from_state, to_state);
+            _CurrentState = to_state;
+            OnStateEntry(from_state, to_state);
+            OnAfterStateChange();
+        }
+
+        protected virtual void OnBeforeStateChange()
         {
             BeforeStateChange.Invoke(this);
         }
 
-        protected virtual void OnAfterChangeState()
+        protected virtual void OnStateExit(TStateEnum from_state, TStateEnum? to_state)
+        {
+            StateInfo current_state_info = GetStateInfo(from_state);
+            current_state_info.Exit.Invoke(this);
+            AnyState.Exit.Invoke(this);
+        }
+
+        protected virtual void OnStateEntry(TStateEnum? from_state, TStateEnum to_state)
+        {
+            StateInfo next_state_info = GetStateInfo(to_state);
+            next_state_info.Entry.Invoke(this);
+            AnyState.Entry.Invoke(this);
+        }
+
+        protected virtual void OnAfterStateChange()
         {
             AfterStateChange.Invoke(this);
         }
 
-        protected virtual void ChangeState(TStateEnum from_state, TStateEnum to_state)
+        private bool _DidStart = false;
+
+        protected virtual void Awake()
         {
-            Debug.Assert(_CurrentState.Equals(from_state), "Transitioned from non-current state");
-            StateInfo current_state_info = GetStateInfo(from_state);
-            current_state_info.Exit.Invoke(this);
-            AnyState.Exit.Invoke(this);
-            _CurrentState = to_state;
-            StateInfo next_state_info = GetStateInfo(to_state);
-            next_state_info.Entry.Invoke(this);
-            AnyState.Entry.Invoke(this);
+            PopulateStates(ref _States);
+        }
+
+        protected virtual void Start()
+        {
+            _DidStart = true;
+            OnBeforeStateChange();
+            OnStateEntry(null, CurrentState);
+            OnAfterStateChange();
+        }
+
+        protected virtual void OnDestroy()
+        {
+            OnBeforeStateChange();
+            OnStateExit(CurrentState, null);
+            OnAfterStateChange();
         }
 
         public virtual void Update()

@@ -1,11 +1,5 @@
-using PunkyTown.Configuration;
-using PunkyTown.GUI;
-using RoaringFangs;
-using RoaringFangs.FSM;
-using RoaringFangs.Utility;
 using System;
 using UnityEngine;
-using UnityObject = UnityEngine.Object;
 
 namespace RoaringFangs.SceneManagement
 {
@@ -31,7 +25,8 @@ namespace RoaringFangs.SceneManagement
         }
 
         [SerializeField]
-        private SceneLoadCompleteEvent _LoadComplete;
+        private SceneLoadCompleteEvent _LoadComplete =
+            new SceneLoadCompleteEvent();
 
         public SceneLoadCompleteEvent LoadComplete
         {
@@ -40,7 +35,8 @@ namespace RoaringFangs.SceneManagement
         }
 
         [SerializeField]
-        private SceneUnloadCompleteEvent _UnloadComplete;
+        private SceneUnloadCompleteEvent _UnloadComplete =
+            new SceneUnloadCompleteEvent();
 
         public SceneUnloadCompleteEvent UnloadComplete
         {
@@ -77,7 +73,7 @@ namespace RoaringFangs.SceneManagement
         {
             Scenes.StartUnloadAsync(self, scene_name, HandleUnloadComplete);
         }
-        
+
         public SceneHandler(string scene_name, Scenes.LoadMode load_mode)
         {
             SceneName = scene_name;

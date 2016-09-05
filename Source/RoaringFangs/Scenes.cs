@@ -214,50 +214,6 @@ namespace RoaringFangs
             self.StartCoroutine(LoadAsync(self, scene_name, mode, callback).GetEnumerator());
         }
 
-        public static void StartLoadMany(MonoBehaviour self, LoadMode mode, SceneLoadManyCompletedHandler callback, params string[] scene_names)
-        {
-            var scene_names_list = new List<string>(scene_names);
-            var scenes_loaded_args = new List<SceneLoadCompleteEventArgs>();
-            SceneLoadCompleteHandler scene_load_callback = (object sender, SceneLoadCompleteEventArgs args) =>
-            {
-                scene_names_list.Remove(args.LoadedScene.name);
-                scenes_loaded_args.Add(args);
-                if (scene_names_list.Count == 0)
-                {
-                    if (callback != null)
-                    {
-                        var collection = scenes_loaded_args.ToArray();
-                        var args_many = new SceneLoadManyCompleteEventArgs(collection);
-                        callback(self, args_many);
-                    }
-                }
-            };
-            foreach (string scene_name in scene_names)
-                StartLoadAsync(self, scene_name, mode, scene_load_callback);
-        }
-
-        public static void StartUnloadMany(MonoBehaviour self, SceneUnloadManyCompletedHandler callback, params string[] scene_names)
-        {
-            var scene_names_list = new List<string>(scene_names);
-            var scenes_unloaded_args = new List<SceneUnloadCompleteEventArgs>();
-            SceneUnloadCompleteHandler scene_unload_callback = (object sender, SceneUnloadCompleteEventArgs args) =>
-            {
-                scene_names_list.Remove(args.UnloadedSceneName);
-                scenes_unloaded_args.Add(args);
-                if (scene_names_list.Count == 0)
-                {
-                    if (callback != null)
-                    {
-                        var collection = scenes_unloaded_args.ToArray();
-                        var args_many = new SceneUnloadManyCompleteEventArgs(collection);
-                        callback(self, args_many);
-                    }
-                }
-            };
-            foreach (string scene_name in scene_names)
-                StartUnloadAsync(self, scene_name, scene_unload_callback);
-        }
-
         public static IEnumerable UnloadAsync(object self, string scene_name, SceneUnloadCompleteHandler callback)
         {
             yield return new WaitForEndOfFrame();

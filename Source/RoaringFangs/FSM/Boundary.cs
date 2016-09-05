@@ -34,6 +34,7 @@ namespace RoaringFangs.FSM
     [Serializable]
     public class Boundary<TStateEnum> :
         ISerializationCallbackReceiver
+        where TStateEnum : struct, IConvertible
     {
         [SerializeField]
         private List<string> _StateNames;
@@ -72,26 +73,37 @@ namespace RoaringFangs.FSM
             protected set { _Exit = value; }
         }
 
-        public void OnStateEntry(TStateEnum exited, TStateEnum entered)
+        public void OnStateEntry(TStateEnum? exited, TStateEnum entered)
         {
-            bool in_exited = _States.Contains(exited);
             bool in_entered = _States.Contains(entered);
-            if(in_exited != in_entered)
+            if (exited.HasValue)
             {
-                if (in_entered)
-                    Entry.Invoke(this);
+                bool in_exited = _States.Contains(exited.Value);
+                if (in_exited != in_entered)
+                {
+                    if (in_entered)
+                        Entry.Invoke(this);
+                }
             }
+            else if (in_entered)
+                Entry.Invoke(this);
+
         }
 
-        public void OnStateExit(TStateEnum exited, TStateEnum entered)
+        public void OnStateExit(TStateEnum exited, TStateEnum? entered)
         {
             bool in_exited = _States.Contains(exited);
-            bool in_entered = _States.Contains(entered);
-            if (in_exited != in_entered)
+            if (entered.HasValue)
             {
-                if (in_exited)
-                    Exit.Invoke(this);
+                bool in_entered = _States.Contains(entered.Value);
+                if (in_exited != in_entered)
+                {
+                    if (in_exited)
+                        Exit.Invoke(this);
+                }
             }
+            else if (in_exited)
+                Exit.Invoke(this);
         }
 
         public void OnBeforeSerialize()

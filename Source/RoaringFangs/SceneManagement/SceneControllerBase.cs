@@ -60,16 +60,19 @@ namespace RoaringFangs.SceneManagement
             private set { _CurrentUnloadGroup = value; }
         }
 
-        private void HandleBeforeStateChange(UnityObject sender)
+        private void HandleBeforeStateChange(object sender)
         {
             CurrentLoadGroup = new SceneHandlerGroup();
             CurrentUnloadGroup = new SceneHandlerGroup();
         }
 
-        private void HandleAfterStateChange(UnityObject sender)
+        private void HandleAfterStateChange(object sender)
         {
-            CurrentLoadGroup.StartLoadAsync(this);
-            CurrentUnloadGroup.StartUnloadAsync(this);
+            if (this.isActiveAndEnabled)
+            {
+                CurrentLoadGroup.StartLoadAsync(this);
+                CurrentUnloadGroup.StartUnloadAsync(this);
+            }
         }
 
         protected virtual void ConfigureForStateMachine(TStateMachine state_machine)

@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using RoaringFangs.Utility;
 
 namespace RoaringFangs.SceneManagement
 {
@@ -39,62 +40,49 @@ namespace RoaringFangs.SceneManagement
             }
         }
 
-        protected void PushScene(string scene_name)
-        {
-            _SceneStack.Push(scene_name);
-        }
-
-        protected string PopScene()
-        {
-            if (_SceneStack.Count == 1)
-                throw new InvalidOperationException("Cannot remove base of navigation stack.");
-            return _SceneStack.Pop();
-        }
-
         public void ResetToActiveScene()
         {
             _SceneStack.Clear();
             _SceneStack.Push(SceneManager.GetActiveScene().name);
         }
 
-        protected void HandleLoadedNext(object sender, SceneLoadCompleteEventArgs args)
+        private void HandleCurrentSceneUnloaded(object sender, SceneUnloadCompleteEventArgs args)
         {
-            SceneManager.SetActiveScene(args.LoadedScene);
-            PushScene(args.LoadedScene.name);
+            _NextSceneHandler.StartLoadAsync(this);
         }
 
-        public virtual void NavigateScene(string name)
+        private void HandlePushSceneLoadComplete(object sender, SceneLoadCompleteEventArgs args)
         {
-            Scenes.StartLoadAsync(this, name, Scenes.LoadMode.ReplaceActive, HandleLoadedNext);
+            _SceneStack.Push(args.LoadedScene.name);
         }
 
-        protected void HandleLoadedAndReset(object sender, SceneLoadCompleteEventArgs args)
+        private void HandlePopSceneLoadComplete(object sender, SceneLoadCompleteEventArgs args)
         {
-            SceneManager.SetActiveScene(args.LoadedScene);
-            ResetToActiveScene();
+            _SceneStack.Pop();
         }
 
-        public virtual void ResetToScene(string name)
+        private SceneHandler _CurrentSceneHandler;
+        private SceneHandler _NextSceneHandler;
+
+        public virtual void PushScene(string name)
         {
-            Scenes.StartLoadAsync(this, name, Scenes.LoadMode.ReplaceActive, HandleLoadedAndReset);
+            _CurrentSceneHandler = new SceneHandler(CurrentSceneName, Scenes.LoadMode.SetActive);
+            _NextSceneHandler = new SceneHandler(name, Scenes.LoadMode.SetActive);
+            _CurrentSceneHandler.UnloadComplete.AddListener(HandleCurrentSceneUnloaded);
+            _NextSceneHandler.LoadComplete.AddListener(HandlePushSceneLoadComplete);
+            _CurrentSceneHandler.StartUnloadAsync(this);
         }
 
-        protected void HandleLoadedPrevious(object sender, SceneLoadCompleteEventArgs args)
+        public virtual void PopScene()
         {
-            SceneManager.SetActiveScene(args.LoadedScene);
-            PopScene();
-        }
-
-        public virtual void NavigatePrevious()
-        {
-            try
-            {
-                Scenes.StartLoadAsync(this, PreviousSceneName, Scenes.LoadMode.ReplaceActive, HandleLoadedPrevious);
-            }
-            catch(InvalidOperationException ex)
-            {
-                Debug.LogException(ex);
-            }
+            if (_SceneStack.Count <= 1)
+                throw new InvalidOperationException("Cannot remove base of navigation stack.");
+            string name = PreviousSceneName;
+            _CurrentSceneHandler = new SceneHandler(CurrentSceneName, Scenes.LoadMode.SetActive);
+            _NextSceneHandler = new SceneHandler(name, Scenes.LoadMode.SetActive);
+            _CurrentSceneHandler.UnloadComplete.AddListener(HandleCurrentSceneUnloaded);
+            _NextSceneHandler.LoadComplete.AddListener(HandlePopSceneLoadComplete);
+            _CurrentSceneHandler.StartUnloadAsync(this);
         }
 
         void Start()
@@ -105,7 +93,7 @@ namespace RoaringFangs.SceneManagement
 #if UNITY_EDITOR
         private static IEnumerable<string> PadFront(IEnumerable<string> strings, int cap)
         {
-            for (int i = (int)strings.Count(); i < cap; i++)
+            for (int i = (int)strings.LongCount(); i < cap; i++)
                 yield return "";
             foreach (string s in strings)
                 yield return s;

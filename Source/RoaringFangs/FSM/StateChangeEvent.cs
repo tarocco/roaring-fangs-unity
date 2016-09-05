@@ -29,7 +29,7 @@ using UnityObject = UnityEngine.Object;
 namespace RoaringFangs.FSM
 {
     [Serializable]
-    public class StateChangeEvent : UnityEvent<UnityObject>
+    public class StateChangeEvent : UnityEvent<object>
     {
     }
 }
