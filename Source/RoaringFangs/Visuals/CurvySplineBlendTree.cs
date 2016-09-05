@@ -16,13 +16,24 @@ namespace RoaringFangs.Visuals
 
         public List<ICurvySpline> Splines
         {
-            get { return _SplineBehaviors.Cast<ICurvySpline>().ToList(); }
+            get
+            {
+                return _SplineBehaviors.Cast<ICurvySpline>().ToList();
+            }
             set
             {
                 _SplineBehaviors = value.Cast<MonoBehaviour>().ToList();
+                _CachedValidSplines = ValidSplines.ToArray();
                 _Dirty = true;
             }
         }
+
+        protected IEnumerable<ICurvySpline> ValidSplines
+        {
+            get { return _SplineBehaviors.Where(b => b != null).Cast<ICurvySpline>(); }
+        }
+
+        private ICurvySpline[] _CachedValidSplines;
 
         private int InterpolantMax
         {
@@ -225,7 +236,7 @@ namespace RoaringFangs.Visuals
 
         public void Refresh()
         {
-            foreach (var spline in Splines)
+            foreach (var spline in ValidSplines)
                 spline.Refresh();
         }
 
@@ -271,6 +282,11 @@ namespace RoaringFangs.Visuals
                     );
                 t_previous = t;
             }
+        }
+
+        void OnValidate()
+        {
+            Splines = ValidSplines.ToList();
         }
 #endif
     }

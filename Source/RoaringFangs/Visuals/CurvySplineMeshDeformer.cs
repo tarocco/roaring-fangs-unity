@@ -4,7 +4,6 @@ using System;
 using System.Linq;
 using RoaringFangs.Adapters.FluffyUnderware.Curvy;
 using RoaringFangs.Utility;
-using System.Collections;
 
 #if FLUFFYUNDERWARE_CURVY
 #else
@@ -32,29 +31,45 @@ namespace RoaringFangs.Visuals
         }
 
         [SerializeField, AutoProperty]
-        private Material _ReferenceMaterial;
+        private Material[] _ReferenceMaterials;
 
-        public Material ReferenceMaterial
+        public Material[] ReferenceMaterials
         {
             get
             {
-                return _ReferenceMaterial;
+                return _ReferenceMaterials;
             }
             set
             {
-                _ReferenceMaterial = value;
-                if (Application.isPlaying)
-                    Renderer.sharedMaterial = new Material(value);
-                else
-                    Renderer.sharedMaterial = value;
+                _ReferenceMaterials = value;
+                Materials = value;
             }
         }
 
-        public Material Material
+        public Material[] Materials
         {
             get
             {
-                return Renderer.sharedMaterial;
+                if (_MaterialsDirty)
+                {
+                    Materials = ReferenceMaterials;
+                    _MaterialsDirty = false;
+                }
+                return Renderer.sharedMaterials;
+            }
+            private set
+            {
+                if (Application.isPlaying)
+                {
+                    var instanced_materials = value
+                        .Select(m => m != null ? new Material(m) : null)
+                        .ToArray();
+                    Renderer.sharedMaterials = instanced_materials;
+                }
+                else
+                {
+                    Renderer.sharedMaterials = value;
+                }
             }
         }
 
@@ -66,7 +81,8 @@ namespace RoaringFangs.Visuals
             get { return _Color; }
             set
             {
-                Material.color = value;
+                foreach (var material in Materials)
+                    material.color = value;
                 _Color = value;
             }
         }
@@ -79,8 +95,12 @@ namespace RoaringFangs.Visuals
             get { return _StretchFactor; }
             set
             {
-                Material.SetFloat("_StretchX", value.x);
-                Material.SetFloat("_StretchY", value.y * _SegmentLength);
+                var valid_materials = Materials.Where(m => m != null);
+                foreach (var material in valid_materials)
+                {
+                    material.SetFloat("_StretchX", value.x);
+                    material.SetFloat("_StretchY", value.y * _SegmentLength);
+                }
                 _StretchFactor = value;
                 //StraightenEnds = _StraightenEnds;
             }
@@ -133,7 +153,11 @@ namespace RoaringFangs.Visuals
             get { return _SegmentLength; }
             set
             {
-                Material.SetFloat("_StretchY", _StretchFactor.y * value);
+                var valid_materials = Materials.Where(m => m != null);
+                foreach (var material in valid_materials)
+                {
+                    material.SetFloat("_StretchY", _StretchFactor.y * value);
+                }
                 _SegmentLength = value;
                 _WeightsDirty = true;
             }
@@ -258,15 +282,13 @@ namespace RoaringFangs.Visuals
             }
         }
 
-        private bool _WeightsDirty;
+        private bool _WeightsDirty = true;
+        private bool _MaterialsDirty = true;
 
         #endregion Properties
 
         private void Start()
         {
-            _WeightsDirty = true;
-            // Lazy initialize
-            ReferenceMaterial = ReferenceMaterial;
         }
 
         private int _SplinePointsChecksum;
@@ -282,6 +304,11 @@ namespace RoaringFangs.Visuals
                     _SplinePointsChecksum = spline_points_checksum;
                 }
             }
+            if (_MaterialsDirty)
+            {
+                Materials = ReferenceMaterials;
+                _MaterialsDirty = false;
+            }
         }
 
         private static int CurvySplineSegmentHash(ICurvySplineSegment s)
@@ -291,6 +318,8 @@ namespace RoaringFangs.Visuals
 
         private static int CurvyControlPointsHash(ICurvySpline spline)
         {
+            if (spline.ControlPoints.Count == 0)
+                return 0;
             var hash_codes = spline.ControlPoints
                 .Where(p => p != null)
                 .Select((Func<ICurvySplineSegment, int>)CurvySplineSegmentHash)
@@ -353,7 +382,7 @@ namespace RoaringFangs.Visuals
                     }
                     else
                     {
-                        rotation = rotation_initial * TargetPathSpline.GetOrientationFast(t);
+                        rotation = TargetPathSpline.GetOrientationFast(t) * rotation_initial;
                     }
 
                     point += rotation * SegmentNormalShift;
@@ -362,9 +391,9 @@ namespace RoaringFangs.Visuals
 
                     if (Positioning == Positioning.WorldSpace)
                     {
-                        if(affect_position)
+                        if (affect_position)
                             weight.position = point;
-                        if(affect_rotation)
+                        if (affect_rotation)
                             weight.rotation = rotation;
                     }
                     else if (Positioning == Positioning.LocalSpace)

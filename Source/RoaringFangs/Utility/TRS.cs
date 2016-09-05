@@ -58,19 +58,21 @@ namespace RoaringFangs.Utility
 
         public static Quaternion GetRotation(ref Matrix4x4 m)
         {
-            //return Quaternion.LookRotation(
-            //        m.GetColumn(2),
-            //        m.GetColumn(1));
-            float w_unscaled = Mathf.Sqrt(1f + m[0, 0] + m[1, 1] + m[2, 2]);
-            Vector4 v4 = new Vector4()
-            {
-                w = 0.5f * w_unscaled,
-                x = (m[2, 1] - m[1, 2]) / (2f * w_unscaled),
-                y = (m[0, 2] - m[2, 0]) / (2f * w_unscaled),
-                z = (m[1, 0] - m[0, 1]) / (2f * w_unscaled),
-            };
-            v4.Normalize();
-            return new Quaternion(v4.x, v4.y, v4.z, v4.w);
+            return Quaternion.LookRotation(
+                    m.GetColumn(2),
+                    m.GetColumn(1));
+
+            // This is an attempt at a more accurate method but there's a typo in here I think -TB
+            //float w_unscaled = Mathf.Sqrt(1f + m[0, 0] + m[1, 1] + m[2, 2]);
+            //Vector4 v4 = new Vector4()
+            //{
+            //    w = 0.5f * w_unscaled,
+            //    x = (m[2, 1] - m[1, 2]) / (2f * w_unscaled),
+            //    y = (m[0, 2] - m[2, 0]) / (2f * w_unscaled),
+            //    z = (m[1, 0] - m[0, 1]) / (2f * w_unscaled),
+            //};
+            //v4.Normalize();
+            //return new Quaternion(v4.x, v4.y, v4.z, v4.w);
         }
 
         public static Quaternion GetRotation(Matrix4x4 m)
