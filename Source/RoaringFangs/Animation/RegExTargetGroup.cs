@@ -228,8 +228,10 @@ namespace RoaringFangs.Animation
 
         public void OnDrawHierarchyIcons(Rect icon_position)
         {
-            UnityEngine.GUI.color = Active ? Color.white : Color.gray;
+            var gui_color = UnityEngine.GUI.color;
+            UnityEngine.GUI.color = gui_color * (Active ? Color.white : Color.gray);
             UnityEngine.GUI.Label(icon_position, GetIcon(Mode));
+            UnityEngine.GUI.color = gui_color;
         }
 
 #endif
