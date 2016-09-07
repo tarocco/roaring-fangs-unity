@@ -236,9 +236,11 @@ namespace RoaringFangs.Animation
             NotifyControlGroupsOfSubjectDescendants(CachedSubjectDescendantsAndPaths);
         }
 
-        private void NotifyControlGroupsOfSubjectDescendants(IEnumerable<TransformUtils.ITransformDP> cached_subject_descendants_and_paths)
+        private void NotifyControlGroupsOfSubjectDescendants(
+            IEnumerable<TransformUtils.ITransformDP> cached_subject_descendants_and_paths)
         {
-            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true).OfType<ITargetGroup>();
+            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true)
+                .OfType<ITargetGroup>();
             foreach (var group in groups)
             {
                 group.OnFindMatchingTargetsInDescendants(cached_subject_descendants_and_paths);
@@ -251,7 +253,10 @@ namespace RoaringFangs.Animation
                 Debug.LogWarning("CollectSubjectDescendants called at runtime!");
             if (Subject == null)
                 return null;
-            return TransformUtils.GetAllDescendantsWithPaths(Subject.transform.parent, Subject.transform, transform);
+            return TransformUtils.GetAllDescendantsWithPaths(
+                Subject.transform.parent,
+                Subject.transform,
+                transform);
         }
 
         #endregion Cached Subject Descendants
@@ -280,21 +285,22 @@ namespace RoaringFangs.Animation
             }
         }
 
-        private Dictionary<Transform, TargetInfo> TargetDataPrevious = new Dictionary<Transform, TargetInfo>();
+        private Dictionary<Transform, TargetInfo> TargetDataPrevious =
+            new Dictionary<Transform, TargetInfo>();
 
         #endregion Targets
 
         private void OnEnable()
         {
 #if UNITY_EDITOR
-            if (!UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
+            if (!EditorApplication.isPlayingOrWillChangePlaymode)
             {
                 CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
-                RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged += HandleHierarchyObjectPathChanged;
+                EditorHelper.HierarchyObjectPathChanged += HandleHierarchyObjectPathChanged;
             }
             else
             {
-                RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
+                EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
             }
             FindIcons();
 #endif
@@ -303,22 +309,29 @@ namespace RoaringFangs.Animation
         private void OnDisable()
         {
 #if UNITY_EDITOR
-            RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
+            EditorHelper.HierarchyObjectPathChanged -= HandleHierarchyObjectPathChanged;
 #endif
         }
 
 #if UNITY_EDITOR
         private bool PathChangeHandledOnceThisUpdate = false;
 
-        private void HandleHierarchyObjectPathChanged(object sender, RoaringFangs.Editor.EditorHelper.HierarchyObjectPathChangedEventArgs args)
+        private void HandleHierarchyObjectPathChanged(
+            object sender,
+            EditorHelper.HierarchyObjectPathChangedEventArgs args)
         {
-            // If the change had anything to do with the subject, notify control groups of the changes to the subject descendants
+            // If the change had anything to do with the subject, notify
+            // control groups of the changes to the subject descendants
             if (!String.IsNullOrEmpty(SubjectPathAbs))
             {
                 // Subject root was affected
-                bool root_affected = SubjectPathAbs == args.NewPath || SubjectPathAbs == args.OldPath;
+                bool root_affected =
+                    SubjectPathAbs == args.NewPath ||
+                    SubjectPathAbs == args.OldPath;
                 // Subject descendants affected
-                bool descendants_affected = Paths.IsSubPath(SubjectPathAbs, args.NewPath) || Paths.IsSubPath(SubjectPathAbs, args.OldPath);
+                bool descendants_affected =
+                    Paths.IsSubPath(SubjectPathAbs, args.NewPath) ||
+                    Paths.IsSubPath(SubjectPathAbs, args.OldPath);
                 if (root_affected)
                 {
                     // If the subject is not null (destroyed), set the subject
