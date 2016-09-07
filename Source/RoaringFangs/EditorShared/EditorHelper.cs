@@ -196,8 +196,11 @@ namespace RoaringFangs.Editor
                     }
                     if (ParallelTasksForever.Current != null)
                     {
-                        if (ParallelCounter > ParallelTaskOperationShowDialog)
-                            EditorUtility.DisplayProgressBar("Busy", "Parallel tasks are being performed", 1f);
+                        if (EditorHelperPreferences.ShowParallelTasksMessage)
+                        {
+                            if (ParallelCounter > ParallelTaskOperationShowDialog)
+                                EditorUtility.DisplayProgressBar("Busy", "Parallel tasks are being performed", 1f);
+                        }
                         ParallelCounter++;
                     }
                     else
