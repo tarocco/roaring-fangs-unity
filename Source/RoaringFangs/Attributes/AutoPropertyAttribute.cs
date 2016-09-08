@@ -68,7 +68,8 @@ namespace RoaringFangs.Attributes
         private bool _Delayed;
 
         /// <summary>
-        /// Use delayed input for this property field. Compare to <seealso cref="DelayedAttribute"/>.
+        /// Use delayed input for this property field.
+        /// <seealso cref="DelayedAttribute"/>
         /// </summary>
         public bool Delayed
         {
@@ -469,7 +470,9 @@ namespace RoaringFangs.Attributes
         /// <summary>
         /// Gets the cortrect property field drawing method for a given SerializedProperty.
         /// </summary>
-        /// <param name="delayed">Whether the field should be delayed. See <seealso cref="AutoPropertyAttribute.Delayed"/>.</param>
+        /// <param name="delayed">
+        /// Whether the field should be delayed (like <see cref="AutoPropertyAttribute.Delayed"/>).
+        /// </param>
         public static PropertyFieldHandler GetPropertyFieldDrawer(SerializedPropertyType sp_type, bool delayed)
         {
             if (delayed)
@@ -492,7 +495,9 @@ namespace RoaringFangs.Attributes
         /// <summary>
         /// Gets the cortrect property field drawing method for a given SerializedProperty.
         /// </summary>
-        /// <param name="delayed">Whether the field should be delayed. See <seealso cref="AutoPropertyAttribute.Delayed"/>.</param>
+        /// <param name="delayed">
+        /// Whether the field should be delayed (like <see cref="AutoPropertyAttribute.Delayed"/>).
+        /// </param>
         public static PropertyFieldHandler GetPropertyFieldDrawer(Type property_type, bool delayed)
         {
             if (delayed)

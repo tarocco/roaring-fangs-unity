@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace RoaringFangs.Adapters.FluffyUnderware.Curvy
 {
+    /// <summary>
+    /// Interface for generalizing Curvy splines
+    /// </summary>
     public interface ICurvySpline : IHasTransform
     {
         float GetNearestPointTF(Vector3 point);
@@ -19,7 +22,9 @@ namespace RoaringFangs.Adapters.FluffyUnderware.Curvy
         Vector3 GetTangentFast(float tf);
 
         float Length { get; }
+
         List<ICurvySplineSegment> ControlPoints { get; }
+
         bool Dirty { get; }
 
         Quaternion GetOrientationFast(float tf);
