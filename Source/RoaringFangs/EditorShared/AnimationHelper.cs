@@ -38,7 +38,7 @@ namespace RoaringFangs.Editor
 
         #region Preferences
 
-        private const string EnableStickyPropertiesKeyName = "RoaringFangs.Editor.AnimationHelper.EnableStickyProperties";
+        private const string EnableStickyPropertiesKey = "RoaringFangs.Editor.AnimationHelper.EnableStickyProperties";
         private static bool? _EnableStickyProperties;
 
         public static bool EnableStickyProperties
@@ -46,18 +46,39 @@ namespace RoaringFangs.Editor
             get
             {
                 if (!_EnableStickyProperties.HasValue)
-                    _EnableStickyProperties = EditorPrefs.GetBool(EnableStickyPropertiesKeyName);
+                    _EnableStickyProperties = EditorPrefs.GetBool(EnableStickyPropertiesKey, false);
                 return _EnableStickyProperties.Value;
             }
             set
             {
                 if (value != _EnableStickyProperties)
                 {
-                    EditorPrefs.SetBool(EnableStickyPropertiesKeyName, value);
+                    EditorPrefs.SetBool(EnableStickyPropertiesKey, value);
                     _EnableStickyProperties = value;
                 }
             }
         }
+
+        private const string SnapBooleanCurveValuesKey = "RoaringFangs.Editor.AnimationHelper.SnapBooleanCurveValues";
+        private static bool? _SnapBooleanCurveValues;
+
+        public static bool SnapBooleanCurveValues
+        {
+            get
+            {
+                if (!_SnapBooleanCurveValues.HasValue)
+                    _SnapBooleanCurveValues = EditorPrefs.GetBool(SnapBooleanCurveValuesKey, false);
+                return _SnapBooleanCurveValues.Value;
+            }
+            set
+            {
+                if (value != _SnapBooleanCurveValues)
+                {
+                    EditorPrefs.SetBool(SnapBooleanCurveValuesKey, value);
+                    _SnapBooleanCurveValues = value;
+                }
+            }
+        }       
 
         #endregion Preferences
 
@@ -82,41 +103,46 @@ namespace RoaringFangs.Editor
             {
                 AnimationClip clip = AnimationWindowUtils.GetCurrentActiveAnimationClip();
                 if (clip != null)
-                {
-                    var bindings = AnimationUtility.GetCurveBindings(clip);
-                    for (int i = 0; i < bindings.Length; i++)
-                    {
-                        EditorCurveBinding binding = bindings[i];
-                        // Repair paths
-                        string path_fixed = FixPath(binding.path);
-                        if (path_fixed != binding.path)
-                        {
-                            AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
-                            AnimationUtility.SetEditorCurve(clip, binding, null);
-                            binding.path = path_fixed;
-                            AnimationUtility.SetEditorCurve(clip, binding, curve);
-                            Debug.Log("Repaired property path: " + binding.path + FTFY + path_fixed);
-                        }
-                        // Round IsActive property value to 0 or 1
-                        if (binding.propertyName == "m_IsActive")
-                        {
-                            AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
-                            Keyframe[] keys = curve.keys;
-                            for (int j = 0; j < curve.length; j++)
-                            {
-                                Keyframe k = keys[j];
-                                k.value = k.value >= 0.5f ? 1f : 0f;
-                                keys[j] = k;
-                            }
-                            curve.keys = keys;
-                            AnimationUtility.SetEditorCurve(clip, binding, curve);
-                        }
-                    }
-                }
+                    RepairAnimationClipProperties(clip);
             }
             catch (NullReferenceException ex)
             {
                 // Suppress until I figure out a way to not spam users (esp. animators)
+            }
+        }
+
+        private static void RepairAnimationClipProperties(AnimationClip clip)
+        {
+            var bindings = AnimationUtility.GetCurveBindings(clip);
+            for (int i = 0; i < bindings.Length; i++)
+            {
+                EditorCurveBinding binding = bindings[i];
+                string path_fixed = FixPath(binding.path);
+                if (path_fixed != binding.path)
+                {
+                    AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+                    AnimationUtility.SetEditorCurve(clip, binding, null);
+                    binding.path = path_fixed;
+                    AnimationUtility.SetEditorCurve(clip, binding, curve);
+                    Debug.Log("Repaired property path: " + binding.path + FTFY + path_fixed);
+                }
+                if (SnapBooleanCurveValues)
+                {
+                    // Round IsActive property value to 0/1, or -1/1 if using symmetric booleans
+                    if (binding.propertyName == "m_IsActive")
+                    {
+                        AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+                        Keyframe[] keys = curve.keys;
+                        for (int j = 0; j < curve.length; j++)
+                        {
+                            Keyframe k = keys[j];
+                            k.value = k.value >= 0.5f ? 1f : 0f;
+                            keys[j] = k;
+                        }
+                        curve.keys = keys;
+                        AnimationUtility.SetEditorCurve(clip, binding, curve);
+                    }
+                }
             }
         }
 
