@@ -186,8 +186,12 @@ namespace RoaringFangs.Formats.MIDI
             out IEnumerable<ITimedEventInfo> events_until)
         {
             var events_until_list = new List<ITimedEventInfo>();
-            for (; event_infos[index].TimeBeats < time_beats_until; index++)
+            for (; index < event_infos.Length; index++)
+            {
+                if (event_infos[index].TimeBeats >= time_beats_until)
+                    break;
                 events_until_list.Add(event_infos[index]);
+            }
             events_until = events_until_list;
             return index;
         }
