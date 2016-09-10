@@ -25,9 +25,12 @@ THE SOFTWARE.
 #if UNITY_EDITOR
 
 using System;
+using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
+using UnityObject = UnityEngine.Object;
 
 namespace RoaringFangs.Editor
 {
@@ -78,7 +81,7 @@ namespace RoaringFangs.Editor
                     _SnapBooleanCurveValues = value;
                 }
             }
-        }       
+        }
 
         #endregion Preferences
 
@@ -184,6 +187,139 @@ namespace RoaringFangs.Editor
                     }
                 }
             }
+        }
+
+        private static string NoClone(string name)
+        {
+            return name.Substring(0, name.Length - 7);
+        }
+
+        /// <summary>
+        /// Forces an animation clip to have a defined length of at least <paramref name="length"/>
+        /// </summary>
+        /// <param name="clip">The animation clip</param>
+        /// <param name="length">Minimum length to make the animation clip</param>
+        public static void AdjustAnimationClipLength(
+            AnimationClip clip,
+            float length)
+        {
+            var dummy_key = new ObjectReferenceKeyframe()
+            {
+                time = length
+            };
+            var dummy_array = new[] { dummy_key };
+            var binding = EditorCurveBinding.PPtrCurve("Length Adjuster", typeof(UnityObject), "");
+            AnimationUtility.SetObjectReferenceCurve(clip, binding, dummy_array);
+        }
+
+        /// <summary>
+        /// Creates new animation clips with boolean IsActive curves and float
+        /// motion curves separated, and a static version of the latter from
+        /// the first frame of the animation.
+        /// </summary>
+        /// <param name="clip">
+        /// Animation clip to create partial animations for
+        /// </param>
+        /// <returns>
+        /// Motion, frame-by-frame and single-frame (preamble) animation clips
+        /// </returns>
+        public static AnimationClip[] CreatePartialAnimationClips(AnimationClip clip)
+        {
+            AnimationClip motion_clip, fbf_clip, preamble_motion_clip;
+            motion_clip = AnimationClip.Instantiate(clip);
+            fbf_clip = AnimationClip.Instantiate(clip);
+            preamble_motion_clip = AnimationClip.Instantiate(clip);
+
+            EditorCurveBinding[] bindings = AnimationUtility.GetCurveBindings(clip);
+
+            motion_clip.name =
+                NoClone(motion_clip.name) + " (Motion)";
+            fbf_clip.name =
+                NoClone(fbf_clip.name) + " (FBF)";
+            preamble_motion_clip.name =
+                NoClone(preamble_motion_clip.name) + " (Preamble Motion)";
+
+            for (int i = 0; i < bindings.Length; i++)
+            {
+                var binding = bindings[i];
+                if (binding.propertyName == "m_IsActive")
+                {
+                    AnimationUtility.SetEditorCurve(motion_clip, binding, null);
+                    AnimationUtility.SetEditorCurve(preamble_motion_clip, binding, null);
+                }
+                else
+                {
+                    AnimationUtility.SetEditorCurve(fbf_clip, binding, null);
+                    var preamble_motion_curve = AnimationUtility.GetEditorCurve(
+                    preamble_motion_clip,
+                    binding);
+                    var first_key = preamble_motion_curve.keys.First();
+                    preamble_motion_curve.keys = new[] { first_key };
+                    // Remark: SetEditorCurve strangely does not like Quaternion curves...
+                    AnimationUtility.SetEditorCurve(
+                        preamble_motion_clip,
+                        binding,
+                        preamble_motion_curve);
+                }
+            }
+
+            AdjustAnimationClipLength(motion_clip, clip.length);
+            AdjustAnimationClipLength(fbf_clip, clip.length);
+            AdjustAnimationClipLength(preamble_motion_clip, clip.length);
+
+            return new[] { motion_clip, fbf_clip, preamble_motion_clip };
+        }
+
+        /// <summary>
+        /// Overwrites the contents of the asset at <paramref name="path"/> if
+        /// it exists, or else it creates a new asset.
+        /// </summary>
+        /// <typeparam name="T">Asset type</typeparam>
+        /// <param name="asset">The asset</param>
+        /// <param name="path">Asset path to read/write</param>
+        /// <returns>The existing asset if it exists, or else null</returns>
+        private static T CreateOrReplaceAsset<T>(T asset, string path)
+            where T : UnityObject
+        {
+            T existingAsset = AssetDatabase.LoadAssetAtPath<T>(path);
+
+            if (existingAsset == null)
+            {
+                AssetDatabase.CreateAsset(asset, path);
+                existingAsset = asset;
+            }
+            else
+            {
+                EditorUtility.CopySerialized(asset, existingAsset);
+            }
+
+            return existingAsset;
+        }
+
+        [MenuItem("Assets/Roaring Fangs/Create Partial Animations")]
+        private static void CreatePartialAnimationsMenuAction()
+        {
+            var clips = Selection.objects
+                .Where(o => o is AnimationClip)
+                .Cast<AnimationClip>()
+                .ToArray();
+            foreach (var clip in clips)
+            {
+                var clip_path = AssetDatabase.GetAssetPath(clip);
+                var clip_directory = Path.GetDirectoryName(clip_path);
+                var partial_clips_directory = Path.Combine(
+                    clip_directory,
+                    "Partial Animations");
+                var partial_clips = CreatePartialAnimationClips(clip);
+                foreach (var partial_clip in partial_clips)
+                {
+                    var partial_clip_path = Path.Combine(
+                        partial_clips_directory,
+                        partial_clip.name + ".anim");
+                    CreateOrReplaceAsset(partial_clip, partial_clip_path);
+                }
+            }
+            AssetDatabase.SaveAssets();
         }
 
         static AnimationHelper()
