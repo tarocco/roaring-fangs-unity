@@ -29,9 +29,16 @@ namespace RoaringFangs.Animation
 {
     public interface ITargetGroup
     {
-        bool Active { get; set; }
+        bool ActiveSelf { get; }
+
+        bool ActiveInHierarchy { get; }
+
+        void SetActive(bool active);
+
         string Name { get; }
+
         TargetGroupMode Mode { get; }
+
         IEnumerable<TransformUtils.ITransformD> Targets { get; }
 
         void OnFindMatchingTargetsInDescendants(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths);

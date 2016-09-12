@@ -120,6 +120,7 @@ namespace RoaringFangs.Animation
                     _Targets = value.Select(t => new TransformUtils.TransformD(t.Transform, t.Depth)).ToArray();
                 else
                     _Targets = null;
+                OnUpdateGroupTargetsInParentManager();
             }
         }
 
@@ -172,6 +173,15 @@ namespace RoaringFangs.Animation
             var manager = GetComponentInParent<ControlManager>();
             if (manager)
                 return manager.CachedSubjectDescendantsAndPaths;
+            else
+                throw new NullReferenceException("RegExTargetGroup has no parent ControlManager!");
+        }
+
+        private void OnUpdateGroupTargetsInParentManager()
+        {
+            var manager = GetComponentInParent<ControlManager>();
+            if (manager)
+                manager.OnUpdateGroupTargets(this);
             else
                 throw new NullReferenceException("RegExTargetGroup has no parent ControlManager!");
         }
@@ -229,7 +239,7 @@ namespace RoaringFangs.Animation
         public void OnDrawHierarchyIcons(Rect icon_position)
         {
             var gui_color = UnityEngine.GUI.color;
-            UnityEngine.GUI.color = gui_color * (Active ? Color.white : Color.gray);
+            UnityEngine.GUI.color = gui_color * (ActiveInHierarchy ? Color.white : Color.gray);
             UnityEngine.GUI.Label(icon_position, GetIcon(Mode));
             UnityEngine.GUI.color = gui_color;
         }

@@ -112,8 +112,8 @@ namespace RoaringFangs.Animation
         private void SetVisibleGroup(ITargetGroup[] target_groups, ITargetGroup selected)
         {
             foreach (ITargetGroup control in target_groups)
-                control.Active = false;
-            selected.Active = true;
+                control.SetActive(false);
+            selected.SetActive(true);
         }
 
         void Start()
