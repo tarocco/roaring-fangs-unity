@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if FLUFFYUNDERWARE_CURVY
+
+using System;
 using System.Collections.Generic;
 using RoaringFangs.Adapters.FluffyUnderware.Curvy;
 using RoaringFangs.Attributes;
@@ -132,3 +134,5 @@ namespace RoaringFangs.Adapters
         }
     }
 }
+
+#endif
