@@ -285,13 +285,42 @@ namespace RoaringFangs.Animation
             }
         }
 
+        private KeyValuePair<ITargetGroup, TargetRule[]>[] _GroupedTargets;
+        private KeyValuePair<ITargetGroup, TargetRule[]>[] GroupedTargets
+        {
+            get
+            {
+                if (_GroupedTargets == null)
+                    _GroupedTargets = FindGroupedTargets();
+                return _GroupedTargets;
+            }
+            set
+            {
+                _GroupedTargets = value;
+            }
+        }
+
         private Dictionary<Transform, TargetInfo> TargetDataPrevious =
             new Dictionary<Transform, TargetInfo>();
 
         #endregion Targets
 
+        private KeyValuePair<ITargetGroup, TargetRule[]>[] FindGroupedTargets()
+        {
+            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true).OfType<ITargetGroup>();
+
+            // For each groups array, select valid target lists in all of the target groups and create
+            // rules on whether to show or hide the targets based on the control group's active state
+            return groups
+                .Where(g => g.Targets != null)
+                    .Select(g => new KeyValuePair<ITargetGroup, TargetRule[]>(g, g.Targets
+                            .Select(t => new TargetRule(t.Transform, t.Depth)).ToArray()))
+                            .ToArray();
+        }
+
         private void OnEnable()
         {
+            GroupedTargets = FindGroupedTargets();
 #if UNITY_EDITOR
             if (!EditorApplication.isPlayingOrWillChangePlaymode)
             {
@@ -346,6 +375,7 @@ namespace RoaringFangs.Animation
                         CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
                         NotifyControlGroupsOfSubjectDescendants();
                         PathChangeHandledOnceThisUpdate = true;
+                        GroupedTargets = FindGroupedTargets();
                     }
                 }
             }
@@ -358,40 +388,48 @@ namespace RoaringFangs.Animation
 #if UNITY_EDITOR
             PathChangeHandledOnceThisUpdate = false;
 #endif
-            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true).OfType<ITargetGroup>();
-            // For each groups array, select valid target lists in all of the target groups and create
-            // rules on whether to show or hide the targets based on the control group's active state
-            IEnumerable<KeyValuePair<ITargetGroup, IEnumerable<TargetRule>>> grouped_targets = groups
-                .Where(g => g.Targets != null)
-                    .Select(g => new KeyValuePair<ITargetGroup, IEnumerable<TargetRule>>(g, g.Targets
-                            .Select(t => new TargetRule(t.Transform, t.Depth))));
-
-            // Create a dictionary to collect valid target data to compare against in the next update
-            var target_data_previous = new Dictionary<Transform, TargetInfo>();
-
-            foreach (var grouped_target in grouped_targets)
+            foreach (var grouped_target in GroupedTargets)
             {
                 // Get the group and targets from the grouping object
                 var group = grouped_target.Key;
                 var targets = grouped_target.Value;
                 // Buffer the selection into an array
-                var targets_array = targets.ToArray();
-                foreach (var target in targets_array)
+                var targets_array = targets;
+                for(int i = 0; i < targets_array.Length; i++)
                 {
+                    var target = targets_array[i];
                     // If the target transform is valid (not deleted)
                     if (target.Transform != null)
                     {
-                        var func = TargetGroupModeFunctor.GetModeFunction(group.Mode);
+                        //var func = TargetGroupModeFunctor.GetModeFunction(group.Mode);
                         // Active is set to mode function of current activeSelf and group active
-                        bool active = func(target.Transform.gameObject.activeSelf, group.Active);
+                        //bool active = func(target.Transform.gameObject.activeSelf, group.Active);
+
+                        bool active_self = target.Transform.gameObject.activeSelf;
+                        bool active_group = group.Active;
+                        bool active;
+
+                        switch (group.Mode)
+                        {
+                            default:
+                            case TargetGroupMode.Set:
+                                active = active_group;
+                                break;
+                            case TargetGroupMode.AND:
+                                active = active_self && active_group;
+                                break;
+                            case TargetGroupMode.OR:
+                                active = active_self || active_group;
+                                break;
+                            case TargetGroupMode.XOR:
+                                active = active_self ^ active_group;
+                                break;
+                        }
+
                         target.Transform.gameObject.SetActive(active);
-                        // Collect valid target data
-                        target_data_previous[target.Transform] = target.Info;
                     }
                 }
             }
-            // Replace previous value dictionary with still-valid targets
-            TargetDataPrevious = target_data_previous;
         }
 
 #if UNITY_EDITOR

@@ -45,51 +45,12 @@ namespace RoaringFangs.Editor
 
         private void OnGUI()
         {
-            if (RemarkStyle == null)
-            {
-                RemarkStyle = new GUIStyle(UGUI.skin.label);
-                RemarkStyle.fontStyle = FontStyle.Italic;
-            }
-            Left(OnGUIRoutine().GetEnumerator());
-        }
-
-        private IEnumerable<bool> OnGUIRoutine()
-        {
-            AnimationHelper.EnableStickyProperties = EditorGUILayout.ToggleLeft("Enable Sticky Properties", AnimationHelper.EnableStickyProperties);
-            yield return false;
-            bool enabled = UGUI.enabled;
-            UGUI.enabled = false;
-            if (GUILayout.Button("Repair Property Paths", GUILayout.MaxWidth(144)))
-                OnRepairPropertyPaths();
-            GUILayout.Label("Coming soon!", RemarkStyle);
-            UGUI.enabled = true;
-            yield return true;
-        }
-
-        private void Left(IEnumerator<bool> routine)
-        {
-            for (;;)
-            {
-                GUILayout.BeginHorizontal();
-                routine.MoveNext();
-                GUILayout.EndHorizontal();
-                if (routine.Current)
-                    break;
-            }
-        }
-
-        private void Centered(IEnumerator<bool> routine)
-        {
-            for (;;)
-            {
-                GUILayout.BeginHorizontal();
-                GUILayout.FlexibleSpace();
-                routine.MoveNext();
-                GUILayout.FlexibleSpace();
-                GUILayout.EndHorizontal();
-                if (routine.Current)
-                    break;
-            }
+            AnimationHelper.EnableStickyProperties = EditorGUILayout.ToggleLeft(
+                "Enable Sticky Properties",
+                AnimationHelper.EnableStickyProperties);
+            AnimationHelper.SnapBooleanCurveValues = EditorGUILayout.ToggleLeft(
+                "Snap Boolean Curve Values",
+                AnimationHelper.SnapBooleanCurveValues);
         }
 
         private void OnRepairPropertyPaths()
