@@ -22,13 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
 using RoaringFangs.Attributes;
 using UnityEngine;
 
 namespace RoaringFangs.Animation
 {
     [ExecuteInEditMode]
-    public class RefActive : RefBoolBehaviorBase
+    public class RefActive : RefBoolBehaviorBase, IActiveStateProperty
     {
         [SerializeField, AutoProperty("Target")]
         private MonoBehaviour _TargetBehavior;
@@ -37,6 +38,23 @@ namespace RoaringFangs.Animation
         {
             get { return (IActiveStateProperty)_TargetBehavior; }
             set { _TargetBehavior = (MonoBehaviour)value; }
+        }
+
+        public bool Active
+        {
+            get
+            {
+                if (Value.HasValue)
+                    return Value.Value;
+                else
+                    return Target.Active;
+            }
+
+            set
+            {
+                Value = value;
+                Target.Active = value;
+            }
         }
 
         private void LateUpdate()

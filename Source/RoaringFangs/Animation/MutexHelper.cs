@@ -41,13 +41,13 @@ namespace RoaringFangs.Animation
     [ExecuteInEditMode]
     public class MutexHelper : MonoBehaviour
     {
-        public IEnumerable<ITargetGroup> Controls
+        public IEnumerable<IActiveStateProperty> Controls
         {
             get
             {
                 foreach (Transform t in transform)
                 {
-                    ITargetGroup ac = t.GetComponent<ITargetGroup>();
+                    var ac = t.GetComponents<IActiveStateProperty>().LastOrDefault();
                     if (ac != null)
                     {
                         yield return ac;
@@ -56,9 +56,9 @@ namespace RoaringFangs.Animation
             }
         }
 
-        private ITargetGroup[] _CachedControls;
+        private IActiveStateProperty[] _CachedControls;
 
-        private ITargetGroup[] CachedControls
+        private IActiveStateProperty[] CachedControls
         {
             get
             {
@@ -68,7 +68,7 @@ namespace RoaringFangs.Animation
             }
         }
 
-        public ITargetGroup GetCachedControlByIndex(int index)
+        public IActiveStateProperty GetCachedControlByIndex(int index)
         {
             return CachedControls[index];
         }
@@ -84,13 +84,13 @@ namespace RoaringFangs.Animation
         [SerializeField, HideInInspector]
         private MonoBehaviour _SelectedBehavior;
 
-        public ITargetGroup Selected
+        public IActiveStateProperty Selected
         {
             get
             {
                 if (_SelectedBehavior == null)
                     SetSelected(CachedControls.First());
-                return (ITargetGroup)_SelectedBehavior;
+                return (IActiveStateProperty)_SelectedBehavior;
             }
             set
             {
@@ -99,7 +99,7 @@ namespace RoaringFangs.Animation
             }
         }
 
-        private void SetSelected(ITargetGroup value)
+        private void SetSelected(IActiveStateProperty value)
         {
             if (!CachedControls.Contains(value))
                 throw new ArgumentException("Cannot select non-child target group");
@@ -109,9 +109,9 @@ namespace RoaringFangs.Animation
             SetVisibleGroup(CachedControls, value);
         }
 
-        private void SetVisibleGroup(ITargetGroup[] target_groups, ITargetGroup selected)
+        private void SetVisibleGroup(IActiveStateProperty[] target_groups, IActiveStateProperty selected)
         {
-            foreach (ITargetGroup control in target_groups)
+            foreach (IActiveStateProperty control in target_groups)
                 control.Active = false;
             selected.Active = true;
         }

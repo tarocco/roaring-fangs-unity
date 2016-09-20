@@ -47,9 +47,9 @@ namespace RoaringFangs.Animation
             set { _MutexHelper = value; }
         }
 
-        private ITargetGroup _CachedSelected;
+        private IActiveStateProperty _CachedSelected;
 
-        private ITargetGroup CachedSelected
+        private IActiveStateProperty CachedSelected
         {
             get
             {
@@ -63,7 +63,7 @@ namespace RoaringFangs.Animation
             }
         }
 
-        private ITargetGroup Selected
+        private IActiveStateProperty Selected
         {
             get { return MutexHelper.Selected; }
             set
@@ -73,7 +73,7 @@ namespace RoaringFangs.Animation
             }
         }
 
-        private ITargetGroup GetCachedControlByIndex(int index)
+        private IActiveStateProperty GetCachedControlByIndex(int index)
         {
             return MutexHelper.GetCachedControlByIndex(index);
         }
@@ -113,7 +113,7 @@ namespace RoaringFangs.Animation
             }
         }
 
-        private int GetCachedControlIndex(ITargetGroup target_group)
+        private int GetCachedControlIndex(IActiveStateProperty target_group)
         {
             return Enumerable.Range(0, NumberOfCachedControls)
                 .Select(i => GetCachedControlByIndex(i))

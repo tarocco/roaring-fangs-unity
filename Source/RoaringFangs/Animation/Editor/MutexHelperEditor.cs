@@ -25,25 +25,31 @@ THE SOFTWARE.
 using System;
 using System.Linq;
 using UnityEditor;
+using UnityEngine;
 
 namespace RoaringFangs.Animation.Editor
 {
     [CustomEditor(typeof(MutexHelper))]
     public class MutexHelperEditor : UnityEditor.Editor
     {
-        protected static void DrawSelector(MutexHelper self, TargetGroupBase[] groups)
+        protected static void DrawSelector(MutexHelper self, IActiveStateProperty[] groups)
         {
-            string[] group_names = groups.Select(g => g.name).ToArray();
+            var group_behaviours = groups
+                .Cast<MonoBehaviour>();
+            string[] group_names = group_behaviours
+                .Select(g => g.name).ToArray();
             int index_selected = Math.Max(0, Array.IndexOf(groups, self.Selected));
             index_selected = EditorGUILayout.Popup(index_selected, group_names);
-            ITargetGroup selected;
+            IActiveStateProperty selected;
             if (index_selected < groups.Length)
-                selected = groups[index_selected] as ITargetGroup;
+                selected = groups[index_selected];
             else
                 selected = null;
             if (self.Selected != selected)
             {
-                Undo.RecordObjects(groups.Select(g => g.gameObject).ToArray(), "Select Target Group");
+                var affected_game_objects = group_behaviours
+                    .Select(g => g.gameObject).ToArray();
+                Undo.RecordObjects(affected_game_objects, "Select Target Group");
                 self.Selected = selected;
             }
         }
@@ -57,8 +63,7 @@ namespace RoaringFangs.Animation.Editor
         {
             serializedObject.Update();
             MutexHelper self = (MutexHelper)target;
-            TargetGroupBase[] groups = self.Controls.OfType<TargetGroupBase>().ToArray();
-            DrawSelector(self, groups);
+            DrawSelector(self, self.Controls.ToArray());
             DrawPropertiesExcluding(serializedObject, properties_to_exclude);
             serializedObject.ApplyModifiedProperties();
         }
@@ -78,8 +83,7 @@ namespace RoaringFangs.Animation.Editor
         {
             serializedObject.Update();
             MutexHelper self = (MutexHelper)target;
-            TargetGroupBase[] groups = self.Controls.OfType<TargetGroupBase>().ToArray();
-            DrawSelector(self, groups);
+            DrawSelector(self, self.Controls.ToArray());
             serializedObject.ApplyModifiedProperties();
         }
     }
