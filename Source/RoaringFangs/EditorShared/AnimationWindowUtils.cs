@@ -64,7 +64,7 @@ namespace RoaringFangs.Editor
         public static object GetAnimationEditor(object animation_window)
         {
             if (animation_window == null)
-                throw new NullReferenceException("Animation window cannot be null");
+                throw new ArgumentNullException("Animation window cannot be null");
             Type animation_window_type = GetUnityEditorAnimationWindowType();
             FieldInfo fi = animation_window_type.GetField("m_AnimEditor", BindingFlags.NonPublic | BindingFlags.Instance);
             return fi.GetValue(animation_window);
@@ -73,7 +73,7 @@ namespace RoaringFangs.Editor
         public static object GetAnimationWindowState(object animation_window_editor)
         {
             if (animation_window_editor == null)
-                throw new NullReferenceException("Animation editor cannot be null");
+                throw new ArgumentNullException("Animation editor cannot be null");
             Type animation_editor_type = GetUnityEditorAssembly().GetType("UnityEditor.AnimEditor");
             FieldInfo fi = animation_editor_type.GetField("m_State", BindingFlags.NonPublic | BindingFlags.Instance);
             return fi.GetValue(animation_window_editor);
@@ -82,7 +82,7 @@ namespace RoaringFangs.Editor
         public static AnimationClip GetActiveAnimationClip(object animation_window_state)
         {
             if (animation_window_state == null)
-                throw new NullReferenceException("Animation window state cannot be null");
+                throw new ArgumentNullException("Animation window state cannot be null");
             Type animation_window_state_type = GetUnityEditorAssembly().GetType("UnityEditorInternal.AnimationWindowState");
             PropertyInfo pi = animation_window_state_type.GetProperty("activeAnimationClip");
             return (AnimationClip)pi.GetValue(animation_window_state, null);
@@ -91,7 +91,7 @@ namespace RoaringFangs.Editor
         public static GameObject GetRootGameObject(object animation_window_state)
         {
             if (animation_window_state == null)
-                throw new NullReferenceException("Animation window state cannot be null");
+                throw new ArgumentNullException("Animation window state cannot be null");
             Type animation_window_state_type = GetUnityEditorAssembly().GetType("UnityEditorInternal.AnimationWindowState");
             PropertyInfo pi = animation_window_state_type.GetProperty("activeRootGameObject");
             return (GameObject)pi.GetValue(animation_window_state, null);
@@ -101,7 +101,7 @@ namespace RoaringFangs.Editor
         {
             var anim_window = GetAnimationWindow();
             if (anim_window == null)
-                throw new NullReferenceException("Animation window cannot be null");
+                throw new ArgumentNullException("Animation window cannot be null");
             return GetCurrentActiveAnimationClip(anim_window);
         }
 

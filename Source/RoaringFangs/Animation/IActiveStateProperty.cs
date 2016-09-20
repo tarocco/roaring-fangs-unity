@@ -22,43 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#if UNITY_EDITOR
-
+using RoaringFangs.Utility;
 using System.Collections.Generic;
-using UnityEditor;
-using UnityEngine;
-using UGUI = UnityEngine.GUI;
 
-namespace RoaringFangs.Editor
+namespace RoaringFangs.Animation
 {
-    public class AnimationHelperWindow : EditorWindow
+    public interface IActiveStateProperty
     {
-        private static GUIStyle RemarkStyle;
-
-        [MenuItem("Window/Animation Helper")]
-        public static void ShowWindow()
-        {
-            var self = GetWindow<AnimationHelperWindow>("Animtn Helper");
-            self.minSize = new Vector2(192, 192);
-            self.maxSize = new Vector2(256, 1024);
-        }
-
-        private void OnGUI()
-        {
-            AnimationHelper.EnableStickyProperties = EditorGUILayout.ToggleLeft(
-                "Enable Sticky Properties",
-                AnimationHelper.EnableStickyProperties);
-            AnimationHelper.SnapBooleanCurveValues = EditorGUILayout.ToggleLeft(
-                "Snap Boolean Curve Values",
-                AnimationHelper.SnapBooleanCurveValues);
-        }
-
-        private void OnRepairPropertyPaths()
-        {
-            Debug.LogError("Repair property paths not implemented yet! Bun needs a break...");
-            // TODO: Do it!
-        }
+        bool Active { get; set; }
     }
 }
-
-#endif

@@ -22,17 +22,55 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using RoaringFangs.Utility;
-using System.Collections.Generic;
+using RoaringFangs.Attributes;
+using System;
+using UnityEditor;
+using UnityEngine;
 
 namespace RoaringFangs.Animation
 {
-    public interface ITargetGroup : IActiveStateProperty
-    {
-        string Name { get; }
-        TargetGroupMode Mode { get; }
-        IEnumerable<TransformUtils.ITransformD> Targets { get; }
+#if UNITY_EDITOR
 
-        void OnFindMatchingTargetsInDescendants(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths);
+    [InitializeOnLoad]
+#endif
+    [Serializable]
+    public class RefBool : IRefBool
+    {
+        public static readonly GameObject True, False;
+
+        [SerializeField, AutoProperty("Value")]
+        private GameObject _ValueObject;
+
+        public bool? Value
+        {
+            get
+            {
+                if (_ValueObject == True)
+                    return true;
+                if (_ValueObject == False)
+                    return false;
+                return null;
+            }
+            set
+            {
+                if (value.HasValue)
+                {
+                    if (value.Value)
+                        _ValueObject = True;
+                    else
+                        _ValueObject = False;
+                }
+                else
+                {
+                    _ValueObject = null;
+                }
+            }
+        }
+
+        static RefBool()
+        {
+            True = Resources.Load<GameObject>("True");
+            False = Resources.Load<GameObject>("False");
+        }
     }
 }

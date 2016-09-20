@@ -383,7 +383,7 @@ namespace RoaringFangs.Animation
 
 #endif
 
-        private void Update()
+        private void LateUpdate()
         {
 #if UNITY_EDITOR
             PathChangeHandledOnceThisUpdate = false;

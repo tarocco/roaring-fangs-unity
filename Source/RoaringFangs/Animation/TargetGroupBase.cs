@@ -41,10 +41,10 @@ namespace RoaringFangs.Animation
 #endif
     public abstract class TargetGroupBase : MonoBehaviour
     {
-        public bool Active
+        public virtual bool Active
         {
-            get { return gameObject.activeInHierarchy; }
-            set { gameObject.SetActive(value); }
+            get { return enabled && gameObject.activeInHierarchy; }
+            set { enabled = value; }
         }
 
         public string Name
@@ -93,7 +93,6 @@ namespace RoaringFangs.Animation
             HIOR = icons.GetOrDefault("mode.or.png");
             HIXOR = icons.GetOrDefault("mode.xor.png");
         }
-
 #endif
     }
 }

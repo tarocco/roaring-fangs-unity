@@ -22,17 +22,37 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using RoaringFangs.Utility;
-using System.Collections.Generic;
+using RoaringFangs.Attributes;
+using UnityEngine;
 
 namespace RoaringFangs.Animation
 {
-    public interface ITargetGroup : IActiveStateProperty
+    [ExecuteInEditMode]
+    public class RefActive : RefBoolBehaviorBase
     {
-        string Name { get; }
-        TargetGroupMode Mode { get; }
-        IEnumerable<TransformUtils.ITransformD> Targets { get; }
+        [SerializeField, AutoProperty("Target")]
+        private MonoBehaviour _TargetBehavior;
 
-        void OnFindMatchingTargetsInDescendants(IEnumerable<TransformUtils.ITransformDP> subject_descendants_and_paths);
+        public IActiveStateProperty Target
+        {
+            get { return (IActiveStateProperty)_TargetBehavior; }
+            set { _TargetBehavior = (MonoBehaviour)value; }
+        }
+
+        private void LateUpdate()
+        {
+            if (Target != null)
+            {
+                if (!Value.HasValue)
+                    Value = Target.Active;
+                Target.Active = Value.Value;
+            }
+        }
+
+        [ContextMenu("Configure")]
+        public void Configure()
+        {
+            Target = Target ?? GetComponent<IActiveStateProperty>();
+        }
     }
 }

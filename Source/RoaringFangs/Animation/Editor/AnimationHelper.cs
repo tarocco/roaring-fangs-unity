@@ -22,8 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#if UNITY_EDITOR
-
+using RoaringFangs.Editor;
 using System;
 using System.IO;
 using System.Linq;
@@ -32,7 +31,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityObject = UnityEngine.Object;
 
-namespace RoaringFangs.Editor
+namespace RoaringFangs.Animation.Editor
 {
     [InitializeOnLoad]
     public static class AnimationHelper
@@ -102,16 +101,17 @@ namespace RoaringFangs.Editor
         /// </summary>
         private static void HandleUpdate()
         {
+            AnimationClip clip = null;
             try
             {
-                AnimationClip clip = AnimationWindowUtils.GetCurrentActiveAnimationClip();
-                if (clip != null)
-                    RepairAnimationClipProperties(clip);
+                clip = AnimationWindowUtils.GetCurrentActiveAnimationClip();
             }
-            catch (NullReferenceException ex)
+            catch (ArgumentNullException ex)
             {
                 // Suppress until I figure out a way to not spam users (esp. animators)
             }
+            if (clip != null)
+                RepairAnimationClipProperties(clip);
         }
 
         private static void RepairAnimationClipProperties(AnimationClip clip)
@@ -189,11 +189,6 @@ namespace RoaringFangs.Editor
             }
         }
 
-        private static string NoClone(string name)
-        {
-            return name.Substring(0, name.Length - 7);
-        }
-
         /// <summary>
         /// Forces an animation clip to have a defined length of at least <paramref name="length"/>
         /// </summary>
@@ -232,12 +227,9 @@ namespace RoaringFangs.Editor
 
             EditorCurveBinding[] bindings = AnimationUtility.GetCurveBindings(clip);
 
-            motion_clip.name =
-                NoClone(motion_clip.name) + " (Motion)";
-            fbf_clip.name =
-                NoClone(fbf_clip.name) + " (FBF)";
-            preamble_motion_clip.name =
-                NoClone(preamble_motion_clip.name) + " (Preamble Motion)";
+            motion_clip.name = clip.name + " (Motion)";
+            fbf_clip.name = clip.name + " (FBF)";
+            preamble_motion_clip.name = clip.name + " (Preamble Motion)";
 
             for (int i = 0; i < bindings.Length; i++)
             {
@@ -270,6 +262,57 @@ namespace RoaringFangs.Editor
             return new[] { motion_clip, fbf_clip, preamble_motion_clip };
         }
 
+        public static AnimationClip[] CreateTransitionSafeAnimationClips(AnimationClip clip)
+        {
+            float frame_time = 1f / clip.frameRate;
+            var safe_clip = AnimationClip.Instantiate(clip);
+            safe_clip.name = clip.name + " (Safe)";
+            var bindings = AnimationUtility.GetCurveBindings(clip);
+            var object_reference_bindings = AnimationUtility.GetObjectReferenceCurveBindings(clip);  
+            for (int i = 0; i < bindings.Length; i++)
+            {
+                var binding = bindings[i];
+                if (binding.propertyName == "m_IsActive")
+                {
+                    var curve = AnimationUtility.GetEditorCurve(safe_clip, binding);
+                    var ref_active_value_object_array = curve.keys
+                        .Select(k => new ObjectReferenceKeyframe()
+                        {
+                            time = k.time,
+                            value = k.value != 0 ? RefBool.True : RefBool.False
+                        })
+                        .ToArray();
+
+                    // Fix last frame of object reference keyframes
+                    int keyframe_count = ref_active_value_object_array.Length;
+                    int idx_last_keyframe = keyframe_count - 1;
+                    var last_keyframe = ref_active_value_object_array[idx_last_keyframe];
+                    if (last_keyframe.time == clip.length)
+                    {
+                        last_keyframe.time = Mathf.Max(0f, last_keyframe.time - frame_time);
+                        ref_active_value_object_array[idx_last_keyframe] = last_keyframe;
+                    }
+
+                    AnimationUtility.SetEditorCurve(safe_clip, binding, null);
+                    string ref_binding_path;
+                    {
+                        string binding_path = binding.path;
+                        int binding_path_length = binding_path.Length;
+                        ref_binding_path =
+                            binding.path.Substring(0, binding_path_length - 10);
+                    }
+                    var ref_binding = new EditorCurveBinding()
+                    {
+                        path = binding.path,
+                        propertyName = "_ValueObject",
+                        type = typeof(RefBoolBehaviorBase)
+                    };
+                    AnimationUtility.SetObjectReferenceCurve(safe_clip, ref_binding, ref_active_value_object_array);
+                }
+            }
+            return new AnimationClip[] { safe_clip };
+        }
+
         /// <summary>
         /// Overwrites the contents of the asset at <paramref name="path"/> if
         /// it exists, or else it creates a new asset.
@@ -296,30 +339,52 @@ namespace RoaringFangs.Editor
             return existingAsset;
         }
 
-        [MenuItem("Assets/Roaring Fangs/Create Partial Animations")]
-        private static void CreatePartialAnimationsMenuAction()
+        private static AnimationClip[] GetSelectedAnimationClips()
         {
-            var clips = Selection.objects
+            return Selection.objects
                 .Where(o => o is AnimationClip)
                 .Cast<AnimationClip>()
                 .ToArray();
+        }
+
+        private static void CreateModifiedAnimationsFromSelection(
+            Func<AnimationClip, AnimationClip[]> modifier_function,
+            string relative_path)
+        {
+            var clips = GetSelectedAnimationClips();
             foreach (var clip in clips)
             {
                 var clip_path = AssetDatabase.GetAssetPath(clip);
                 var clip_directory = Path.GetDirectoryName(clip_path);
-                var partial_clips_directory = Path.Combine(
+                var modified_clips_directory = Path.Combine(
                     clip_directory,
-                    "Partial Animations");
-                var partial_clips = CreatePartialAnimationClips(clip);
-                foreach (var partial_clip in partial_clips)
+                    relative_path);
+                var modified_clips = modifier_function(clip);
+                foreach (var modified_clip in modified_clips)
                 {
-                    var partial_clip_path = Path.Combine(
-                        partial_clips_directory,
-                        partial_clip.name + ".anim");
-                    CreateOrReplaceAsset(partial_clip, partial_clip_path);
+                    var modified_clip_path = Path.Combine(
+                        modified_clips_directory,
+                        modified_clip.name + ".anim");
+                    CreateOrReplaceAsset(modified_clip, modified_clip_path);
                 }
             }
             AssetDatabase.SaveAssets();
+        }
+
+        [MenuItem("Assets/Roaring Fangs/Create Partial Animations")]
+        private static void CreatePartialAnimationsMenuAction()
+        {
+            CreateModifiedAnimationsFromSelection(
+                CreatePartialAnimationClips,
+                "Partial Animations");
+        }
+
+        [MenuItem("Assets/Roaring Fangs/Create Transition-Safe Animations")]
+        private static void CreateTransitionSafeAnimationsMenuAction()
+        {
+            CreateModifiedAnimationsFromSelection(
+                CreateTransitionSafeAnimationClips,
+                "Converted Animations");
         }
 
         static AnimationHelper()
@@ -329,5 +394,3 @@ namespace RoaringFangs.Editor
         }
     }
 }
-
-#endif
