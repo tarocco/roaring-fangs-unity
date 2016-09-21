@@ -25,8 +25,9 @@ THE SOFTWARE.
 using RoaringFangs.FSM;
 using RoaringFangs.Utility;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
-using UnityObject = UnityEngine.Object;
+using System.Linq;
 
 namespace RoaringFangs.SceneManagement
 {
@@ -44,34 +45,54 @@ namespace RoaringFangs.SceneManagement
             protected set { _StateMachine = value; }
         }
 
-        private SceneHandlerGroup _CurrentLoadGroup;
-
-        protected SceneHandlerGroup CurrentLoadGroup
+        protected struct SceneHandlerGroupPair
         {
-            get { return _CurrentLoadGroup; }
-            private set { _CurrentLoadGroup = value; }
+            public SceneHandlerGroup LoadGroup;
+            public SceneHandlerGroup UnloadGroup;
         }
 
-        private SceneHandlerGroup _CurrentUnloadGroup;
+        private Stack<SceneHandlerGroupPair> _SceneHandlerGroupPairs;
 
-        protected SceneHandlerGroup CurrentUnloadGroup
+        protected Stack<SceneHandlerGroupPair> SceneHandlerGroupPairs
         {
-            get { return _CurrentUnloadGroup; }
-            private set { _CurrentUnloadGroup = value; }
+            get { return _SceneHandlerGroupPairs; }
+            private set { _SceneHandlerGroupPairs = value; }
+        }
+
+        protected SceneHandlerGroupPair CurrentSceneHandlerGroupPair
+        {
+            get { return _SceneHandlerGroupPairs.Peek(); }
+        }
+
+        public SceneHandlerGroup CurrentLoadGroup
+        {
+            get { return CurrentSceneHandlerGroupPair.LoadGroup; }
+        }
+
+        public SceneHandlerGroup CurrentUnloadGroup
+        {
+            get { return CurrentSceneHandlerGroupPair.UnloadGroup; }
         }
 
         private void HandleBeforeStateChange(object sender)
         {
-            CurrentLoadGroup = new SceneHandlerGroup();
-            CurrentUnloadGroup = new SceneHandlerGroup();
+            //if (isActiveAndEnabled)
+            {
+                SceneHandlerGroupPairs.Push(new SceneHandlerGroupPair()
+                {
+                    LoadGroup = new SceneHandlerGroup(),
+                    UnloadGroup = new SceneHandlerGroup(),
+                });
+            }
         }
 
         private void HandleAfterStateChange(object sender)
         {
-            if (this.isActiveAndEnabled)
+            if (isActiveAndEnabled)
             {
-                CurrentLoadGroup.StartLoadAsync(this);
-                CurrentUnloadGroup.StartUnloadAsync(this);
+                var pair = SceneHandlerGroupPairs.Pop();
+                pair.LoadGroup.StartLoadAsync(this);
+                pair.UnloadGroup.StartUnloadAsync(this);
             }
         }
 
@@ -92,6 +113,7 @@ namespace RoaringFangs.SceneManagement
 
         private void Start()
         {
+            SceneHandlerGroupPairs = new Stack<SceneHandlerGroupPair>();
         }
     }
 }

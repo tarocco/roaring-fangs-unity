@@ -50,6 +50,15 @@ namespace RoaringFangs.FSM
             StateTypeLUT = enums.ToDictionary(e => e.ToString(), e => e);
         }
 
+        [SerializeField, AutoProperty("StateProvider")]
+        private MonoBehaviour _StateProviderBehavior;
+
+        public StateProvider<TStateEnum> StateProvider
+        {
+            get { return _StateProviderBehavior as StateProvider<TStateEnum>; }
+            protected set { _StateProviderBehavior = value; }
+        }
+
         #region Serialization
 
         [SerializeField]
@@ -237,6 +246,8 @@ namespace RoaringFangs.FSM
         {
             get
             {
+                if (StateProvider != null)
+                    _CurrentState = StateProvider.CurrentState;
                 return _CurrentState;
             }
             set
@@ -245,25 +256,37 @@ namespace RoaringFangs.FSM
                 if (Application.isPlaying)
                 {
 #endif
-                    SetCurrentState(_CurrentState, value);
+                    var from_state = CurrentState;
+                    ExitState(from_state, value);
+                    if (StateProvider != null)
+                        StateProvider.CurrentState = value;
+                    _CurrentState = value;
+                    EnterState(from_state, value);
 #if UNITY_EDITOR
                 }
                 else
+                {
+                    if (StateProvider != null)
+                        StateProvider.CurrentState = value;
                     _CurrentState = value;
+                }
 #endif
             }
         }
 
-        private void SetCurrentState(TStateEnum from_state, TStateEnum to_state)
+        private void ExitState(TStateEnum from_state, TStateEnum to_state)
         {
-            Debug.Assert(_CurrentState.Equals(from_state), "Transitioned from non-current state");
+            Debug.Assert(CurrentState.Equals(from_state), "Transitioned from non-current state");
             var destinations = Transitions[from_state];
             if (!destinations.Contains(to_state))
                 throw new InvalidOperationException(
                     "Cannot transition from state " + from_state + " to state " + to_state);
             OnBeforeStateChange();
             OnStateExit(from_state, to_state);
-            _CurrentState = to_state;
+        }
+
+        private void EnterState(TStateEnum from_state, TStateEnum to_state)
+        {
             OnStateEntry(from_state, to_state);
             OnAfterStateChange();
         }

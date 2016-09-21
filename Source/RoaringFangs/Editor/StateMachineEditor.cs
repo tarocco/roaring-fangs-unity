@@ -10,8 +10,9 @@ namespace RoaringFangs.FSM.Editor
     {
         public override void OnInspectorGUI()
         {
+            using(new EditorGUI.DisabledGroupScope(true))
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Script"));
             var state_machine = target as StateMachine<TStateEnum>;
-
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox, GUILayout.MinHeight(96f)))
             {
                 var style = new GUIStyle(UnityEngine.GUI.skin.label);
@@ -31,10 +32,9 @@ namespace RoaringFangs.FSM.Editor
                     state_machine.CurrentState = next_state;
                 }
             }
-            DrawPropertiesExcluding(serializedObject, "_CurrentState");
+            DrawPropertiesExcluding(serializedObject, "m_Script", "_CurrentState");
             EditorUtility.SetDirty(serializedObject.targetObject);
             serializedObject.ApplyModifiedProperties();
-            
         }
     }
 }
