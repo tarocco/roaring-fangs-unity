@@ -25,6 +25,7 @@ THE SOFTWARE.
 using System;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 
 namespace RoaringFangs.Animation.Editor
@@ -53,7 +54,10 @@ namespace RoaringFangs.Animation.Editor
                 Undo.RecordObjects(affected_game_objects, "Select Target Group");
                 self.Selected = selected;
                 foreach (var group_behavior in group_behaviors)
+                {
                     EditorUtility.SetDirty(group_behavior);
+                    EditorSceneManager.MarkSceneDirty(group_behavior.gameObject.scene);
+                }
                 return true;
             }
             return false;
@@ -70,6 +74,7 @@ namespace RoaringFangs.Animation.Editor
             if (DrawSelector(self, self.Controls.ToArray()))
             {
                 EditorUtility.SetDirty(self);
+                EditorSceneManager.MarkSceneDirty(self.gameObject.scene);
             }
             DrawPropertiesExcluding(serializedObject, properties_to_exclude);
         }
@@ -91,6 +96,7 @@ namespace RoaringFangs.Animation.Editor
             if (DrawSelector(self, self.Controls.ToArray()))
             {
                 EditorUtility.SetDirty(self);
+                EditorSceneManager.MarkSceneDirty(self.gameObject.scene);
             }
         }
     }
