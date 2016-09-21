@@ -32,11 +32,12 @@ namespace RoaringFangs.Animation.Editor
     [CustomEditor(typeof(MutexHelper))]
     public class MutexHelperEditor : UnityEditor.Editor
     {
-        protected static void DrawSelector(MutexHelper self, IActiveStateProperty[] groups)
+        protected static bool DrawSelector(MutexHelper self, IActiveStateProperty[] groups)
         {
-            var group_behaviours = groups
-                .Cast<MonoBehaviour>();
-            string[] group_names = group_behaviours
+            var group_behaviors = groups
+                .Cast<MonoBehaviour>()
+                .ToArray();
+            string[] group_names = group_behaviors
                 .Select(g => g.name).ToArray();
             int index_selected = Math.Max(0, Array.IndexOf(groups, self.Selected));
             index_selected = EditorGUILayout.Popup(index_selected, group_names);
@@ -47,11 +48,15 @@ namespace RoaringFangs.Animation.Editor
                 selected = null;
             if (self.Selected != selected)
             {
-                var affected_game_objects = group_behaviours
+                var affected_game_objects = group_behaviors
                     .Select(g => g.gameObject).ToArray();
                 Undo.RecordObjects(affected_game_objects, "Select Target Group");
                 self.Selected = selected;
+                foreach (var group_behavior in group_behaviors)
+                    EditorUtility.SetDirty(group_behavior);
+                return true;
             }
+            return false;
         }
 
         public override void OnInspectorGUI()
@@ -61,11 +66,12 @@ namespace RoaringFangs.Animation.Editor
 
         protected virtual void _OnInspectorGUI(params string[] properties_to_exclude)
         {
-            serializedObject.Update();
             MutexHelper self = (MutexHelper)target;
-            DrawSelector(self, self.Controls.ToArray());
+            if (DrawSelector(self, self.Controls.ToArray()))
+            {
+                EditorUtility.SetDirty(self);
+            }
             DrawPropertiesExcluding(serializedObject, properties_to_exclude);
-            serializedObject.ApplyModifiedProperties();
         }
     }
 
@@ -81,10 +87,11 @@ namespace RoaringFangs.Animation.Editor
     {
         public override void OnInspectorGUI()
         {
-            serializedObject.Update();
             MutexHelper self = (MutexHelper)target;
-            DrawSelector(self, self.Controls.ToArray());
-            serializedObject.ApplyModifiedProperties();
+            if (DrawSelector(self, self.Controls.ToArray()))
+            {
+                EditorUtility.SetDirty(self);
+            }
         }
     }
 }
