@@ -27,7 +27,6 @@ using RoaringFangs.Utility;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq;
 
 namespace RoaringFangs.SceneManagement
 {
@@ -55,7 +54,12 @@ namespace RoaringFangs.SceneManagement
 
         protected Stack<SceneHandlerGroupPair> SceneHandlerGroupPairs
         {
-            get { return _SceneHandlerGroupPairs; }
+            get
+            {
+                if (_SceneHandlerGroupPairs == null)
+                    _SceneHandlerGroupPairs = new Stack<SceneHandlerGroupPair>();
+                return _SceneHandlerGroupPairs;
+            }
             private set { _SceneHandlerGroupPairs = value; }
         }
 
@@ -109,11 +113,6 @@ namespace RoaringFangs.SceneManagement
             if (StateMachine == null)
                 throw new ArgumentNullException("Scene control state machine is missing");
             ConfigureForStateMachine(StateMachine);
-        }
-
-        private void Start()
-        {
-            SceneHandlerGroupPairs = new Stack<SceneHandlerGroupPair>();
         }
     }
 }

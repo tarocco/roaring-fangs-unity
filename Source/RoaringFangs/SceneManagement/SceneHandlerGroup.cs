@@ -81,23 +81,36 @@ namespace RoaringFangs.SceneManagement
         {
             var loaded_scene = args.LoadedScene;
             var loaded_scene_name = loaded_scene.name;
-            _LoadChecklist.Remove(loaded_scene_name);
+
+            var scene_handler = (SceneHandler)sender;
+            var scene_name = scene_handler.SceneName;
+
+            Debug.Assert(
+                loaded_scene_name == scene_name,
+                "Loaded scene name differs from expected scene name\n" +
+                "Loaded scene name: " + loaded_scene_name + "\n" +
+                "Expected scene name: " + scene_name);
+
+            _LoadChecklist.Remove(scene_name);
             if (_LoadChecklist.Count == 0)
                 OnLoadChecklistComplete();
-
-            var handler = (SceneHandler)sender;
-            handler.LoadComplete.RemoveListener(HandleLoadComplete);
         }
 
         private void HandleUnloadComplete(object sender, SceneUnloadCompleteEventArgs args)
         {
             var unloaded_scene_name = args.UnloadedSceneName;
-            _UnloadChecklist.Remove(unloaded_scene_name);
-            if (_LoadChecklist.Count == 0)
-                OnUnloadChecklistComplete();
 
-            var handler = (SceneHandler)sender;
-            handler.UnloadComplete.RemoveListener(HandleUnloadComplete);
+            var scene_handler = (SceneHandler)sender;
+            var scene_name = scene_handler.SceneName;
+
+            Debug.Assert(
+                unloaded_scene_name == scene_name,
+                "Unloaded scene name differs from expected scene name\n" +
+                "Unloaded scene name: " + unloaded_scene_name + "\n" +
+                "Expected scene name: " + scene_name);
+
+            if (_UnloadChecklist.Count == 0)
+                OnUnloadChecklistComplete();
         }
 
         protected virtual void OnLoadChecklistComplete()
