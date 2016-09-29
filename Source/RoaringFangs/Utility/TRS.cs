@@ -97,5 +97,10 @@ namespace RoaringFangs.Utility
         {
             return Matrix4x4.TRS(Position, Rotation, Scale);
         }
+
+        public override string ToString()
+        {
+            return string.Format("T{0} R{1} S{2}", Position, Rotation, Scale);
+        }
     }
 }
