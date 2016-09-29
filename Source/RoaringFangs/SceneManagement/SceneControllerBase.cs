@@ -26,6 +26,7 @@ using RoaringFangs.FSM;
 using RoaringFangs.Utility;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace RoaringFangs.SceneManagement
@@ -82,11 +83,12 @@ namespace RoaringFangs.SceneManagement
         {
             //if (isActiveAndEnabled)
             {
-                SceneHandlerGroupPairs.Push(new SceneHandlerGroupPair()
+                var pair = new SceneHandlerGroupPair()
                 {
                     LoadGroup = new SceneHandlerGroup(),
                     UnloadGroup = new SceneHandlerGroup(),
-                });
+                };
+                SceneHandlerGroupPairs.Push(pair);
             }
         }
 
@@ -98,6 +100,7 @@ namespace RoaringFangs.SceneManagement
                 pair.LoadGroup.StartLoadAsync(this);
                 pair.UnloadGroup.StartUnloadAsync(this);
             }
+            
         }
 
         protected virtual void ConfigureForStateMachine(TStateMachine state_machine)

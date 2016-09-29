@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using RoaringFangs.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,13 +78,14 @@ namespace RoaringFangs.SceneManagement
         protected List<SceneUnloadCompleteEventArgs> _UnloadCollectedEventArgs =
             new List<SceneUnloadCompleteEventArgs>();
 
-        private void HandleLoadComplete(object sender, SceneLoadCompleteEventArgs args)
+        private void HandleLoadCompleteOneShot(object sender, SceneLoadCompleteEventArgs args)
         {
+            var scene_handler = (SceneHandler)sender;
+            // HACK: remove this one-shot listener
+            scene_handler.LoadComplete.RemoveListener(HandleLoadCompleteOneShot);
+            var scene_name = scene_handler.SceneName;
             var loaded_scene = args.LoadedScene;
             var loaded_scene_name = loaded_scene.name;
-
-            var scene_handler = (SceneHandler)sender;
-            var scene_name = scene_handler.SceneName;
 
             Debug.Assert(
                 loaded_scene_name == scene_name,
@@ -96,13 +98,13 @@ namespace RoaringFangs.SceneManagement
                 OnLoadChecklistComplete();
         }
 
-        private void HandleUnloadComplete(object sender, SceneUnloadCompleteEventArgs args)
+        private void HandleUnloadCompleteOneShot(object sender, SceneUnloadCompleteEventArgs args)
         {
-            var unloaded_scene_name = args.UnloadedSceneName;
-
             var scene_handler = (SceneHandler)sender;
+            // HACK: remove this one-shot listener
+            scene_handler.LoadComplete.RemoveListener(HandleLoadCompleteOneShot);
             var scene_name = scene_handler.SceneName;
-
+            var unloaded_scene_name = args.UnloadedSceneName;
             Debug.Assert(
                 unloaded_scene_name == scene_name,
                 "Unloaded scene name differs from expected scene name\n" +
@@ -138,8 +140,11 @@ namespace RoaringFangs.SceneManagement
             _LoadCollectedEventArgs = new List<SceneLoadCompleteEventArgs>();
             foreach (var handler in SceneHandlers)
             {
-                handler.LoadComplete.AddListener(HandleLoadComplete);
+                // HACK: using rem/add listener method as a safeguard against adding listener multiple times
+                // TODO: better handling of this, somehow
+                handler.LoadComplete.RemAddListener(HandleLoadCompleteOneShot);
                 handler.StartLoadAsync(self);
+                //Debug.Log("Load " + handler.SceneName + "\nHandler " + handler.GetHashCode());
             }
         }
 
@@ -154,8 +159,11 @@ namespace RoaringFangs.SceneManagement
             _UnloadCollectedEventArgs = new List<SceneUnloadCompleteEventArgs>();
             foreach (var handler in SceneHandlers)
             {
-                handler.UnloadComplete.AddListener(HandleUnloadComplete);
+                // HACK: using rem/add listener method as a safeguard against adding listener multiple times
+                // TODO: better handling of this, somehow
+                handler.UnloadComplete.RemAddListener(HandleUnloadCompleteOneShot);
                 handler.StartUnloadAsync(self);
+                //Debug.Log("Unload " + handler.SceneName + "\nHandler " + handler.GetHashCode());
             }
         }
 
