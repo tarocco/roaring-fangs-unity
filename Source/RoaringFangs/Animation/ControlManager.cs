@@ -285,13 +285,13 @@ namespace RoaringFangs.Animation
             }
         }
 
-        private KeyValuePair<ITargetGroup, TargetRule[]>[] _GroupedTargets;
-        private KeyValuePair<ITargetGroup, TargetRule[]>[] GroupedTargets
+        private Dictionary<ITargetGroup, TargetRule[]> _GroupedTargets;
+        private Dictionary<ITargetGroup, TargetRule[]> GroupedTargets
         {
             get
             {
                 if (_GroupedTargets == null)
-                    _GroupedTargets = FindGroupedTargets();
+                    _GroupedTargets = GetAllGroupedTargets();
                 return _GroupedTargets;
             }
             set
@@ -305,22 +305,38 @@ namespace RoaringFangs.Animation
 
         #endregion Targets
 
-        private KeyValuePair<ITargetGroup, TargetRule[]>[] FindGroupedTargets()
+        private IEnumerable<ITargetGroup> GetAllTargetGroups()
         {
-            var groups = TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true).OfType<ITargetGroup>();
+            return TransformUtils.GetComponentsInDescendants<TargetGroupBase>(transform, true)
+                .OfType<ITargetGroup>();
+        }
 
+        private Dictionary<ITargetGroup, TargetRule[]> GetAllGroupedTargets()
+        {
+            var groups = GetAllTargetGroups();
             // For each groups array, select valid target lists in all of the target groups and create
             // rules on whether to show or hide the targets based on the control group's active state
             return groups
                 .Where(g => g.Targets != null)
-                    .Select(g => new KeyValuePair<ITargetGroup, TargetRule[]>(g, g.Targets
-                            .Select(t => new TargetRule(t.Transform, t.Depth)).ToArray()))
-                            .ToArray();
+                .ToDictionary(g => g, g => g.Targets
+                    .Select(t => new TargetRule(t.Transform, t.Depth)).ToArray());
+        }
+
+        public void OnUpdateGroupTargets(ITargetGroup group)
+        {
+            var matching = GroupedTargets.Where(t => t.Key == group);
+            foreach(var e in matching.ToArray())
+            {
+                var targets = e.Key.Targets ?? Enumerable.Empty<TransformUtils.ITransformD>();
+                var target_rules = e.Key.Targets
+                    .Select(t => new TargetRule(t.Transform, t.Depth)).ToArray();
+                GroupedTargets[e.Key] = target_rules;
+            }
         }
 
         private void OnEnable()
         {
-            GroupedTargets = FindGroupedTargets();
+            GroupedTargets = GetAllGroupedTargets();
 #if UNITY_EDITOR
             if (!EditorApplication.isPlayingOrWillChangePlaymode)
             {
@@ -375,7 +391,7 @@ namespace RoaringFangs.Animation
                         CachedSubjectDescendantsAndPaths = GetSubjectDescendants();
                         NotifyControlGroupsOfSubjectDescendants();
                         PathChangeHandledOnceThisUpdate = true;
-                        GroupedTargets = FindGroupedTargets();
+                        GroupedTargets = GetAllGroupedTargets();
                     }
                 }
             }
@@ -383,7 +399,7 @@ namespace RoaringFangs.Animation
 
 #endif
 
-        private void LateUpdate()
+        private void Update()
         {
 #if UNITY_EDITOR
             PathChangeHandledOnceThisUpdate = false;
@@ -392,43 +408,46 @@ namespace RoaringFangs.Animation
             {
                 // Get the group and targets from the grouping object
                 var group = grouped_target.Key;
+                // Skip if group is not valid
+                if (group.Equals(null))
+                    continue;
                 var targets = grouped_target.Value;
                 // Buffer the selection into an array
                 var targets_array = targets;
                 for(int i = 0; i < targets_array.Length; i++)
                 {
                     var target = targets_array[i];
-                    // If the target transform is valid (not deleted)
-                    if (target.Transform != null)
+                    // Skip if the target transform is not valid
+                    if (target.Transform == null)
+                        continue;
+                    // Skip if the target transform is this transform
+                    if (transform.IsChildOf(target.Transform))
+                        continue;
+
+                    bool target_active = target.Transform.gameObject.activeSelf;
+                    bool group_active = group.ActiveInHierarchy;
+                    bool active;
+
+                    switch (group.Mode)
                     {
-                        //var func = TargetGroupModeFunctor.GetModeFunction(group.Mode);
-                        // Active is set to mode function of current activeSelf and group active
-                        //bool active = func(target.Transform.gameObject.activeSelf, group.Active);
-
-                        bool active_self = target.Transform.gameObject.activeSelf;
-                        bool active_group = group.Active;
-                        bool active;
-
-                        switch (group.Mode)
-                        {
-                            default:
-                            case TargetGroupMode.Set:
-                                active = active_group;
-                                break;
-                            case TargetGroupMode.AND:
-                                active = active_self && active_group;
-                                break;
-                            case TargetGroupMode.OR:
-                                active = active_self || active_group;
-                                break;
-                            case TargetGroupMode.XOR:
-                                active = active_self ^ active_group;
-                                break;
-                        }
-
-                        target.Transform.gameObject.SetActive(active);
+                        default:
+                        case TargetGroupMode.Set:
+                            active = group_active;
+                            break;
+                        case TargetGroupMode.AND:
+                            active = target_active && group_active;
+                            break;
+                        case TargetGroupMode.OR:
+                            active = target_active || group_active;
+                            break;
+                        case TargetGroupMode.XOR:
+                            active = target_active ^ group_active;
+                            break;
                     }
+
+                    target.Transform.gameObject.SetActive(active);
                 }
+                
             }
         }
 

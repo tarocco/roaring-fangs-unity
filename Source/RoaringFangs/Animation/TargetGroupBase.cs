@@ -41,10 +41,19 @@ namespace RoaringFangs.Animation
 #endif
     public abstract class TargetGroupBase : MonoBehaviour
     {
-        public virtual bool Active
+        public bool ActiveSelf
         {
-            get { return enabled && gameObject.activeInHierarchy; }
-            set { enabled = value; }
+            get { return gameObject.activeSelf; }
+        }
+
+        public bool ActiveInHierarchy
+        {
+            get { return gameObject.activeInHierarchy; }
+        }
+
+        public void SetActive(bool active)
+        {
+            gameObject.SetActive(active);
         }
 
         public string Name

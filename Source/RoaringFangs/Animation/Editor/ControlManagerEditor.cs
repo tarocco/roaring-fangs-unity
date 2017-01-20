@@ -185,7 +185,7 @@ namespace RoaringFangs.Animation.Editor
                 bool gui_previously_enabled = UnityEngine.GUI.enabled;
                 UnityEngine.GUI.enabled &= enable_toggles;
                 if (current_target_group != null)
-                    current_target_group.Active = EditorGUILayout.Toggle(current_target_group.Active, GUILayout.Width(single_line_height));
+                    current_target_group.SetActive(EditorGUILayout.Toggle(current_target_group.ActiveSelf, GUILayout.Width(single_line_height)));
                 else
                     current_game_object.SetActive(EditorGUILayout.Toggle(current_game_object.activeSelf, GUILayout.Width(single_line_height)));
                 UnityEngine.GUI.enabled = gui_previously_enabled;
