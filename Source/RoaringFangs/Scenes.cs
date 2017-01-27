@@ -29,11 +29,12 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using RoaringFangs.SceneManagement;
+using UnityEngine.Events;
 
 namespace RoaringFangs
 {
     /// <summary>
-    /// Use this as a COMPLETE replacement for <see cref="UnityEngine.Scenemanagement.SceneManager"/>
+    /// Use this as a COMPLETE replacement for <see cref="SceneManager"/>
     /// </summary>
     public static class Scenes
     {
@@ -225,6 +226,57 @@ namespace RoaringFangs
         public static void StartUnloadAsync(MonoBehaviour self, string scene_name, SceneUnloadCompleteHandler callback)
         {
             self.StartCoroutine(UnloadAsync(self, scene_name, callback).GetEnumerator());
+        }
+
+        public static IEnumerable LoadTogether(ICollection<string> scene_names)
+        {
+            List<string> scene_names_remaining = new List<string>(scene_names);
+            // Create a handler to remove the scene name from the list after it has been loaded
+            UnityAction<Scene, LoadSceneMode> load_scene_handler = null;
+            load_scene_handler = (scene, mode) =>
+            {
+                if (scene_names_remaining.Remove(scene.name))
+                    return;
+                Debug.LogWarning("Loaded scene name not found in scene name list\nUnexpected scene: \"" + scene.name + "\"");
+            };
+            // Subscribe the handler to the loaded event
+            SceneManager.sceneLoaded += load_scene_handler;
+            // Asynchronously load the scenes
+            foreach (string scene_name in scene_names)
+            {
+                Debug.Log("Async loading scene \"" + scene_name + "\"");
+                SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
+            }
+            // Wait for all of the scenes in the list to be loaded
+            while (scene_names_remaining.Count > 0)
+                yield return new WaitForEndOfFrame();
+            // Unsubscribe the handler from the loaded event
+            SceneManager.sceneLoaded -= load_scene_handler;
+        }
+
+        public static IEnumerable UnloadTogether(ICollection<string> scene_names)
+        {
+            List<string> scene_names_remaining = new List<string>(scene_names);
+            // Create a handler to remove the scene name from the list after it has been unloaded
+            UnityAction<Scene> unload_scene_handler = (scene) =>
+            {
+                if (scene_names_remaining.Remove(scene.name))
+                    return;
+                Debug.LogWarning("Unloaded scene name not found in scene name list\nUnexpected scene: \"" + scene.name + "\"");
+            };
+            // Subscribe the handler to the unloaded event
+            SceneManager.sceneUnloaded += unload_scene_handler;
+            // Asynchronously unload the handlers
+            foreach (string scene_name in scene_names)
+            {
+                SceneManager.UnloadSceneAsync(scene_name);
+                Debug.Log("Async unloading scene \"" + scene_name + "\"");
+            }
+            // Wait for all of the scenes in the list to be unloaded
+            while (scene_names_remaining.Count > 0)
+                yield return new WaitForEndOfFrame();
+            // Unsubscribe the handler from the unloaded event
+            SceneManager.sceneUnloaded -= unload_scene_handler;
         }
     }
 }
