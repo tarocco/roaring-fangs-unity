@@ -30,7 +30,7 @@ using UnityEngine;
 
 namespace RoaringFangs.Utility
 {
-    public class TransformUtils
+    public static class TransformUtils
     {
         #region Delegates
 
@@ -460,7 +460,6 @@ namespace RoaringFangs.Utility
                 return FindGameObject(t, name);
             return null;
         }
-
         #endregion Static Methods
     }
 }

@@ -30,7 +30,9 @@ namespace RoaringFangs.Attributes
         public AutoMinMaxAttribute(float min, float max) :
         base()
         {
+#if UNITY_EDITOR
             DrawPropertyField = MinMaxField(min, max);
+#endif
         }
     }
 }

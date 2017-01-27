@@ -86,7 +86,7 @@ namespace RoaringFangs.FSM
                 .Select(
                     e => new StateInfoEntry(
                         e.Key.ToString(),
-                        e.Value ?? default(StateInfo)))
+                        e.Value))
                 .ToList();
             _TransitionsList = Transitions
                 .SelectMany(

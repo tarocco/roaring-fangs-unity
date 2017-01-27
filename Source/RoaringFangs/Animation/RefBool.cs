@@ -24,7 +24,13 @@ THE SOFTWARE.
 
 using RoaringFangs.Attributes;
 using System;
+
+#if UNITY_EDITOR
+
 using UnityEditor;
+
+#endif
+
 using UnityEngine;
 
 namespace RoaringFangs.Animation

@@ -30,25 +30,33 @@ namespace RoaringFangs.Attributes
         public AutoRangeAttribute(float min, float max) :
         base()
         {
+#if UNITY_EDITOR
             DrawPropertyField = RangeField(min, max);
+#endif
         }
 
         public AutoRangeAttribute(string min_prop_name, float max) :
         base()
         {
+#if UNITY_EDITOR
             DrawPropertyField = RangeField(min_prop_name, max);
+#endif
         }
 
         public AutoRangeAttribute(float min, string max_prop_name) :
         base()
         {
+#if UNITY_EDITOR
             DrawPropertyField = RangeField(min, max_prop_name);
+#endif
         }
 
         public AutoRangeAttribute(string min_prop_name, string max_prop_name) :
         base()
         {
+#if UNITY_EDITOR
             DrawPropertyField = RangeField(min_prop_name, max_prop_name);
+#endif
         }
     }
 }

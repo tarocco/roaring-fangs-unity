@@ -1,7 +1,9 @@
 ﻿using RoaringFangs.Attributes;
 using System;
 using System.Linq;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
 
 namespace RoaringFangs.Utility

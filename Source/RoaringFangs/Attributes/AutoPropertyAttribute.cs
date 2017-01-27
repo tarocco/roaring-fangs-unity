@@ -63,6 +63,8 @@ namespace RoaringFangs.Attributes
 
         #endregion Types and Delegates
 
+#endif
+
         #region Instance Fields/Properties
 
         private bool _Delayed;
@@ -94,6 +96,7 @@ namespace RoaringFangs.Attributes
         }
 
         private string _PropertyName;
+
         public string PropertyName
         {
             get { return _PropertyName; }
@@ -101,6 +104,7 @@ namespace RoaringFangs.Attributes
         }
 
         private PropertyInfo _PropertyInfo;
+
         /// <summary>
         /// PropertyInfo for property associated with the field with this drawer's AutoPropertyAttribute
         /// </summary>
@@ -114,6 +118,7 @@ namespace RoaringFangs.Attributes
             }
         }
 
+#if UNITY_EDITOR
         private PropertyFieldHandler _DrawPropertyField = null;
 
         /// <summary>
@@ -125,14 +130,22 @@ namespace RoaringFangs.Attributes
             protected set { _DrawPropertyField = value; }
         }
 
+#endif
+
         #endregion Instance Fields/Properties
 
-        #region Static Fields/Properties
+        #region Static Fields/Properties (Shared)
 
         /// <summary>
         /// Characters to trim from field names when searching for corresponding properties
         /// </summary>
         private static readonly char[] _AutoPropertyTrimChars = { '_' };
+
+        #endregion Static Fields/Properties (Shared)
+
+#if UNITY_EDITOR
+
+        #region Static Fields/Properties
 
         private static Dictionary<PropertyInfoBindingKey, PropertyInfoBindingValue> CachedAutoPropertyBindings =
             new Dictionary<PropertyInfoBindingKey, PropertyInfoBindingValue>();
@@ -218,8 +231,10 @@ namespace RoaringFangs.Attributes
             {
                 private static System.Text.RegularExpressions.Regex FieldRegex =
                     new System.Text.RegularExpressions.Regex("([^\\[]+)(?:\\[(\\d+)\\])?");
+
                 public string FieldName;
                 public int? ArrayIndex;
+
                 public Element(string field_element)
                 {
                     var field_match = FieldRegex.Match(field_element);
@@ -264,16 +279,14 @@ namespace RoaringFangs.Attributes
                     }
                     throw new Exception("Could not get field value.");
                 }
-
-
             }
+
             public static IEnumerable<Element> Parse(string property_path)
             {
                 property_path = property_path.Replace(".Array.data[", "[");
                 return property_path.Split('.').Select(e => new Element(e));
             }
         }
-
 
         private static object GetPropertyDeclaringObjectAtPath(object target, string property_path)
         {
@@ -421,7 +434,6 @@ namespace RoaringFangs.Attributes
 
         public static PropertyFieldHandler RangeField(string min_prop_name, float max)
         {
-
             return (a, b, c) => RangeField(a, b, c,
                 float.NegativeInfinity, max, min_prop_name, null);
         }
