@@ -26,12 +26,31 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
 namespace RoaringFangs.ASM
 {
     public class SceneEventHandler : MonoBehaviour, IStateHandler, ISerializationCallbackReceiver
     {
+        #region Event Classes
+
+        public class LoadCompletedEventArgs : EventArgs
+        {
+        }
+
+        [Serializable]
+        public class LoadCompletedEvent : UnityEvent<object, LoadCompletedEventArgs> { }
+
+        public class UnloadCompletedEventArgs : EventArgs
+        {
+        }
+
+        [Serializable]
+        public class UnloadCompletedEvent : UnityEvent<object, UnloadCompletedEventArgs> { }
+
+        #endregion Event Classes
+
         [SerializeField]
         private string _Name;
 
@@ -82,6 +101,8 @@ namespace RoaringFangs.ASM
         public List<string> FirstScenesExitUnload;
         public List<string> SecondScenesExitUnload;
 
+        public List<GameObject> ConfigurationObjects;
+
         private IEnumerable OnStateEnterCoroutine()
         {
             foreach (object o in Scenes.LoadTogether(FirstScenesEntryLoad))
@@ -103,6 +124,8 @@ namespace RoaringFangs.ASM
                         "Specified active scene is valid but not loaded\nScene name:\"" + ActiveSceneName + "\"");
                 SceneManager.SetActiveScene(active_scene);
             }
+            foreach (var config_object in ConfigurationObjects)
+                Instantiate(config_object);
         }
 
         private IEnumerable OnStateExitCoroutine()

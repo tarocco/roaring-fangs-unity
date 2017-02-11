@@ -25,12 +25,35 @@ THE SOFTWARE.
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Experimental.Director;
 
 namespace RoaringFangs.ASM
 {
     public class ControlledStateManager : MonoBehaviour, ISerializationCallbackReceiver
     {
+        private IAnimatorControllerPlayable _Animator;
+
+        public IAnimatorControllerPlayable Animator
+        {
+            get
+            {
+                if (_Animator == null)
+                    _Animator = GetComponent<IAnimatorControllerPlayable>();
+                return _Animator;
+            }
+            set { _Animator = value; }
+        }
+
         [SerializeField]
+        private Transform _ConfigurationObjectCache;
+
+        public Transform ConfigurationObjectCache
+        {
+            get { return _ConfigurationObjectCache; }
+            private set { _ConfigurationObjectCache = value; }
+        }
+
+        [SerializeField, HideInInspector]
         private List<MonoBehaviour> _StateHandlers;
 
         public ILookup<int, IStateHandler> StateHandlersNameHashLookup { get; private set; }
@@ -117,6 +140,35 @@ namespace RoaringFangs.ASM
             foreach (var state_handler in state_handlers)
                 state_handler.OnStateExit(args.Animator, args.AnimatorStateInfo, args.LayerIndex);
             Exit.Invoke(this, args);
+        }
+
+        public void SetAnimatorTrigger(string name)
+        {
+            Animator.SetTrigger(name);
+        }
+
+        public void SetAnimatorTrigger(int id)
+        {
+            Animator.SetTrigger(id);
+        }
+
+        public void ResetAnimatorTrigger(string name)
+        {
+            Animator.ResetTrigger(name);
+        }
+
+        public void ResetAnimatorTrigger(int id)
+        {
+            Animator.ResetTrigger(id);
+        }
+
+        public void Start()
+        {
+            var animator = GetComponent<Animator>();
+            var state_controllers = animator.GetBehaviours<StateMachineBehaviour>()
+                .OfType<IStateController>();
+            foreach(var state_controller in state_controllers)
+                state_controller.Initialize(this);
         }
     }
 }

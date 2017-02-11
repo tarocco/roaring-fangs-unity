@@ -32,11 +32,10 @@ using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-    [DisallowMultipleComponent]
 #if LIGHTSTRIKE_ADVANCED_INSPECTOR
-    public class StateController : AIStateMachineBehaviour, IStateMachineBehavior
+    public class StateController : AIStateMachineBehaviour, IStateController
 #else
-    public class AggregatedStateMachineBehavior : StateMachineBehaviour, IStateMachineBehavior
+    public class StateController : StateMachineBehaviour, IStateController
 #endif
     {
         private ControlledStateManager _CachedControlledStateManager;
@@ -87,6 +86,11 @@ namespace RoaringFangs.ASM
                 CachedControlledStateManager = state_machine;
                 state_machine.OnStateBehaviorExit(args);
             }
+        }
+
+        public void Initialize(ControlledStateManager manager)
+        {
+            // Nothing yet!
         }
     }
 }

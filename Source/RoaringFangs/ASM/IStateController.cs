@@ -22,54 +22,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
-using RoaringFangs.Attributes;
 using UnityEngine;
 
-namespace RoaringFangs.Animation
+namespace RoaringFangs.ASM
 {
-    [ExecuteInEditMode]
-    public class RefActive : RefBoolBehaviorBase, IActiveStateProperty
+    public interface IStateController : IStateMachineBehavior
     {
-        [SerializeField, AutoProperty("Target")]
-        private GameObject _TargetBehavior;
-
-        public GameObject Target
-        {
-            get { return _TargetBehavior; }
-            set { _TargetBehavior = value; }
-        }
-
-        public bool Active
-        {
-            get
-            {
-                if (Value.HasValue)
-                    return Value.Value;
-                return Target.activeSelf;
-            }
-
-            set
-            {
-                Value = value;
-                Target.SetActive(value);
-            }
-        }
-
-        private void LateUpdate()
-        {
-            if (Target != null)
-            {
-                if (!Value.HasValue)
-                    Value = Target.activeSelf;
-                Target.SetActive(Value.Value);
-            }
-        }
-
-        [ContextMenu("Configure")]
-        public void Configure()
-        {
-            Target = Target ?? gameObject;
-        }
+        void Initialize(ControlledStateManager manager);
     }
 }

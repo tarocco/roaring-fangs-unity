@@ -28,10 +28,23 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+#if LIGHTSTRIKE_ADVANCED_INSPECTOR
+
+using AdvancedInspector;
+
+#endif
+
 namespace RoaringFangs.ASM
 {
-    public class SceneStateController : StateController
+#if LIGHTSTRIKE_ADVANCED_INSPECTOR
+
+    public class SceneState : AIStateMachineBehaviour, IStateController
+#else
+    public class SceneState : StateMachineBehaviour, IStateController
+#endif
     {
+        protected ControlledStateManager Manager { get; set; }
+
         public string ActiveSceneName;
 
         public List<string> FirstScenesEntryLoad;
@@ -39,6 +52,8 @@ namespace RoaringFangs.ASM
 
         public List<string> FirstScenesExitUnload;
         public List<string> SecondScenesExitUnload;
+
+        public List<GameObject> ConfigurationObjects;
 
         private IEnumerable OnStateEnterCoroutine()
         {
@@ -54,13 +69,13 @@ namespace RoaringFangs.ASM
             {
                 Scene active_scene = SceneManager.GetSceneByName(ActiveSceneName);
                 if (!active_scene.IsValid())
-                    throw new InvalidOperationException("Specified active scene is invalid\nScene name: \"" +
-                                                        ActiveSceneName + "\"");
+                    throw new InvalidOperationException("Specified active scene is invalid\nScene name: \"" + ActiveSceneName + "\"");
                 if (!active_scene.isLoaded)
-                    throw new InvalidOperationException(
-                        "Specified active scene is valid but not loaded\nScene name:\"" + ActiveSceneName + "\"");
+                    Debug.LogWarning("Specified active scene is valid but not yet loaded\nScene name:\"" + ActiveSceneName + "\"");
                 SceneManager.SetActiveScene(active_scene);
             }
+            foreach (var config_object in ConfigurationObjects)
+                Instantiate(config_object);
         }
 
         private IEnumerable OnStateExitCoroutine()
@@ -71,20 +86,29 @@ namespace RoaringFangs.ASM
                 yield return o;
         }
 
-        // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
         public override void OnStateEnter(Animator animator, AnimatorStateInfo state_info, int layer_index)
         {
-            base.OnStateEnter(animator, state_info, layer_index);
-            if (CachedControlledStateManager != null)
-                CachedControlledStateManager.StartCoroutine(OnStateEnterCoroutine().GetEnumerator());
+            Manager.StartCoroutine(OnStateEnterCoroutine().GetEnumerator());
         }
 
-        // OnStateExit is called when a transition ends and the state machine finishes evaluating this state
         public override void OnStateExit(Animator animator, AnimatorStateInfo state_info, int layer_index)
         {
-            base.OnStateExit(animator, state_info, layer_index);
-            if (CachedControlledStateManager != null)
-                CachedControlledStateManager.StartCoroutine(OnStateExitCoroutine().GetEnumerator());
+            Manager.StartCoroutine(OnStateExitCoroutine().GetEnumerator());
+        }
+
+        public void Initialize(ControlledStateManager manager)
+        {
+            // Assign the manager object
+            Manager = manager;
+            // Replace configuration objects with instances (don't work directly on prefabs!)
+            var instances = new List<GameObject>();
+            foreach (var configuration_object in ConfigurationObjects)
+            {
+                var instance = Instantiate(configuration_object, manager.ConfigurationObjectCache);
+                instance.name = configuration_object.name; // Remove "(Clone)" suffix
+                instances.Add(instance);
+            }
+            ConfigurationObjects = instances;
         }
     }
 }
