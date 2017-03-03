@@ -11,7 +11,7 @@ namespace RoaringFangs.Visuals
     [ExecuteInEditMode]
     public class CurvySplineBlendTree : MonoBehaviour, ICurvySpline
     {
-        [SerializeField, AutoProperty("Splines")]
+        [SerializeField, AutoProperty]
         private List<MonoBehaviour> _SplineBehaviors;
 
         public List<ICurvySpline> Splines
@@ -45,7 +45,8 @@ namespace RoaringFangs.Visuals
             }
         }
 
-        [SerializeField, AutoRange(0f, "InterpolantMax")]
+        // FIXME: implement improved RangeAttribute with upper limit property InterpolantMax
+        [SerializeField, AutoProperty]
         private float _Interpolant;
 
         public float Interpolant
@@ -250,7 +251,7 @@ namespace RoaringFangs.Visuals
         }
 
 #if UNITY_EDITOR
-        [SerializeField, AutoRange(1f, 64f)]
+        [SerializeField, Range(1f, 64f)]
         private int _PreviewSegments = 24;
 
         public int PreviewSegments

@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using RoaringFangs.Adapters.FluffyUnderware.Curvy;
 using RoaringFangs.Utility;
+using RoaringFangs.Editor;
 
 #if FLUFFYUNDERWARE_CURVY
 #else
@@ -17,17 +18,23 @@ using RoaringFangs.Attributes;
 namespace RoaringFangs.Visuals
 {
     [ExecuteInEditMode]
-    public class CurvySplineMeshDeformer : MonoBehaviour
+    public class CurvySplineMeshDeformer : MonoBehaviour, ISerializationCallbackReceiver
     {
         #region Properties
 
-        [SerializeField]
+        [SerializeField, AutoProperty]
         private Renderer _Renderer;
 
         public Renderer Renderer
         {
             get { return _Renderer; }
-            set { _Renderer = value; }
+            set
+            {
+                if (value == null)
+                    _Renderer = GetComponent<Renderer>();
+                else
+                    _Renderer = value;
+            }
         }
 
         [SerializeField, AutoProperty]
@@ -42,7 +49,10 @@ namespace RoaringFangs.Visuals
             set
             {
                 _ReferenceMaterials = value;
-                Materials = value;
+                var instanced_materials = value
+                    .Select(m => m != null ? new Material(m) : null)
+                    .ToArray();
+                Renderer.sharedMaterials = instanced_materials;
             }
         }
 
@@ -50,26 +60,7 @@ namespace RoaringFangs.Visuals
         {
             get
             {
-                if (_MaterialsDirty)
-                {
-                    Materials = ReferenceMaterials;
-                    _MaterialsDirty = false;
-                }
                 return Renderer.sharedMaterials;
-            }
-            private set
-            {
-                if (Application.isPlaying)
-                {
-                    var instanced_materials = value
-                        .Select(m => m != null ? new Material(m) : null)
-                        .ToArray();
-                    Renderer.sharedMaterials = instanced_materials;
-                }
-                else
-                {
-                    Renderer.sharedMaterials = value;
-                }
             }
         }
 
@@ -81,9 +72,9 @@ namespace RoaringFangs.Visuals
             get { return _Color; }
             set
             {
-                foreach (var material in Materials)
-                    material.color = value;
                 _Color = value;
+                foreach (var material in Materials.Where(m => m != null))
+                    material.color = value;
             }
         }
 
@@ -255,7 +246,7 @@ namespace RoaringFangs.Visuals
             }
         }
 
-        [SerializeField, AutoMinMax(0f, 1f)]
+        [SerializeField, MinMax(0f, 1f), AutoProperty]
         private Vector2 _StraightenEnds = new Vector2(0f, 1f);
 
         public Vector2 StraightenEnds
@@ -289,6 +280,12 @@ namespace RoaringFangs.Visuals
 
         private void Start()
         {
+            // Necessary
+            TargetPathSpline.Refresh();
+            // Lazy initialization for properties that need it
+            ReferenceMaterials = ReferenceMaterials; // Instantiates materials
+            Color = Color; // Applies colors to material instances
+            SegmentLength = SegmentLength; // Affects material instance stretch parameters
         }
 
         private int _SplinePointsChecksum;
@@ -303,11 +300,6 @@ namespace RoaringFangs.Visuals
                     UpdateMeshWeights(true, true, _WeightsDirty);
                     _SplinePointsChecksum = spline_points_checksum;
                 }
-            }
-            if (_MaterialsDirty)
-            {
-                Materials = ReferenceMaterials;
-                _MaterialsDirty = false;
             }
         }
 
@@ -408,6 +400,15 @@ namespace RoaringFangs.Visuals
                 }
                 _WeightsDirty = false;
             }
+        }
+
+        public void OnBeforeSerialize()
+        {
+            EditorUtilities.OnBeforeSerializeAutoProperties(this);
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }
