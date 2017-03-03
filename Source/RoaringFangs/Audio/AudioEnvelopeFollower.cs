@@ -19,12 +19,13 @@ THE SOFTWARE.
 */
 
 using RoaringFangs.Attributes;
+using RoaringFangs.Editor;
 using System.Linq;
 using UnityEngine;
 
 namespace RoaringFangs.Audio
 {
-    public class AudioEnvelopeFollower : MonoBehaviour
+    public class AudioEnvelopeFollower : MonoBehaviour, ISerializationCallbackReceiver
     {
         #region Types
 
@@ -60,7 +61,8 @@ namespace RoaringFangs.Audio
         }
 
         [SerializeField]
-        [AutoProperty(Delayed = true)]
+        [Delayed]
+        [AutoProperty]
         private int _ChannelNumber = 0;
 
         public int ChannelNumber
@@ -124,7 +126,8 @@ namespace RoaringFangs.Audio
         }
 
         [SerializeField]
-        [AutoProperty(Delayed = true)]
+        [Delayed]
+        [AutoProperty]
         private int _BufferStride = 24;
 
         public int BufferStride
@@ -134,7 +137,8 @@ namespace RoaringFangs.Audio
         }
 
         [SerializeField]
-        [AutoProperty(Delayed = true)]
+        [Delayed]
+        [AutoProperty]
         private int _IncrementalBufferSize = 1024;
 
         public int IncrementalBufferSize
@@ -144,7 +148,8 @@ namespace RoaringFangs.Audio
         }
 
         [SerializeField]
-        [AutoProperty(Delayed = true)]
+        [Delayed]
+        [AutoProperty]
         private int _ChannelBufferSize = 1024;
 
         public int ChannelBufferSize
@@ -401,6 +406,15 @@ namespace RoaringFangs.Audio
             int buffer_read_start_index;
             Buffer(out buffer_read_start_index);
             Level = OutputGain * GetRawLevel(buffer_read_start_index);
+        }
+
+        public void OnBeforeSerialize()
+        {
+            EditorUtilities.OnBeforeSerializeAutoProperties(this);
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
 
         #endregion Methods
