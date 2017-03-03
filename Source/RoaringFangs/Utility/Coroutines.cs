@@ -23,6 +23,7 @@ THE SOFTWARE.
 */
 
 using UnityEngine;
+using System;
 
 #if UNITY_EDITOR
 
@@ -68,6 +69,31 @@ namespace RoaringFangs.Utility
 #else
             return target.StartCoroutine(work);
 #endif
+        }
+
+        /// <summary>
+        /// Wraps each enumerator step of <paramref name="coroutine"/> in a try-catch statement.
+        /// If the enumerator throws an exception, the exception message is logged
+        /// as an error and the coroutine is aborted.
+        /// </summary>
+        /// <param name="coroutine">The coroutine enumerator to wrap.</param>
+        /// <returns>The wrapped coroutine.</returns>
+        public static IEnumerator GetSafeCoroutine(this IEnumerator coroutine)
+        {
+            for (;;)
+            {
+                try
+                {
+                    if (!coroutine.MoveNext() || coroutine.Current == null)
+                        break;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError(ex);
+                    break;
+                }
+                yield return coroutine.Current;
+            }
         }
     }
 }
