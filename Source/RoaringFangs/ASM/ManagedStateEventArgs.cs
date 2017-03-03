@@ -26,12 +26,35 @@ using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-    public interface IStateMachineBehavior
+    public class ManagedStateEventArgs : StateControllerEventArgsBase
     {
-        void OnStateEnter(Animator animator, AnimatorStateInfo state_info, int layer_index);
+        //public readonly ControlledStateManager Manager;
+        /// <summary>
+        ///  Having this in here is just breaking the rules all over the place BUT ALRIGHT
+        /// </summary>
+        public readonly IStateController StateController;
 
-        void OnStateUpdate(Animator animator, AnimatorStateInfo state_info, int layer_index);
+        public readonly object UserData;
 
-        void OnStateExit(Animator animator, AnimatorStateInfo state_info, int layer_index);
+        public ManagedStateEventArgs(
+            //ControlledStateManager manager,
+            IStateController state_controller,
+            Animator animator,
+            AnimatorStateInfo animator_state_info,
+            int layer_index) :
+            base(animator, animator_state_info, layer_index)
+        {
+            //Manager = manager;
+            StateController = state_controller;
+        }
+
+        public ManagedStateEventArgs(ManagedStateEventArgs args, object replacement_user_data) :
+            this(
+                args.StateController,
+                args.Animator,
+                args.AnimatorStateInfo,
+                args.LayerIndex)
+        {
+        }
     }
 }

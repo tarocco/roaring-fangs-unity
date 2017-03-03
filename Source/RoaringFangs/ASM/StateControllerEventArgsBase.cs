@@ -22,10 +22,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
+using UnityEngine;
+
 namespace RoaringFangs.ASM
 {
-    public interface IStateHandler : IManagedStateMachineBehavior, INameHash, ITagHash
+    public abstract class StateControllerEventArgsBase : EventArgs
     {
-        new string Tag { get; set; } // Resolve ambiguity
+        public readonly Animator Animator;
+        public readonly AnimatorStateInfo AnimatorStateInfo;
+        public readonly int LayerIndex;
+
+        public StateControllerEventArgsBase(
+            Animator animator,
+            AnimatorStateInfo animator_state_info,
+            int layer_index)
+        {
+            Animator = animator;
+            AnimatorStateInfo = animator_state_info;
+            LayerIndex = layer_index;
+        }
     }
 }

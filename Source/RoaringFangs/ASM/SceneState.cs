@@ -27,6 +27,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Experimental.Director;
+using System.Linq;
 
 #if LIGHTSTRIKE_ADVANCED_INSPECTOR
 
@@ -38,12 +40,18 @@ namespace RoaringFangs.ASM
 {
 #if LIGHTSTRIKE_ADVANCED_INSPECTOR
 
-    public class SceneState : AIStateMachineBehaviour, IStateController
+    public class SceneState : StateController
 #else
-    public class SceneState : StateMachineBehaviour, IStateController
+    public class SceneState : StateController
 #endif
     {
-        protected ControlledStateManager Manager { get; set; }
+        [SerializeField]
+        private string _Tag;
+        public override string Tag
+        {
+            get { return _Tag; }
+            set { _Tag = value; }
+        }
 
         public string ActiveSceneName;
 
@@ -55,7 +63,7 @@ namespace RoaringFangs.ASM
 
         public List<GameObject> ConfigurationObjects;
 
-        private IEnumerable OnStateEnterCoroutine()
+        private IEnumerable OnStateEnterCoroutine(IEnumerable<string> scene_names)
         {
             foreach (object o in Scenes.LoadTogether(FirstScenesEntryLoad))
                 yield return o;
@@ -69,37 +77,79 @@ namespace RoaringFangs.ASM
             {
                 Scene active_scene = SceneManager.GetSceneByName(ActiveSceneName);
                 if (!active_scene.IsValid())
-                    throw new InvalidOperationException("Specified active scene is invalid\nScene name: \"" + ActiveSceneName + "\"");
-                if (!active_scene.isLoaded)
+                    Debug.LogWarning("Specified active scene is invalid\nScene name: \"" + ActiveSceneName + "\"");
+                else if (!active_scene.isLoaded)
                     Debug.LogWarning("Specified active scene is valid but not yet loaded\nScene name:\"" + ActiveSceneName + "\"");
-                SceneManager.SetActiveScene(active_scene);
+                else
+                    SceneManager.SetActiveScene(active_scene);
             }
             foreach (var config_object in ConfigurationObjects)
                 Instantiate(config_object);
         }
 
-        private IEnumerable OnStateExitCoroutine()
+        private IEnumerable OnStateExitCoroutine(IEnumerable<string> scene_names)
         {
-            foreach (object o in Scenes.UnloadTogether(FirstScenesExitUnload))
-                yield return o;
-            foreach (object o in Scenes.UnloadTogether(SecondScenesExitUnload))
+            foreach (object o in Scenes.UnloadTogether(scene_names))
                 yield return o;
         }
 
-        public override void OnStateEnter(Animator animator, AnimatorStateInfo state_info, int layer_index)
+        public override void OnManagedStateVerifyEnter(
+            ControlledStateManager manager,
+            ManagedStateEventArgs args)
         {
-            Manager.StartCoroutine(OnStateEnterCoroutine().GetEnumerator());
+            var scene_names_to_load = FirstScenesEntryLoad
+                .Concat(SecondScenesEntryLoad)
+                .ToArray();
+            foreach (var scene_name in scene_names_to_load)
+            {
+                // Verify that the scenes to be loaded are valid before enqueing the loader coroutine
+                if (!Application.CanStreamedLevelBeLoaded(scene_name))
+                    throw new ArgumentException("Scene cannot not be loaded: \"" + scene_name + "\"");
+                // Verify that none of the scenes to be loaded are already loaded
+                // This limitation is caused by SceneManager.SetActiveScene being really BAD
+                var scene = SceneManager.GetSceneByName(scene_name);
+                if (scene.isLoaded)
+                    throw new InvalidOperationException("Scene cannot be loaded more than once: \"" + scene_name + "\"");
+            }
         }
 
-        public override void OnStateExit(Animator animator, AnimatorStateInfo state_info, int layer_index)
+        public override void OnManagedStateEnter(
+            ControlledStateManager manager,
+            ManagedStateEventArgs args)
         {
-            Manager.StartCoroutine(OnStateExitCoroutine().GetEnumerator());
+            var scene_names_to_load = FirstScenesEntryLoad
+                .Concat(SecondScenesEntryLoad)
+                .ToArray();
+            //manager.EnqueueDeferredCoroutine(OnStateEnterCoroutine(scene_names_to_load).GetEnumerator());
+            manager.EnqueueCoroutine(OnStateEnterCoroutine(scene_names_to_load).GetEnumerator());
         }
 
-        public void Initialize(ControlledStateManager manager)
+        public override void OnManagedStateVerifyExit(
+            ControlledStateManager manager,
+            ManagedStateEventArgs args)
         {
-            // Assign the manager object
-            Manager = manager;
+            var scene_names_to_unload = FirstScenesExitUnload
+                .Concat(SecondScenesExitUnload)
+                .ToArray();
+            // Verify that the scenes to be unloaded are valid before enqueing the unloader coroutine
+            foreach (var scene_name in scene_names_to_unload)
+                if (!Application.CanStreamedLevelBeLoaded(scene_name))
+                    throw new ArgumentException("Scene cannot not be unloaded: \"" + scene_name + "\"");
+        }
+
+        public override void OnManagedStateExit(
+            ControlledStateManager manager,
+            ManagedStateEventArgs args)
+        {
+            var scene_names_to_unload = FirstScenesExitUnload
+                .Concat(SecondScenesExitUnload)
+                .ToArray();
+            manager.EnqueueCoroutine(OnStateExitCoroutine(scene_names_to_unload).GetEnumerator());
+        }
+
+        public override void Initialize(ControlledStateManager manager)
+        {
+            base.Initialize(manager);
             // Replace configuration objects with instances (don't work directly on prefabs!)
             var instances = new List<GameObject>();
             foreach (var configuration_object in ConfigurationObjects)

@@ -22,13 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
-using UnityEngine.Events;
+using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-    [Serializable]
-    public class StateEvent : UnityEvent<object, StateEventArgs>
+    public interface IManagedStateMachineBehavior
     {
+        string Tag { get; set; }
+        void OnManagedStateVerifyEnter(ControlledStateManager manager, ManagedStateEventArgs args);
+
+        void OnManagedStateVerifyUpdate(ControlledStateManager manager, ManagedStateEventArgs args);
+
+        void OnManagedStateVerifyExit(ControlledStateManager manager, ManagedStateEventArgs args);
+
+        void OnManagedStateEnter(ControlledStateManager manager, ManagedStateEventArgs args);
+
+        void OnManagedStateUpdate(ControlledStateManager manager, ManagedStateEventArgs args);
+
+        void OnManagedStateExit(ControlledStateManager manager, ManagedStateEventArgs args);
     }
 }

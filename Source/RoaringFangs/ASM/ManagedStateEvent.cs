@@ -23,24 +23,12 @@ THE SOFTWARE.
 */
 
 using System;
-using UnityEngine;
+using UnityEngine.Events;
 
 namespace RoaringFangs.ASM
 {
-    public class StateEventArgs : EventArgs
+    [Serializable]
+    public class ManagedStateEvent : UnityEvent<object, ManagedStateEventArgs>
     {
-        public readonly Animator Animator;
-        public readonly AnimatorStateInfo AnimatorStateInfo;
-        public readonly int LayerIndex;
-
-        public StateEventArgs(
-            Animator animator,
-            AnimatorStateInfo animator_state_info,
-            int layer_index)
-        {
-            Animator = animator;
-            AnimatorStateInfo = animator_state_info;
-            LayerIndex = layer_index;
-        }
     }
 }

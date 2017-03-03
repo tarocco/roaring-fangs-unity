@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-    public interface IStateController : IStateMachineBehavior
+    public interface IStateController : IManagedStateMachineBehavior
     {
         void Initialize(ControlledStateManager manager);
     }

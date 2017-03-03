@@ -33,11 +33,13 @@ using UnityEngine;
 namespace RoaringFangs.ASM
 {
 #if LIGHTSTRIKE_ADVANCED_INSPECTOR
-    public class StateController : AIStateMachineBehaviour, IStateController
+    public abstract class StateController : AIStateMachineBehaviour, IStateController
 #else
-    public class StateController : StateMachineBehaviour, IStateController
+    public abstract class StateController : StateMachineBehaviour, IStateController
 #endif
     {
+        public abstract string Tag { get; set; }
+
         private ControlledStateManager _CachedControlledStateManager;
 
         protected ControlledStateManager CachedControlledStateManager
@@ -57,40 +59,49 @@ namespace RoaringFangs.ASM
 
         public override void OnStateEnter(Animator animator, AnimatorStateInfo state_info, int layer_index)
         {
-            var args = new StateEventArgs(animator, state_info, layer_index);
-            var state_machine = CachedControlledStateManager;
-            if (state_machine ?? GetSceneController(animator, out state_machine))
-            {
-                CachedControlledStateManager = state_machine;
-                state_machine.OnStateBehaviorEntry(args);
-            }
+            var args = new StateControllerEventArgs(animator, state_info, layer_index);
+            CachedControlledStateManager.OnStateControllerEntry(this, args);
+        }
+
+        public virtual void OnManagedStateEnter(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
         }
 
         public override void OnStateUpdate(Animator animator, AnimatorStateInfo state_info, int layer_index)
         {
-            var args = new StateEventArgs(animator, state_info, layer_index);
-            var state_machine = CachedControlledStateManager;
-            if (state_machine ?? GetSceneController(animator, out state_machine))
-            {
-                CachedControlledStateManager = state_machine;
-                state_machine.OnStateBehaviorUpdate(args);
-            }
+            var args = new StateControllerEventArgs(animator, state_info, layer_index);
+            CachedControlledStateManager.OnStateControllerUpdate(this, args);
+        }
+
+        public virtual void OnManagedStateUpdate(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
         }
 
         public override void OnStateExit(Animator animator, AnimatorStateInfo state_info, int layer_index)
         {
-            var args = new StateEventArgs(animator, state_info, layer_index);
-            var state_machine = CachedControlledStateManager;
-            if (state_machine ?? GetSceneController(animator, out state_machine))
-            {
-                CachedControlledStateManager = state_machine;
-                state_machine.OnStateBehaviorExit(args);
-            }
+            var args = new StateControllerEventArgs(animator, state_info, layer_index);
+            CachedControlledStateManager.OnStateControllerExit(this, args);
         }
 
-        public void Initialize(ControlledStateManager manager)
+        public virtual void OnManagedStateExit(ControlledStateManager manager, ManagedStateEventArgs args)
         {
-            // Nothing yet!
+        }
+
+        public virtual void Initialize(ControlledStateManager manager)
+        {
+            CachedControlledStateManager = manager;
+        }
+
+        public virtual void OnManagedStateVerifyEnter(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
+        }
+
+        public virtual void OnManagedStateVerifyUpdate(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
+        }
+
+        public virtual void OnManagedStateVerifyExit(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
         }
     }
 }

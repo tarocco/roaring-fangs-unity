@@ -33,6 +33,7 @@ namespace RoaringFangs.ASM
 {
     public class SceneEventHandler : MonoBehaviour, IStateHandler, ISerializationCallbackReceiver
     {
+
         #region Event Classes
 
         public class LoadCompletedEventArgs : EventArgs
@@ -137,19 +138,22 @@ namespace RoaringFangs.ASM
         }
 
         // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
-        public void OnStateEnter(Animator animator, AnimatorStateInfo state_info, int layer_index)
+        public void OnManagedStateEnter(ControlledStateManager manager, ManagedStateEventArgs args)
         {
-            StartCoroutine(OnStateEnterCoroutine().GetEnumerator());
+            // TODO
+            //StartCoroutine(OnStateEnterCoroutine().GetEnumerator());
         }
 
         // OnStateExit is called when a transition ends and the state machine finishes evaluating this state
-        public void OnStateExit(Animator animator, AnimatorStateInfo state_info, int layer_index)
+        public void OnManagedStateExit(ControlledStateManager manager, ManagedStateEventArgs args)
         {
-            StartCoroutine(OnStateExitCoroutine().GetEnumerator());
+            // TODO
+            //StartCoroutine(OnStateExitCoroutine().GetEnumerator());
         }
 
-        public void OnStateUpdate(Animator animator, AnimatorStateInfo state_info, int layer_index)
+        public void OnManagedStateUpdate(ControlledStateManager manager, ManagedStateEventArgs args)
         {
+            // TODO
         }
 
         public void OnBeforeSerialize()
@@ -162,6 +166,21 @@ namespace RoaringFangs.ASM
         {
             Name = Name;
             Tag = Tag;
+        }
+
+        public void OnManagedStateVerifyEnter(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
+            // TODO
+        }
+
+        public void OnManagedStateVerifyUpdate(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
+            // TODO
+        }
+
+        public void OnManagedStateVerifyExit(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
+            // TODO
         }
     }
 }
