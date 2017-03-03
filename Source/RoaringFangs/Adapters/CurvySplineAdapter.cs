@@ -8,11 +8,12 @@ using RoaringFangs.Utility;
 using UnityEngine;
 using FluffyUnderware.Curvy;
 using System.Linq;
+using RoaringFangs.Editor;
 
 namespace RoaringFangs.Adapters
 {
     [RequireComponent(typeof(CurvySpline))]
-    public class CurvySplineAdapter : MonoBehaviour, ICurvySpline
+    public class CurvySplineAdapter : MonoBehaviour, ICurvySpline, ISerializationCallbackReceiver
     {
         [SerializeField]
         private CurvySpline _Self;
@@ -121,16 +122,23 @@ namespace RoaringFangs.Adapters
         [ContextMenu("Configure")]
         public void Configure()
         {
-            Self = Self ?? GetComponent<CurvySpline>();
-            var existing_segment_adapters = Self.GetComponentsInChildren<CurvySplineSegmentAdapter>();
-            foreach (var adapter in existing_segment_adapters)
-                DestroyImmediate(adapter);
             var segments = Self.GetComponentsInChildren<CurvySplineSegment>();
             foreach (var segment in segments)
             {
-                var adapter = segment.gameObject.AddComponent<CurvySplineSegmentAdapter>();
-                adapter.Self = segment;
+                if (segment.gameObject.GetComponent<CurvySplineSegmentAdapter>() == null)
+                {
+                    var adapter = segment.gameObject.AddComponent<CurvySplineSegmentAdapter>();
+                }
             }
+        }
+
+        public void OnBeforeSerialize()
+        {
+            Self = Self ?? GetComponent<CurvySpline>();
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }

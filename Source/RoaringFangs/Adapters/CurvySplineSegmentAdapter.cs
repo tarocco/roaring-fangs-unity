@@ -11,7 +11,7 @@ using FluffyUnderware.Curvy;
 namespace RoaringFangs.Adapters
 {
     [RequireComponent(typeof(CurvySplineSegment))]
-    public class CurvySplineSegmentAdapter : MonoBehaviour, ICurvySplineSegment
+    public class CurvySplineSegmentAdapter : MonoBehaviour, ICurvySplineSegment, ISerializationCallbackReceiver
     {
         [SerializeField]
         private CurvySplineSegment _Self;
@@ -29,10 +29,13 @@ namespace RoaringFangs.Adapters
         //    }
         //}
 
-        [ContextMenu("Configure")]
-        public void Configure()
+        public void OnBeforeSerialize()
         {
             Self = Self ?? GetComponent<CurvySplineSegment>();
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }
