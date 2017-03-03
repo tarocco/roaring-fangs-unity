@@ -257,31 +257,31 @@ AddListenerAuto will use non-persistent fallback for.";
         public static void RemAddListener(this UnityEvent @event, UnityAction listener)
         {
             @event.RemoveListener(listener);
-            @event.AddListenerAuto(listener);
+            @event.AddListener(listener);
         }
 
         public static void RemAddListener<T0>(this UnityEvent<T0> @event, UnityAction<T0> listener)
         {
             @event.RemoveListener(listener);
-            @event.AddListenerAuto(listener);
+            @event.AddListener(listener);
         }
 
         public static void RemAddListener<T0, T1>(this UnityEvent<T0, T1> @event, UnityAction<T0, T1> listener)
         {
             @event.RemoveListener(listener);
-            @event.AddListenerAuto(listener);
+            @event.AddListener(listener);
         }
 
         public static void RemAddListener<T0, T1, T2>(this UnityEvent<T0, T1, T2> @event, UnityAction<T0, T1, T2> listener)
         {
             @event.RemoveListener(listener);
-            @event.AddListenerAuto(listener);
+            @event.AddListener(listener);
         }
 
         public static void RemAddListener<T0, T1, T2, T3>(this UnityEvent<T0, T1, T2, T3> @event, UnityAction<T0, T1, T2, T3> listener)
         {
             @event.RemoveListener(listener);
-            @event.AddListenerAuto(listener);
+            @event.AddListener(listener);
         }
 
         #endregion Set
