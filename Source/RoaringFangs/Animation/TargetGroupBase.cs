@@ -32,6 +32,7 @@ using UnityEditor;
 
 using RoaringFangs.Utility;
 using RoaringFangs.Editor;
+using System;
 
 namespace RoaringFangs.Animation
 {
@@ -39,7 +40,7 @@ namespace RoaringFangs.Animation
 #if UNITY_EDITOR
     [InitializeOnLoad]
 #endif
-    public abstract class TargetGroupBase : MonoBehaviour
+    public abstract class TargetGroupBase : MonoBehaviour, ISerializationCallbackReceiver
     {
         public bool ActiveSelf
         {
@@ -101,6 +102,15 @@ namespace RoaringFangs.Animation
             HIAND = icons.GetOrDefault("mode.and.png");
             HIOR = icons.GetOrDefault("mode.or.png");
             HIXOR = icons.GetOrDefault("mode.xor.png");
+        }
+
+        public void OnBeforeSerialize()
+        {
+            EditorUtilities.OnBeforeSerializeAutoProperties(this);
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
 #endif
     }

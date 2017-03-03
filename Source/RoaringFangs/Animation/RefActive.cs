@@ -29,9 +29,9 @@ using UnityEngine;
 namespace RoaringFangs.Animation
 {
     [ExecuteInEditMode]
-    public class RefActive : RefBoolBehaviorBase, IActiveStateProperty
+    public class RefActive : RefBoolBehaviorBase, IActiveStateProperty, ISerializationCallbackReceiver
     {
-        [SerializeField, AutoProperty("Target")]
+        [SerializeField]
         private GameObject _TargetBehavior;
 
         public GameObject Target
@@ -44,9 +44,9 @@ namespace RoaringFangs.Animation
         {
             get
             {
-                if (Value.HasValue)
-                    return Value.Value;
-                return Target.activeSelf;
+                if (!Value.HasValue)
+                    Value = Target.activeSelf;
+                return Value.Value;
             }
 
             set
@@ -56,20 +56,20 @@ namespace RoaringFangs.Animation
             }
         }
 
-        private void LateUpdate()
+        public void ManagedUpdate()
         {
-            if (Target != null)
-            {
-                if (!Value.HasValue)
-                    Value = Target.activeSelf;
-                Target.SetActive(Value.Value);
-            }
+            Target.SetActive(Value.Value);
         }
 
-        [ContextMenu("Configure")]
-        public void Configure()
+        public void OnBeforeSerialize()
         {
-            Target = Target ?? gameObject;
+            Target = gameObject;
+            if (!Value.HasValue)
+                Value = Target.activeSelf;
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }

@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
 using RoaringFangs.Attributes;
 using UnityEngine;
 
@@ -29,9 +30,8 @@ namespace RoaringFangs.Animation
 {
     public abstract class RefBoolBehaviorBase : MonoBehaviour, IRefBool
     {
-        [SerializeField, AutoProperty("Value")]
+        [SerializeField]
         private GameObject _ValueObject;
-
         public virtual bool? Value
         {
             get
@@ -45,16 +45,9 @@ namespace RoaringFangs.Animation
             set
             {
                 if (value.HasValue)
-                {
-                    if (value.Value)
-                        _ValueObject = RefBool.True;
-                    else
-                        _ValueObject = RefBool.False;
-                }
+                    _ValueObject = value.Value ? RefBool.True : RefBool.False;
                 else
-                {
                     _ValueObject = null;
-                }
             }
         }
     }

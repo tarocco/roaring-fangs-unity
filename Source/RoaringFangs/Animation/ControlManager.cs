@@ -285,8 +285,20 @@ namespace RoaringFangs.Animation
             }
         }
 
-        private Dictionary<ITargetGroup, TargetRule[]> _GroupedTargets;
-        private Dictionary<ITargetGroup, TargetRule[]> GroupedTargets
+        private struct GroupTargetKey
+        {
+            public readonly ITargetGroup Group;
+            public readonly IActiveStateProperty ActiveStateProperty;
+            public GroupTargetKey(ITargetGroup group, IActiveStateProperty active_state_property)
+            {
+                Group = group;
+                ActiveStateProperty = active_state_property;
+            }
+        }
+
+        private Dictionary<GroupTargetKey, TargetRule[]> _GroupedTargets;
+
+        private Dictionary<GroupTargetKey, TargetRule[]> GroupedTargets
         {
             get
             {
@@ -311,26 +323,28 @@ namespace RoaringFangs.Animation
                 .OfType<ITargetGroup>();
         }
 
-        private Dictionary<ITargetGroup, TargetRule[]> GetAllGroupedTargets()
+        private Dictionary<GroupTargetKey, TargetRule[]> GetAllGroupedTargets()
         {
             var groups = GetAllTargetGroups();
             // For each groups array, select valid target lists in all of the target groups and create
             // rules on whether to show or hide the targets based on the control group's active state
             return groups
                 .Where(g => g.Targets != null)
-                .ToDictionary(g => g, g => g.Targets
-                    .Select(t => new TargetRule(t.Transform, t.Depth)).ToArray());
+                .ToDictionary(
+                    g => new GroupTargetKey(g, (g as Component).GetComponent<IActiveStateProperty>()),
+                    g => g.Targets.Select(t => new TargetRule(t.Transform, t.Depth)).ToArray()
+                );
         }
 
         public void OnUpdateGroupTargets(ITargetGroup group)
         {
-            var matching = GroupedTargets.Where(t => t.Key == group);
-            foreach(var e in matching.ToArray())
+            var matching = GroupedTargets.Keys.Where(t => t.Group == group);
+            foreach (var e in matching.ToArray())
             {
-                var targets = e.Key.Targets ?? Enumerable.Empty<TransformUtils.ITransformD>();
-                var target_rules = e.Key.Targets
+                var targets = e.Group.Targets ?? Enumerable.Empty<TransformUtils.ITransformD>();
+                var target_rules = e.Group.Targets
                     .Select(t => new TargetRule(t.Transform, t.Depth)).ToArray();
-                GroupedTargets[e.Key] = target_rules;
+                GroupedTargets[e] = target_rules;
             }
         }
 
@@ -404,17 +418,22 @@ namespace RoaringFangs.Animation
 #if UNITY_EDITOR
             PathChangeHandledOnceThisUpdate = false;
 #endif
-            foreach (var grouped_target in GroupedTargets)
+            // Update any of the ActiveStateProperty controllers
+            foreach (var entry in GroupedTargets)
             {
+                var group_info = entry.Key;
+                var active_state_property = group_info.ActiveStateProperty;
+                if (active_state_property != null)
+                    active_state_property.ManagedUpdate();
                 // Get the group and targets from the grouping object
-                var group = grouped_target.Key;
+                var group = group_info.Group;
                 // Skip if group is not valid
                 if (group.Equals(null))
                     continue;
-                var targets = grouped_target.Value;
+                var targets = entry.Value;
                 // Buffer the selection into an array
                 var targets_array = targets;
-                for(int i = 0; i < targets_array.Length; i++)
+                for (int i = 0; i < targets_array.Length; i++)
                 {
                     var target = targets_array[i];
                     // Skip if the target transform is not valid
@@ -434,12 +453,15 @@ namespace RoaringFangs.Animation
                         case TargetGroupMode.Set:
                             active = group_active;
                             break;
+
                         case TargetGroupMode.AND:
                             active = target_active && group_active;
                             break;
+
                         case TargetGroupMode.OR:
                             active = target_active || group_active;
                             break;
+
                         case TargetGroupMode.XOR:
                             active = target_active ^ group_active;
                             break;
@@ -447,7 +469,6 @@ namespace RoaringFangs.Animation
 
                     target.Transform.gameObject.SetActive(active);
                 }
-                
             }
         }
 

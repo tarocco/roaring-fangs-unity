@@ -25,12 +25,14 @@ THE SOFTWARE.
 using RoaringFangs.Attributes;
 using System.Linq;
 using UnityEngine;
+using System;
+using RoaringFangs.Editor;
 
 namespace RoaringFangs.Animation
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(MutexHelper))]
-    public class LinearMutexSelector : MonoBehaviour
+    public class LinearMutexSelector : MonoBehaviour, ISerializationCallbackReceiver
     {
         [SerializeField]
         private MutexHelper _MutexHelper;
@@ -94,7 +96,8 @@ namespace RoaringFangs.Animation
             return index;
         }
 
-        [SerializeField, AutoRange(0f, "NumberOfCachedControls")]
+        // FIXME: implement improved RangeAttribute with upper limit property NumberOfCachedControls
+        [SerializeField, AutoProperty]
         private float _Selector;
 
         public float Selector
@@ -143,6 +146,15 @@ namespace RoaringFangs.Animation
                     Selected = selected_by_selector;
                 }
             }
+        }
+
+        public void OnBeforeSerialize()
+        {
+            EditorUtilities.OnBeforeSerializeAutoProperties(this);
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }

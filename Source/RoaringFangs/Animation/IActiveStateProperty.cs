@@ -30,5 +30,6 @@ namespace RoaringFangs.Animation
     public interface IActiveStateProperty
     {
         bool Active { get; set; }
+        void ManagedUpdate();
     }
 }
