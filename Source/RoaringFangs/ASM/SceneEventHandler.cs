@@ -137,14 +137,12 @@ namespace RoaringFangs.ASM
                 yield return o;
         }
 
-        // OnStateEnter is called when a transition starts and the state machine starts to evaluate this state
         public void OnManagedStateEnter(ControlledStateManager manager, ManagedStateEventArgs args)
         {
             // TODO
             //StartCoroutine(OnStateEnterCoroutine().GetEnumerator());
         }
 
-        // OnStateExit is called when a transition ends and the state machine finishes evaluating this state
         public void OnManagedStateExit(ControlledStateManager manager, ManagedStateEventArgs args)
         {
             // TODO
@@ -154,18 +152,6 @@ namespace RoaringFangs.ASM
         public void OnManagedStateUpdate(ControlledStateManager manager, ManagedStateEventArgs args)
         {
             // TODO
-        }
-
-        public void OnBeforeSerialize()
-        {
-            Name = Name;
-            Tag = Tag;
-        }
-
-        public void OnAfterDeserialize()
-        {
-            Name = Name;
-            Tag = Tag;
         }
 
         public void OnManagedStateVerifyEnter(ControlledStateManager manager, ManagedStateEventArgs args)
@@ -181,6 +167,38 @@ namespace RoaringFangs.ASM
         public void OnManagedStateVerifyExit(ControlledStateManager manager, ManagedStateEventArgs args)
         {
             // TODO
+        }
+
+        public void OnManagedStateMachineVerifyEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args)
+        {
+            //TODO
+        }
+
+        public void OnManagedStateMachineEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args)
+        {
+            //TODO
+        }
+
+        public void OnManagedStateMachineExit(ControlledStateManager manager, ManagedStateMachineEventArgs args)
+        {
+            //TODO
+        }
+
+        public void OnManagedStateMachineVerifyExit(ControlledStateManager manager, ManagedStateMachineEventArgs args)
+        {
+            //TODO
+        }
+
+        public void OnBeforeSerialize()
+        {
+            Name = Name;
+            Tag = Tag;
+        }
+
+        public void OnAfterDeserialize()
+        {
+            Name = Name;
+            Tag = Tag;
         }
     }
 }

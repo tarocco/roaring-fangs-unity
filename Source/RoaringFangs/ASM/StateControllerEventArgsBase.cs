@@ -33,7 +33,7 @@ namespace RoaringFangs.ASM
         public readonly AnimatorStateInfo AnimatorStateInfo;
         public readonly int LayerIndex;
 
-        public StateControllerEventArgsBase(
+        protected StateControllerEventArgsBase(
             Animator animator,
             AnimatorStateInfo animator_state_info,
             int layer_index)

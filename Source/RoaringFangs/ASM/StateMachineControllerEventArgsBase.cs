@@ -22,32 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
 using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-    public interface IManagedStateMachineBehavior
+    public abstract class StateMachineControllerEventArgsBase : EventArgs
     {
-        string Tag { get; set; }
-
-        void OnManagedStateVerifyEnter(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateVerifyUpdate(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateVerifyExit(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateMachineVerifyEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args);
-
-        void OnManagedStateMachineVerifyExit(ControlledStateManager manager, ManagedStateMachineEventArgs args);
-
-        void OnManagedStateEnter(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateUpdate(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateExit(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateMachineEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args);
-
-        void OnManagedStateMachineExit(ControlledStateManager manager, ManagedStateMachineEventArgs args);
+        public readonly Animator Animator;
+        public readonly int StateMachinePathHash;
+        protected StateMachineControllerEventArgsBase(
+            Animator animator,
+            int state_machine_path_hash)
+        {
+            Animator = animator;
+            StateMachinePathHash = state_machine_path_hash;
+        }
     }
 }

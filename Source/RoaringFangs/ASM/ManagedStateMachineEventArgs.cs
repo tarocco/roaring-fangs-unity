@@ -26,28 +26,23 @@ using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-    public interface IManagedStateMachineBehavior
+    public class ManagedStateMachineEventArgs : StateMachineControllerEventArgsBase
     {
-        string Tag { get; set; }
+        //public readonly ControlledStateManager Manager;
+        /// <summary>
+        ///  Having this in here is just breaking the rules all over the place BUT ALRIGHT
+        /// </summary>
+        public readonly IStateController StateController;
 
-        void OnManagedStateVerifyEnter(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateVerifyUpdate(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateVerifyExit(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateMachineVerifyEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args);
-
-        void OnManagedStateMachineVerifyExit(ControlledStateManager manager, ManagedStateMachineEventArgs args);
-
-        void OnManagedStateEnter(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateUpdate(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateExit(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateMachineEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args);
-
-        void OnManagedStateMachineExit(ControlledStateManager manager, ManagedStateMachineEventArgs args);
+        public ManagedStateMachineEventArgs(
+            //ControlledStateManager manager,
+            IStateController state_controller,
+            Animator animator,
+            int state_machine_path_hash) :
+            base(animator, state_machine_path_hash)
+        {
+            //Manager = manager;
+            StateController = state_controller;
+        }
     }
 }

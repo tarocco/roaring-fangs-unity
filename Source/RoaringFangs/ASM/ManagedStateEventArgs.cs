@@ -34,8 +34,6 @@ namespace RoaringFangs.ASM
         /// </summary>
         public readonly IStateController StateController;
 
-        public readonly object UserData;
-
         public ManagedStateEventArgs(
             //ControlledStateManager manager,
             IStateController state_controller,
@@ -46,15 +44,6 @@ namespace RoaringFangs.ASM
         {
             //Manager = manager;
             StateController = state_controller;
-        }
-
-        public ManagedStateEventArgs(ManagedStateEventArgs args, object replacement_user_data) :
-            this(
-                args.StateController,
-                args.Animator,
-                args.AnimatorStateInfo,
-                args.LayerIndex)
-        {
         }
     }
 }

@@ -26,28 +26,13 @@ using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-    public interface IManagedStateMachineBehavior
+    public class StateMachineControllerEventArgs : StateMachineControllerEventArgsBase
     {
-        string Tag { get; set; }
-
-        void OnManagedStateVerifyEnter(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateVerifyUpdate(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateVerifyExit(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateMachineVerifyEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args);
-
-        void OnManagedStateMachineVerifyExit(ControlledStateManager manager, ManagedStateMachineEventArgs args);
-
-        void OnManagedStateEnter(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateUpdate(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateExit(ControlledStateManager manager, ManagedStateEventArgs args);
-
-        void OnManagedStateMachineEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args);
-
-        void OnManagedStateMachineExit(ControlledStateManager manager, ManagedStateMachineEventArgs args);
+        public StateMachineControllerEventArgs(
+            Animator animator,
+            int state_machine_path_hash) :
+            base(animator, state_machine_path_hash)
+        {
+        }
     }
 }

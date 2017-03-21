@@ -22,43 +22,71 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace RoaringFangs.ASM
 {
-    public class SceneState : SceneStateBase
+    public class SceneStateMachine : SceneStateBase
     {
+        public override void OnManagedStateMachineVerifyEnter(
+            ControlledStateManager manager,
+            ManagedStateMachineEventArgs args)
+        {
+            DoVerifyEnter();
+        }
+
+        public override void OnManagedStateMachineEnter(
+            ControlledStateManager manager,
+            ManagedStateMachineEventArgs args)
+        {
+            DoEnter(manager);
+        }
+
+        public override void OnManagedStateMachineVerifyExit(
+            ControlledStateManager manager,
+            ManagedStateMachineEventArgs args)
+        {
+            DoVerifyExit();
+        }
+
+        public override void OnManagedStateMachineExit(
+            ControlledStateManager manager,
+            ManagedStateMachineEventArgs args)
+        {
+            DoExit(manager);
+        }
+
         public override void OnManagedStateVerifyEnter(
             ControlledStateManager manager,
             ManagedStateEventArgs args)
         {
-            DoVerifyEnter();
+            if(manager.AcceptStateMachineStateEvents)
+                DoVerifyEnter();
         }
 
         public override void OnManagedStateEnter(
             ControlledStateManager manager,
             ManagedStateEventArgs args)
         {
-            DoEnter(manager);
+            if (manager.AcceptStateMachineStateEvents)
+                DoEnter(manager);
         }
 
         public override void OnManagedStateVerifyExit(
             ControlledStateManager manager,
             ManagedStateEventArgs args)
         {
-            DoVerifyExit();
+            if (manager.AcceptStateMachineStateEvents)
+                DoVerifyExit();
         }
 
         public override void OnManagedStateExit(
             ControlledStateManager manager,
             ManagedStateEventArgs args)
         {
-            DoExit(manager);
+            if (manager.AcceptStateMachineStateEvents)
+                DoExit(manager);
         }
     }
 }
