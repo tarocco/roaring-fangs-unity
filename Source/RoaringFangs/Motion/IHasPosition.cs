@@ -40,4 +40,9 @@ namespace RoaringFangs.Motion
     {
         Transform Target { get; set; }
     }
+
+    public interface IHasTether: IHasTarget
+    {
+        Transform Tether { get; set; }
+    }
 }

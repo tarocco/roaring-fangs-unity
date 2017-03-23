@@ -26,43 +26,40 @@ using UnityEngine;
 
 namespace RoaringFangs.Motion
 {
-    //TODO: FIX THIS
+    // Using InControl seems reaaallly overkill for this...
+    //public class MouseActionSet : PlayerActionSet
+    //{
+    //    public PlayerAction Up, Down, Left, Right;
+    //    public PlayerTwoAxisAction MouseAction;
+
+    //    public MouseActionSet()
+    //    {
+    //        Up = CreatePlayerAction("Up");
+    //        Down = CreatePlayerAction("Down");
+    //        Left = CreatePlayerAction("Left");
+    //        Right = CreatePlayerAction("Right");
+    //        MouseAction = CreateTwoAxisPlayerAction(Left, Right, Down, Up);
+    //    }
+    //}
     public class MouseFollower : MonoBehaviour
     {
-        //public Receiver Receiver;
-        private float RayDistance = 100f;
+        public float RayDistance = 100f;
 
         private void Start()
         {
-            //Receiver.MultiMousePress += HandleMultiMousePress;
         }
-
-        private void OnDestroy()
-        {
-            //Receiver.MultiMousePress -= HandleMultiMousePress;
-        }
-
-        /*
-        void HandleMultiMousePress(object sender, MultiMousePressEventArgs m_args)
-        {
-            foreach (MousePressEventArgs args in m_args.MousePressed)
-            {
-                Plane xy = new Plane(Vector3.back, Vector3.zero);
-                Vector3 screen_position = args.ScreenPosition;
-                screen_position.z = RayDistance;
-                Ray ray = Camera.main.ScreenPointToRay(screen_position);
-                float t;
-                xy.Raycast(ray, out t);
-                Vector3 position = ray.origin + ray.direction * t;
-                transform.position = position;
-                break;
-            }
-        }
-        */
 
         // Update is called once per frame
         private void Update()
         {
+            var xy = new Plane(Vector3.back, Vector3.zero);
+            var screen_position = Input.mousePosition;
+            screen_position.z = RayDistance;
+            var ray = Camera.main.ScreenPointToRay(screen_position);
+            float t;
+            xy.Raycast(ray, out t);
+            var position = ray.origin + ray.direction * t;
+            transform.position = position;
         }
     }
 }

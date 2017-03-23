@@ -26,12 +26,27 @@ using UnityEngine;
 
 namespace RoaringFangs.Motion
 {
-    public class SoftTetherMovement : MonoBehaviour
+    public class SoftTetherMovement : MonoBehaviour, IHasTether
     {
-        public Transform Target;
-        public Transform Tether;
+        [SerializeField]
+        private Transform _Target;
 
-        public Vector3 Offset;
+        public Transform Target
+        {
+            get { return _Target;}
+            set { _Target = value; }
+        }
+
+        public Vector3 TargetOffset;
+
+        [SerializeField]
+        private Transform _Tether;
+
+        public Transform Tether
+        {
+            get { return _Tether; }
+            set { _Tether = value; }
+        }
 
         public float FollowDistanceMin = 0f;
         public float FollowDistanceMax = float.PositiveInfinity;
@@ -64,27 +79,32 @@ namespace RoaringFangs.Motion
                 Vector3 follow_position;
                 if (Tether != null)
                 {
-                    Vector3 difference = Target.position - Tether.position;
-                    float alpha = Mathf.Clamp01((difference.magnitude - FollowDistanceMin) / (SmoothingFactor * FollowDistanceMax));
+                    Vector3 tether_position = Tether.position;
+                    Vector3 difference = Target.position - tether_position;
+                    Vector3 difference_inverse = Tether.InverseTransformVector(difference);
+                    float alpha = Mathf.Clamp01((difference_inverse.magnitude - FollowDistanceMin) / (SmoothingFactor * FollowDistanceMax));
                     float beta = FollowDistanceMin + SoftLimitOut2(alpha) * (FollowDistanceMax - FollowDistanceMin);
-                    difference = difference.normalized * beta;
-                    follow_position = Tether.position + difference;
+                    difference_inverse = difference_inverse.normalized * beta;
+                    difference = Tether.TransformVector(difference_inverse);
+                    follow_position = tether_position + difference;
                 }
                 else
                     follow_position = Target.position;
-                transform.position = follow_position + Offset;
+                transform.position = follow_position + TargetOffset;
             }
         }
-
-        /*
+#if UNITY_EDITOR
         void OnDrawGizmos()
         {
-            for(int i = 0; i < 32; i ++)
+            if (Tether != null)
             {
-                float x = (float)i / 31f;
-                Gizmos.DrawSphere(new Vector3(x, SoftLimitOut(x), 0), 0.1f);
+                Gizmos.matrix = Tether.localToWorldMatrix;
+                Gizmos.color = Color.magenta;
+                Gizmos.DrawWireSphere(Vector3.zero, FollowDistanceMin);
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawWireSphere(Vector3.zero, FollowDistanceMax);
             }
         }
-        */
+#endif
     }
 }
