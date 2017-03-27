@@ -103,15 +103,14 @@ namespace RoaringFangs.Animation
             HIOR = icons.GetOrDefault("mode.or.png");
             HIXOR = icons.GetOrDefault("mode.xor.png");
         }
-
-        public void OnBeforeSerialize()
-        {
-            EditorUtilities.OnBeforeSerializeAutoProperties(this);
-        }
-
-        public void OnAfterDeserialize()
-        {
-        }
 #endif
+		public void OnBeforeSerialize()
+		{
+			EditorUtilities.OnBeforeSerializeAutoProperties(this);
+		}
+
+		public void OnAfterDeserialize()
+		{
+		}
     }
 }

@@ -31,6 +31,30 @@ namespace RoaringFangs.Editor
 {
     public class EditorHelperPreferences
     {
+		private static readonly string EnableHierarchyObjectPathTrackingKey =
+			"EditorHelperPreferences.EnableHierarchyObjectTracking";
+
+		private static bool? _EnableHierarchyObjectPathTracking;
+
+		public static bool EnableHierarchyObjectPathTracking
+		{
+			get
+			{
+				if (!_EnableHierarchyObjectPathTracking.HasValue)
+					_EnableHierarchyObjectPathTracking = EditorPrefs.GetBool(EnableHierarchyObjectPathTrackingKey, false);
+				return _EnableHierarchyObjectPathTracking.Value;
+			}
+			set
+			{
+				if (value != _EnableHierarchyObjectPathTracking)
+				{
+					EditorPrefs.SetBool(EnableHierarchyObjectPathTrackingKey, value);
+					_EnableHierarchyObjectPathTracking = value;
+					EditorHelper.SetHierarchyObjectPathTracking (value);
+				}
+			}
+		}
+
         private static readonly string ShowParallelTasksMessageKey =
             "EditorHelperPreferences.ShowParallelTasksMessage";
 
@@ -41,7 +65,7 @@ namespace RoaringFangs.Editor
             get
             {
                 if (!_ShowParallelTasksMessage.HasValue)
-                    _ShowParallelTasksMessage = EditorPrefs.GetBool(ShowParallelTasksMessageKey, true);
+                    _ShowParallelTasksMessage = EditorPrefs.GetBool(ShowParallelTasksMessageKey, false);
                 return _ShowParallelTasksMessage.Value;
             }
             set
@@ -57,13 +81,23 @@ namespace RoaringFangs.Editor
         [PreferenceItem("RF Editor Helper")]
         public static void PreferencesGUI()
         {
-            var show_parallel_tasks_message_label = new GUIContent(
+			var enabme_hierarchy_object_path_tracking_label = new GUIContent(
+				"Enable Hierarchy Object Path Tracking",
+				"Enables the EditorHelper.HierarchyObjectPathChanged event " +
+				"allowing scripts to know when an object has moved to a " +
+				"different location in the hierarchy. Path change detection " +
+				"is performed as a parallel operation.");
+			EnableHierarchyObjectPathTracking = EditorGUILayout.Toggle(
+				enabme_hierarchy_object_path_tracking_label,
+				EnableHierarchyObjectPathTracking);
+			var show_parallel_tasks_message_label = new GUIContent(
                 "Show Parallel Tasks Message",
                 "Whether to show a non-modal progress indicator when parallel " +
                 "tasks are taking a noticeable amount of time to complete.");
             ShowParallelTasksMessage = EditorGUILayout.Toggle(
                 show_parallel_tasks_message_label,
                 ShowParallelTasksMessage);
+			
         }
     }
 }

@@ -221,12 +221,26 @@ namespace RoaringFangs.Editor
             HierarchyChangedTask = DoHierarchyWindowChanged().GetEnumerator();
         }
 
+		public static void SetHierarchyObjectPathTracking(bool enabled)
+		{
+			EditorApplication.hierarchyWindowChanged -= HandleHierarchyWindowChanged;
+			if (enabled)
+			{
+				EditorApplication.hierarchyWindowChanged += HandleHierarchyWindowChanged;
+				// Initialize by calling the handler once
+				HandleHierarchyWindowChanged ();
+			}
+		}
+
         static EditorHelper()
         {
             EditorApplication.update += HandleUpdate;
-            EditorApplication.hierarchyWindowChanged += HandleHierarchyWindowChanged;
-            // Initialize by calling the handler once at the start
-            HandleHierarchyWindowChanged();
+			if (EditorHelperPreferences.EnableHierarchyObjectPathTracking)
+			{
+				EditorApplication.hierarchyWindowChanged += HandleHierarchyWindowChanged;
+				// Initialize by calling the handler once at the start
+				HandleHierarchyWindowChanged ();
+			}
         }
     }
 }

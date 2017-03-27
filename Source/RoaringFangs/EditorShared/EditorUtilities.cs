@@ -86,47 +86,102 @@ namespace RoaringFangs.Editor
         /// <summary>
         /// Used for the key type in <see cref="MemberHashes"/>
         /// </summary>
-        private struct HashedMemberBinding
+        private struct MemberBinding
         {
-            /// <summary>
-            /// Unique id of the declaring object (hash code or instance id)
-            /// </summary>
-            public readonly int ObjectId;
-            /// <summary>
-            /// Hash code of the member info
-            /// </summary>
-            public readonly int InfoHash;
-            public HashedMemberBinding(int object_id, int info_hash)
-            {
-                ObjectId = object_id;
-                InfoHash = info_hash;
-            }
+			private WeakReference _Object;
+			public UnityEngine.Object Object
+			{
+				get { return _Object.Target as UnityEngine.Object; }
+			}
+			private WeakReference _MemberInfo;
+			public MemberInfo MemberInfo
+			{
+				get { return _MemberInfo.Target as MemberInfo; }
+			}
+
+			private int _HashCode;
+
+			public MemberBinding(UnityEngine.Object @object, MemberInfo info)
+			{
+				_Object = new WeakReference(@object);
+				_MemberInfo = new WeakReference(info);
+				_HashCode = 0; // CS0188
+				_HashCode = Object.GetInstanceID () ^ MemberInfo.GetHashCode ();
+			}
+			public override int GetHashCode ()
+			{
+				return _HashCode;
+			}
+
+			public override bool Equals (object obj)
+			{
+				if (obj is MemberBinding)
+				{
+					var other = (MemberBinding)obj;
+					return
+						Equals (Object, other.Object) &&
+						Equals (MemberInfo, other.MemberInfo);
+				}
+				return false;
+			}
         }
         
-        /// <summary>
-        /// Dictionary of cached fields/properties and hashes of their values.
-        /// Compared against updated hashes to detect changes.
-        /// </summary>
-        private static Dictionary<HashedMemberBinding, int> MemberHashes = new Dictionary<HashedMemberBinding, int>();
+		private static Dictionary<MemberBinding, int> MemberValueHashCache = new Dictionary<MemberBinding, int>();
 
-        /// <summary>
-        /// Updates a member value hash cache with a <see cref="HashedMemberBinding"/> key and integer hash codes or instance ids of the member values.
-        /// </summary>
-        /// <param name="cache">The cache to be updated</param>
-        /// <param name="member_binding">Binding key value in cache</param>
-        /// <param name="current_member_value_hash">Hash of the member's value</param>
-        /// <returns>True if binding was already in cache and value hash has changed</returns>
-        private static bool UpdateMemberValueHashCache(Dictionary<HashedMemberBinding, int> cache, HashedMemberBinding member_binding, int current_member_value_hash)
-        {
-            int previous_member_value_hash;
-            bool property_is_cached = cache.TryGetValue(member_binding, out previous_member_value_hash);
-            bool property_is_same = property_is_cached && current_member_value_hash == previous_member_value_hash;
-            if (property_is_same)
-                return false;
-            // Update the cache
-            cache[member_binding] = current_member_value_hash;
-            return property_is_cached;
-        }
+		private static Dictionary<MemberBinding, Attribute[]> MemberAttributeCache = new Dictionary<MemberBinding, Attribute[]>();
+
+		/// <returns>
+		/// 1: True if key was already in cache and value has changed
+		/// 2: true if key has been added or has changed and <param name="force_first_update"> is true
+		/// </returns>
+		private static bool UpdateCache<TKey, TValue>(
+			Dictionary<TKey, TValue> cache,
+			TKey key,
+			TValue value,
+			bool force_first_update = false)
+		{
+			TValue previous_value = default(TValue);
+			bool is_cached = cache.TryGetValue(key, out previous_value);
+			bool is_same = is_cached && value.Equals(previous_value);
+			if (is_same)
+				return false;
+			cache[key] = value;
+			return force_first_update || is_cached;
+		}
+
+		private static TValue UseCachedOrInsert<TKey, TValue>(
+			Dictionary<TKey, TValue> cache,
+			TKey key,
+			TValue value)
+		{
+			TValue previous_value = default(TValue);
+			if (cache.TryGetValue (key, out previous_value))
+				return previous_value;
+			cache [key] = value;
+			return value;
+		}
+
+		private static TSpecific UseCachedOrInsert<TKey, TValue, TSpecific>(
+			Dictionary<TKey, TValue> cache,
+			TKey key,
+			TSpecific value)
+			where TValue: class
+			where TSpecific: class
+		{
+			TValue previous_value = default(TValue);
+			if (cache.TryGetValue (key, out previous_value))
+				return previous_value as TSpecific;
+			cache [key] = value as TValue;
+			return value;
+		}
+
+		private static TAttribute[] UseCachedAttributesOrInsert<TAttribute>(
+			MemberBinding key,
+			MemberInfo member_info)
+		{
+			var attributes = member_info.GetCustomAttributes (false).OfType<TAttribute> ();
+			return UseCachedOrInsert(MemberAttributeCache, key, attributes.ToArray());
+		}
 
         public static void OnBeforeSerializeAutoProperties<T>(
             T self,
@@ -142,17 +197,18 @@ namespace RoaringFangs.Editor
                 return;
 
             // TODO: simplify these statements somehow?
+			// Gets a lookup table for self's fields to their attributes, cached so that there is persistence until Unity changes play states instead of simply creating new ones
             var fields_to_process = typeof(T)
                 .GetFields(field_flags)
                 .SelectMany(
-                    f => f.GetCustomAttributes(false).OfType<AutoPropertyAttribute>(),
+					f => UseCachedAttributesOrInsert<AutoPropertyAttribute>(new MemberBinding(self, f), f),
                     (f, a) => new KeyValuePair<FieldInfo, AutoPropertyAttribute>(f, a))
                 .ToArray()
                 .ToLookup(e => e.Key, e => e.Value);
             var properties_to_process = typeof(T)
                 .GetProperties(property_flags)
                 .SelectMany(
-                    p => p.GetCustomAttributes(false).OfType<AutoPropertyAttribute>(),
+					p => UseCachedAttributesOrInsert<AutoPropertyAttribute>(new MemberBinding(self, p), p),
                     (p, a) => new KeyValuePair<PropertyInfo, AutoPropertyAttribute>(p, a))
                 .ToArray()
                 .ToLookup(e => e.Key, e => e.Value);
@@ -164,7 +220,7 @@ namespace RoaringFangs.Editor
                 var field_value = field_info.GetValue(self);
                 var field_value_hash = field_value != null ? field_value.GetHashCode() : 0;
                 // Skip fields that have not changed
-                if (!UpdateMemberValueHashCache(MemberHashes, new HashedMemberBinding(self.GetInstanceID(), field_info.GetHashCode()), field_value_hash))
+				if (!UpdateCache(MemberValueHashCache, new MemberBinding(self, field_info), field_value_hash))
                     continue;
 
                 // Make sure the object is marked as dirty in case a property accessor
@@ -211,7 +267,7 @@ namespace RoaringFangs.Editor
                 var property_value = property_info.GetValue(self, null);
                 var property_value_hash = property_value != null ? property_value.GetHashCode() : 0;
                 // Skip properties that have not changed
-                if (!UpdateMemberValueHashCache(MemberHashes, new HashedMemberBinding(self.GetInstanceID(), property_info.GetHashCode()), property_value_hash))
+				if (!UpdateCache(MemberValueHashCache, new MemberBinding(self, property_info), property_value_hash))
                     continue;
 
                 foreach (var attribute in group) // Usually just a group of 1
@@ -235,19 +291,119 @@ namespace RoaringFangs.Editor
                     }
                 }
             }
+#endif
         }
 
+		/// <summary>
+		/// Calls the necessary overload of <see cref="TransformUtils.SyncObjectWithPath"/> for
+		/// serialized <see cref="GameObject"/> and <see cref="Component"/> fields with the
+		/// <see cref="StickyAttribute"/> attribute on them.
+		/// </summary>
+		/// <param name="self">Declaring component type</param>
+		/// <param name="field_flags">Binding flags for the fields</param>
+		/// <typeparam name="T">Type parameter of the declaring component</typeparam>
+		public static void OnBeforeSerializeStickyFields<T>(
+			T self,
+			BindingFlags field_flags = PublicNonPublicInstanceFlags) where T : Behaviour
+		{
+#if UNITY_EDITOR
+			// Don't apply changes while changing play mode (Unity doesn't like it!)
+			if (EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isPlaying)
+				return;
+
+			// TODO: simplify these statements somehow?
+			// Get a lookup table of field info for self's fields to all of their (cached) sticky attributes
+			var fields_to_process = typeof(T)
+				.GetFields(field_flags)
+				.SelectMany(
+					// Cached attributes for the same bound members have priority over new ones
+					f => UseCachedAttributesOrInsert<StickyInEditorAttribute>(new MemberBinding(self, f), f),
+					(f, a) => new KeyValuePair<FieldInfo, StickyInEditorAttribute>(f, a))
+				.ToArray()
+				.ToLookup(e => e.Key, e => e.Value);
+
+			// Work over fields
+			foreach (var group in fields_to_process)
+			{
+				var field_info = group.Key;
+
+				// See if the field is for GameObject or Component types (Transform, MonoBehaviour, etc.)
+				bool field_value_inherits_gameobject = field_info.FieldType.IsSubclassOf(typeof(GameObject));
+				bool field_value_inherits_component = field_info.FieldType.IsSubclassOf(typeof(Component));
+
+				// Bail out if it's not a type we can work with
+				if(!(field_value_inherits_gameobject || field_value_inherits_component))
+					throw new ArgumentException("Sticky field must be a GameObject or Component type");
+
+				// Get the value of the field
+				var field_value = field_info.GetValue(self);
+
+				{
+					// Check to see if the non-polymorphic field value is null on its own
+					bool field_value_is_naively_null = field_value == null;
+
+					// Enforce "real" null values because == operator is not virtual on these!
+					if(field_value_inherits_gameobject && (field_value as GameObject) == null)
+						field_value = null;
+
+					if(field_value_inherits_component && (field_value as Component) == null)
+						field_value = null;
+				}
+
+				bool field_value_is_null = field_value == null;
+
+				var field_value_hash = !field_value_is_null ? field_value.GetHashCode() : 0;
+
+				// Skip fields that have not changed
+				bool field_value_has_changed = UpdateCache(
+					MemberValueHashCache,
+					new MemberBinding(self, field_info),
+					field_value_hash,
+					true);
+				
+				if (!field_value_has_changed && !field_value_is_null)
+					continue;
+
+				// Make sure the object is marked as dirty in case a property accessor
+				// affected self from a separate call to here (just trust me on this one)
+				EditorUtility.SetDirty(self);
+
+				foreach (var attribute in group) // Usually just a group of 1
+				{
+					var path = attribute.Path;
+					// Handling is slightly different for GameObject and Component types, where Component needs the specific type from the field info when calling GetComponent()
+					if(field_value_inherits_gameobject)
+					{
+						var game_object = field_value as GameObject;
+						RoaringFangs.Utility.TransformUtils.SyncObjectWithPath(self.transform, ref game_object, ref path);
+						field_info.SetValue(self, game_object);
+					}
+					else if(field_value_inherits_component)
+					{
+						var component = field_value as Component;
+						RoaringFangs.Utility.TransformUtils.SyncObjectWithPath(self.transform, ref component, ref path, field_info.FieldType);
+						field_info.SetValue(self, component);
+					}
+					// Update the path value on the StickyAttribute
+					attribute.Path = path;
+					//Debug.Log("Cache size = " + MemberAttributeCache.Count + " rows");
+				}
+			}
+#endif
+		}
+
+#if UNITY_EDITOR
         private static void HandlePlaymodeStateChanged()
         {
             // Don't let this get too big!
-            MemberHashes.Clear();
+            MemberValueHashCache.Clear();
+			MemberAttributeCache.Clear ();
         }
 
         static EditorUtilities()
         {
             EditorApplication.playmodeStateChanged += HandlePlaymodeStateChanged;
         }
-
 #endif
     }
 }

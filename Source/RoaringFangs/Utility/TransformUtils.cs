@@ -460,6 +460,51 @@ namespace RoaringFangs.Utility
                 return FindGameObject(t, name);
             return null;
         }
+
+		// Very WET
+
+		public static void SyncObjectWithPath<T>(
+			Transform parent,
+			ref T component,
+			ref string path,
+			Type type = null)
+			where T: Component
+		{
+			if (parent == null)
+				throw new ArgumentNullException ("Parent cannot be null");
+			if (component == null)
+			{
+				if (!String.IsNullOrEmpty (path))
+				{
+					var transform_at_path = parent.Find (path);
+					if (transform_at_path)
+						component = (T)transform_at_path.GetComponent(type ?? typeof(T));
+				}
+			}
+			else
+			{
+				path = GetTransformPathRelative (parent, component.transform);		
+			}
+		}
+
+		public static void SyncObjectWithPath(Transform parent, ref GameObject game_object, ref string path)
+		{
+			if (parent == null)
+				throw new ArgumentNullException ("Parent cannot be null");
+			if (game_object == null)
+			{
+				var transform_at_path = parent.Find (path);
+				if (transform_at_path)
+					game_object = transform_at_path.gameObject;
+			}
+			else
+			{
+				path = GetTransformPathRelative (parent, game_object.transform);		
+			}
+		}
+
+
+
         #endregion Static Methods
     }
 }
