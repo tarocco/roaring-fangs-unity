@@ -22,12 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
 using UnityEngine;
 
 namespace RoaringFangs.Motion
 {
     [RequireComponent(typeof(BouncyMove))]
-    public class BouncyFollower : MonoBehaviour
+    public class BouncyFollower : MonoBehaviour, ISerializationCallbackReceiver
     {
         [SerializeField]
         private BouncyMove _BouncyMove;
@@ -40,7 +41,11 @@ namespace RoaringFangs.Motion
             protected set { _Target = value; }
         }
 
-        void Start()
+        public void OnAfterDeserialize()
+        {
+        }
+
+        public void OnBeforeSerialize()
         {
             _BouncyMove = _BouncyMove ?? GetComponent<BouncyMove>();
         }
