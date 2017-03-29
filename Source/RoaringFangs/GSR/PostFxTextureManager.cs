@@ -27,7 +27,7 @@ using UnityEngine;
 namespace RoaringFangs.GSR
 {
     [ExecuteInEditMode]
-    public class PostFxTextureManager : TexturableBehavior
+    public class PostFxTextureManager : MonoBehaviour, ITexturable
     {
         [SerializeField]
         private ConfigurableRenderTexture _ConfigurableTexture;
@@ -38,7 +38,7 @@ namespace RoaringFangs.GSR
             private set { _ConfigurableTexture = value; }
         }
 
-        public override Texture Texture
+        public Texture Texture
         {
             get { return ConfigurableTexture.Texture; }
             set { ConfigurableTexture.Texture = value; }

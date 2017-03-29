@@ -22,18 +22,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using RoaringFangs.Attributes;
+using RoaringFangs.Editor;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace RoaringFangs.GSR
 {
-    public abstract class BlitFxManagerBase : MonoBehaviour
+    public abstract class BlitFxManagerBase : MonoBehaviour, ISerializationCallbackReceiver
     {
         public abstract IEnumerable<UpdateDirectiveBase> Directives();
 
+        public void OnBeforeSerialize()
+        {
+            EditorUtilities.OnBeforeSerializeAutoProperties(this);
+        }
+
+        public void OnAfterDeserialize()
+        {
+        }
+
         [Serializable]
-        public class UpdateDirectiveBase
+        public class UpdateDirectiveBase : ISerializationCallbackReceiver
         {
             [SerializeField]
             private String _FieldName;
@@ -65,6 +77,15 @@ namespace RoaringFangs.GSR
             }
 
             protected virtual void Apply(BlitFx effect)
+            {
+            }
+
+            public virtual void OnBeforeSerialize()
+            {
+                EditorUtilities.OnBeforeSerializeAutoProperties(this);
+            }
+
+            public void OnAfterDeserialize()
             {
             }
         }
@@ -104,46 +125,65 @@ namespace RoaringFangs.GSR
         [Serializable]
         public class UpdateDirectiveTexture : UpdateDirectiveBase
         {
-            [SerializeField]
+            [SerializeField, AutoProperty]
+            private MonoBehaviour _Source;
+
+            public ITexturable Source
+            {
+                get { return _Source as ITexturable; }
+                set
+                {
+                    _Texture = null;
+                    _Source = value as MonoBehaviour;
+                }
+            }
+
+            [SerializeField, AutoProperty]
             private Texture _Texture;
 
             public Texture Texture
             {
                 get
                 {
-                    return Source ? Source.Texture ?? _Texture : _Texture;
+                    return _Texture;
                 }
                 set
                 {
-                    if (Source != null)
-                        Source.Texture = value;
+                    _Source = null;
                     _Texture = value;
                 }
             }
 
-            [SerializeField]
-            private TexturableBehavior _Source;
-
-            public TexturableBehavior Source
+            public Texture ActiveTexture
             {
-                get { return _Source; }
-                private set { _Source = value; }
+                get
+                {
+                    if (Source != null)
+                        return Source.Texture;
+                    return Texture;
+                }
             }
 
-            [SerializeField]
-            private TexturableBehavior[] _Destinations;
+            [SerializeField, AutoProperty]
+            private MonoBehaviour[] _Destinations;
 
-            public TexturableBehavior[] Destinations
+            public ITexturable[] Destinations
             {
-                get { return _Destinations; }
-                private set { _Destinations = value; }
+                get { return _Destinations.Cast<ITexturable>().ToArray(); }
+                private set { _Destinations = value.Cast<MonoBehaviour>().ToArray(); }
+            }
+
+            public override void OnBeforeSerialize()
+            {
+                //Source = Source;
+                EditorUtilities.OnBeforeSerializeAutoProperties(this);
             }
 
             //public Vector2 Scale = Vector2.one;
             //public Vector2 Offset = Vector2.zero;
             public UpdateDirectiveTexture()
             {
-                Texture = default(Texture);
+                //SourceTexture = default(Texture);
             }
 
             protected override void Apply(BlitFx effect)
@@ -151,9 +191,9 @@ namespace RoaringFangs.GSR
                 if (effect.Material.HasProperty(FieldName))
                 {
                     var current_texture = effect.Material.GetTexture(FieldName);
-                    if (current_texture != Texture)
+                    if (current_texture != ActiveTexture)
                     {
-                        effect.Material.SetTexture(FieldName, Texture);
+                        effect.Material.SetTexture(FieldName, ActiveTexture);
                     }
                     //effect.Material.SetTextureScale(FieldName, Scale);
                     //effect.Material.SetTextureOffset(FieldName, Offset);
@@ -162,7 +202,7 @@ namespace RoaringFangs.GSR
 
             protected void Apply(ITexturable texturable)
             {
-                texturable.Texture = Texture;
+                texturable.Texture = ActiveTexture;
             }
 
             public override void ApplyAll()

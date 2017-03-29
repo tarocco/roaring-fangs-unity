@@ -22,54 +22,59 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using RoaringFangs.GSR;
+using RoaringFangs.Attributes;
+using RoaringFangs.Editor;
 using UnityEngine;
 
-namespace RoaringFangs.CameraBehavior
+namespace RoaringFangs.GSR
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(Camera))]
-    public class CameraMimick : MonoBehaviour, ITexturable, ISerializationCallbackReceiver
+    public class ShaderCamera : MonoBehaviour, ISerializationCallbackReceiver
     {
         [SerializeField]
         private Camera _Camera;
 
-        [SerializeField]
-        private Camera _Source;
+        [SerializeField, AutoProperty]
+        private Shader _Shader;
 
-        public bool PreserveTexture;
-        public bool PreserveCullingMask;
+        [SerializeField, Delayed, AutoProperty]
+        private string _ReplacementTag;
 
-        public Texture Texture
+        public Shader Shader
         {
-            get
-            {
-                return _Camera.targetTexture;
-            }
+            get { return _Shader; }
             set
             {
-                _Camera.targetTexture = (RenderTexture)value;
+                _Shader = value;
+                if (value != null)
+                    _Camera.SetReplacementShader(value, ReplacementTag);
+                else
+                    _Camera.ResetReplacementShader();
             }
         }
 
-        private void OnPreCull()
+        private void Start()
         {
-            var texture = _Camera.targetTexture;
-            var culling_mask = _Camera.cullingMask;
-            _Camera.CopyFrom(_Source);
-            if (PreserveTexture)
-                _Camera.targetTexture = texture;
-            if (PreserveCullingMask)
-                _Camera.cullingMask = culling_mask;
+            Shader = Shader; // Invoke setter
+        }
+
+        public string ReplacementTag
+        {
+            get { return _ReplacementTag; }
+            set
+            {
+                _ReplacementTag = value;
+                if (Shader != null)
+                    _Camera.SetReplacementShader(Shader, value);
+            }
         }
 
         public void OnBeforeSerialize()
         {
             if (_Camera == null)
                 _Camera = GetComponent<Camera>();
-            if (_Source == null && transform.parent != null)
-                _Source = transform.parent.GetComponentInParent<Camera>();
-            //EditorUtilities.OnBeforeSerializeAutoProperties(this);
+            EditorUtilities.OnBeforeSerializeAutoProperties(this);
         }
 
         public void OnAfterDeserialize()
