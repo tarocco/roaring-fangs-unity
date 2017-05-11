@@ -45,4 +45,9 @@ namespace RoaringFangs.Motion
     {
         Transform Tether { get; set; }
     }
+
+    public interface IUpdatesPosition
+    {
+        void UpdatePosition();
+    }
 }

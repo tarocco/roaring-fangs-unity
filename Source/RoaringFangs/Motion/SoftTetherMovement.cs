@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace RoaringFangs.Motion
 {
-    public class SoftTetherMovement : MonoBehaviour, IHasTether
+    public class SoftTetherMovement : MonoBehaviour, IHasTether, IUpdatesPosition
     {
         [SerializeField]
         private Transform _Target;
@@ -72,7 +72,7 @@ namespace RoaringFangs.Motion
             return 1f - Mathf.Pow(t - 1f, 2f);
         }
 
-        private void Update()
+        public void UpdatePosition()
         {
             if (Target != null)
             {
@@ -92,6 +92,11 @@ namespace RoaringFangs.Motion
                     follow_position = Target.position;
                 transform.position = follow_position + TargetOffset;
             }
+        }
+
+        private void Update()
+        {
+            UpdatePosition();
         }
 #if UNITY_EDITOR
         void OnDrawGizmos()
