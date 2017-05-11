@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
 using RoaringFangs.GSR;
 using UnityEngine;
 
@@ -29,7 +30,7 @@ namespace RoaringFangs.CameraBehavior
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(Camera))]
-    public class CameraMimick : MonoBehaviour, ITexturable, ISerializationCallbackReceiver
+    public class CameraMimick : MonoBehaviour, ITexturable<RenderTexture>, ISerializationCallbackReceiver
     {
         [SerializeField]
         private Camera _Camera;
@@ -37,10 +38,18 @@ namespace RoaringFangs.CameraBehavior
         [SerializeField]
         private Camera _Source;
 
-        public bool PreserveTexture;
-        public bool PreserveCullingMask;
+        [Serializable]
+        public struct PreservationFlags
+        {
+            public bool Texture;
+            public bool CullingMask;
+            public bool ClearFlags;
+            public bool BackgroundColor;
+        }
 
-        public Texture Texture
+        public PreservationFlags SettingsToPreserve;
+
+        public RenderTexture Texture
         {
             get
             {
@@ -48,19 +57,27 @@ namespace RoaringFangs.CameraBehavior
             }
             set
             {
-                _Camera.targetTexture = (RenderTexture)value;
+                _Camera.targetTexture = value;
             }
         }
 
         private void OnPreCull()
         {
-            var texture = _Camera.targetTexture;
-            var culling_mask = _Camera.cullingMask;
+            var prior_texture = _Camera.targetTexture;
+            var prior_culling_mask = _Camera.cullingMask;
+            var prior_clear_flags = _Camera.clearFlags;
+            var prior_background_color = _Camera.backgroundColor;
+
             _Camera.CopyFrom(_Source);
-            if (PreserveTexture)
-                _Camera.targetTexture = texture;
-            if (PreserveCullingMask)
-                _Camera.cullingMask = culling_mask;
+
+            if (SettingsToPreserve.Texture)
+                _Camera.targetTexture = prior_texture;
+            if (SettingsToPreserve.CullingMask)
+                _Camera.cullingMask = prior_culling_mask;
+            if (SettingsToPreserve.ClearFlags)
+                _Camera.clearFlags = prior_clear_flags;
+            if (SettingsToPreserve.BackgroundColor)
+                _Camera.backgroundColor = prior_background_color;
         }
 
         public void OnBeforeSerialize()
