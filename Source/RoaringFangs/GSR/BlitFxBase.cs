@@ -26,16 +26,10 @@ using UnityEngine;
 
 namespace RoaringFangs.GSR
 {
-    public abstract class TexturableBehavior : MonoBehaviour, ITexturable
+    [ExecuteInEditMode]
+    //[RequireComponent(typeof(Camera))]
+    public class BlitFxBase : MonoBehaviour
     {
-        public abstract Texture Texture { get; set; }
-
-        private void Start()
-        {
-        }
-
-        private void Update()
-        {
-        }
+        public Material Material;
     }
 }

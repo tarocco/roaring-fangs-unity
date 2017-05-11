@@ -26,23 +26,23 @@ using UnityEngine;
 
 namespace RoaringFangs.GSR
 {
-    public interface ITexturable
+    public interface ITexturable<TTexture> where TTexture : Texture
     {
-        Texture Texture { get; set; }
+        TTexture Texture { get; set; }
     }
 
-    public interface ITexturable2 : ITexturable
+    public interface ITexturable2<TTexture> : ITexturable<TTexture> where TTexture : Texture
     {
-        Texture Texture1 { get; set; }
+        TTexture Texture1 { get; set; }
     }
 
-    public interface ITexturable3 : ITexturable2
+    public interface ITexturable3<TTexture> : ITexturable2<TTexture> where TTexture : Texture
     {
-        Texture Texture2 { get; set; }
+        TTexture Texture2 { get; set; }
     }
 
-    public interface ITexturable4 : ITexturable3
+    public interface ITexturable4<TTexture> : ITexturable3<TTexture> where TTexture : Texture
     {
-        Texture Texture3 { get; set; }
+        TTexture Texture3 { get; set; }
     }
 }

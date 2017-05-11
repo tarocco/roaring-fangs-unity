@@ -22,52 +22,49 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using System;
+using RoaringFangs.Attributes;
 using UnityEngine;
 
 namespace RoaringFangs.GSR
 {
-    [Serializable]
-    public class ConfigurableRenderTexture : ITexturable<RenderTexture>
+    [ExecuteInEditMode]
+    [RequireComponent(typeof(BlitFx))]
+    public class PreBlitFx : BlitFxBase, ITexturable<RenderTexture>
     {
-        public bool AutoResize;
+        [SerializeField, AutoProperty]
+        private RenderTexture _Texture;
 
-        [Range(1, 16)]
-        public int SquashPower = 8;
-
-        [Range(1, 16)]
-        public int StretchPower = 6;
-
-        public RenderTexture Reference;
-
-        private RenderTexture _Texture = null;
-
+        private RenderTexture _BufferTexture;
         public RenderTexture Texture
         {
             get { return _Texture; }
-            set { _Texture = value; }
+            set
+            {
+                _Texture = value;
+                if(_BufferTexture != null)
+                    _BufferTexture.Release();
+                if (value != null)
+                {
+                    if(
+                        _BufferTexture == null ||
+                        _BufferTexture.width != value.width ||
+                        _BufferTexture.height != value.height ||
+                        _BufferTexture.depth != value.depth ||
+                        _BufferTexture.format != value.format)
+                    _BufferTexture = new RenderTexture(value.width, value.height, value.depth, value.format,
+                        RenderTextureReadWrite.Default);
+                }
+            }
         }
 
-        public void Resize(int target_width, int target_height)
+        public RenderTexture GetBufferedCopyOfTexture()
         {
-            StretchPower = Mathf.Min(SquashPower, StretchPower);
-            int width_rd = (target_width >> SquashPower) << StretchPower;
-            int height_rd = (target_height >> SquashPower) << StretchPower;
+            Graphics.Blit(Texture, _BufferTexture);
+            return _BufferTexture;
+        }
 
-            bool dirty =
-                Texture == null ||
-                Texture.width != width_rd ||
-                Texture.height != height_rd;
-            if (dirty)
-            {
-                RenderTexture.ReleaseTemporary(Texture);
-                Texture = RenderTexture.GetTemporary(
-                    width_rd,
-                    height_rd,
-                    Reference.depth,
-                    Reference.format,
-                    RenderTextureReadWrite.Default);
-            }
+        void Start()
+        {
         }
     }
 }

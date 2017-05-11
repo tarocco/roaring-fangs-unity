@@ -22,19 +22,40 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System.Linq;
 using UnityEngine;
 
 namespace RoaringFangs.GSR
 {
     [ExecuteInEditMode]
-    [RequireComponent(typeof(Camera))]
-    public class BlitFx : MonoBehaviour
+    //[RequireComponent(typeof(Camera))]
+    public class BlitFx : BlitFxBase, ISerializationCallbackReceiver
     {
-        public Material Material;
+        [SerializeField, HideInInspector]
+        private PreBlitFx[] _PreBlitFx;
 
         private void OnRenderImage(RenderTexture src, RenderTexture dest)
         {
+            foreach (var fx in _PreBlitFx)
+            {
+                if (fx.Material != null)
+                { 
+                    Graphics.Blit(fx.GetBufferedCopyOfTexture(), fx.Texture, fx.Material);
+                }
+            }
             Graphics.Blit(src, dest, Material);
+        }
+
+        public void OnBeforeSerialize()
+        {
+            var components = GetComponents<MonoBehaviour>();
+            var components_before_this = components.TakeWhile(c => this != c);
+            var pre_blit_fx = components_before_this.OfType<PreBlitFx>();
+            _PreBlitFx = pre_blit_fx.ToArray();
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }

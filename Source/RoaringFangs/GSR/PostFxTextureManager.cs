@@ -27,7 +27,7 @@ using UnityEngine;
 namespace RoaringFangs.GSR
 {
     [ExecuteInEditMode]
-    public class PostFxTextureManager : MonoBehaviour, ITexturable
+    public class PostFxTextureManager : MonoBehaviour, ITexturable<RenderTexture>
     {
         [SerializeField]
         private ConfigurableRenderTexture _ConfigurableTexture;
@@ -38,21 +38,21 @@ namespace RoaringFangs.GSR
             private set { _ConfigurableTexture = value; }
         }
 
-        public Texture Texture
+        public RenderTexture Texture
         {
             get { return ConfigurableTexture.Texture; }
             set { ConfigurableTexture.Texture = value; }
         }
 
-        private void Start()
-        {
-            ConfigurableTexture.Resize();
-        }
+        //private void Start()
+        //{
+        //    ConfigurableTexture.Resize();
+        //}
 
         private void OnPreRender()
         {
             if (ConfigurableTexture.AutoResize)
-                ConfigurableTexture.Resize();
+                ConfigurableTexture.Resize(Screen.width, Screen.height);
         }
     }
 }
