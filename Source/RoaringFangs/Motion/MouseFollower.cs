@@ -52,14 +52,18 @@ namespace RoaringFangs.Motion
         // Update is called once per frame
         private void Update()
         {
-            var xy = new Plane(Vector3.back, Vector3.zero);
-            var screen_position = Input.mousePosition;
-            screen_position.z = RayDistance;
-            var ray = Camera.main.ScreenPointToRay(screen_position);
-            float t;
-            xy.Raycast(ray, out t);
-            var position = ray.origin + ray.direction * t;
-            transform.position = position;
+            var camera = Camera.main;
+            if (camera != null)
+            {
+                var xy = new Plane(Vector3.back, Vector3.zero);
+                var screen_position = Input.mousePosition;
+                screen_position.z = RayDistance;
+                var ray = camera.ScreenPointToRay(screen_position);
+                float t;
+                xy.Raycast(ray, out t);
+                var position = ray.origin + ray.direction*t;
+                transform.position = position;
+            }
         }
     }
 }
