@@ -35,12 +35,7 @@ using UnityEngine.SceneManagement;
 
 namespace RoaringFangs.ASM
 {
-#if LIGHTSTRIKE_ADVANCED_INSPECTOR
-
     public abstract class SceneStateBase : StateController
-#else
-    public class SceneState : StateController
-#endif
     {
         [SerializeField]
         private string _Tag;
