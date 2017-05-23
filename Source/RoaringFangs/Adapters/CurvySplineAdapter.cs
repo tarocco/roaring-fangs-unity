@@ -119,22 +119,32 @@ namespace RoaringFangs.Adapters
             Self.Refresh();
         }
 
+        public void CreateSplineSegmentAdapters()
+        {
+            if (Self != null)
+            {
+                var segments = Self.GetComponentsInChildren<CurvySplineSegment>();
+                foreach (var segment in segments)
+                {
+                    if (segment.gameObject.GetComponent<CurvySplineSegmentAdapter>() == null)
+                    {
+                        var adapter = segment.gameObject.AddComponent<CurvySplineSegmentAdapter>();
+                    }
+                }
+            }
+        }
+
         [ContextMenu("Configure")]
         public void Configure()
         {
-            var segments = Self.GetComponentsInChildren<CurvySplineSegment>();
-            foreach (var segment in segments)
-            {
-                if (segment.gameObject.GetComponent<CurvySplineSegmentAdapter>() == null)
-                {
-                    var adapter = segment.gameObject.AddComponent<CurvySplineSegmentAdapter>();
-                }
-            }
+            CreateSplineSegmentAdapters();
         }
 
         public void OnBeforeSerialize()
         {
             Self = Self ?? GetComponent<CurvySpline>();
+            // Creating components needs to be done outside of ISerializationCallbackReceiver methods
+            EditorUtilities.AddDelayedOneShotCall(CreateSplineSegmentAdapters);
         }
 
         public void OnAfterDeserialize()
