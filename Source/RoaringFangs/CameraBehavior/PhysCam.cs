@@ -22,31 +22,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-
-using System.Linq;
-
-#if FLUFFYUNDERWARE_CURVY
-using FluffyUnderware.Curvy;
-
-#else
-
 using RoaringFangs.Adapters.FluffyUnderware.Curvy;
-
-#endif
+using System.Linq;
+using RoaringFangs.Attributes;
+using RoaringFangs.Editor;
+using UnityEngine;
 
 namespace RoaringFangs.CameraBehavior
 {
     [RequireComponent(typeof(Rigidbody))]
-    public class PhysCam : MonoBehaviour
+    public class PhysCam : MonoBehaviour, ISerializationCallbackReceiver
     {
         public GameObject Target;
-#if FLUFFYUNDERWARE_CURVY
-        public CurvySpline GuideCameraDirection;
 
-#else
-        public ICurvySpline GuideCameraDirection;
-#endif
+        [SerializeField, AutoProperty("GuideCameraDirection")]
+        private MonoBehaviour _GuideCameraDirectionBehavior;
+
+        public ICurvySpline GuideCameraDirection
+        {
+            get { return _GuideCameraDirectionBehavior as ICurvySpline; }
+            set { _GuideCameraDirectionBehavior = value as MonoBehaviour; }
+        }
 
         public GameObject CameraParent;
         public Camera Camera;
@@ -87,6 +83,15 @@ namespace RoaringFangs.CameraBehavior
                 Quaternion rotation = Quaternion.LookRotation(normal, Vector3.up);
                 CameraParent.transform.localRotation = rotation;
             }
+        }
+
+        public void OnBeforeSerialize()
+        {
+            EditorUtilities.OnBeforeSerializeAutoProperties(this);
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }
