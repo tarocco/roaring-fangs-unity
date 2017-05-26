@@ -23,13 +23,15 @@ THE SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
+
+#if LIGHTSTRIKE_ADVANCED_INSPECTOR
 using AdvancedInspector;
+#endif
 
 namespace RoaringFangs.Attributes
 {
+#if LIGHTSTRIKE_ADVANCED_INSPECTOR
 	public class StickyInEditorAttribute : BackgroundAttribute
     {
         public string Path;
@@ -38,4 +40,17 @@ namespace RoaringFangs.Attributes
         {
         }
     }
+#else
+
+    public class StickyInEditorAttribute : Attribute
+    {
+        public string Path;
+
+        public StickyInEditorAttribute()
+        {
+            // Stubbed
+        }
+    }
+
+#endif
 }
