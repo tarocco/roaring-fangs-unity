@@ -23,6 +23,7 @@ THE SOFTWARE.
 */
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RoaringFangs.Utility
 {
@@ -63,6 +64,26 @@ namespace RoaringFangs.Utility
             if (self.TryGetValue(key, out value))
                 return value;
             return default(TValue);
+        }
+
+        public static int AggregatedHashCode<T>(this ICollection<T> self)
+        {
+            var hashes = self
+                .Where(s => s != null)
+                .Select(s => s.GetHashCode());
+            if (hashes.Any())
+                return hashes.Aggregate((a, b) => a ^ b);
+            return 0;
+        }
+
+        public static int AggregatedInstanceIDs<T>(this ICollection<T> self) where T : UnityEngine.Object
+        {
+            var ids = self
+                .Where(s => s != null)
+                .Select(s => s.GetInstanceID());
+            if (ids.Any())
+                return ids.Aggregate((a, b) => a ^ b);
+            return 0;
         }
     }
 }
