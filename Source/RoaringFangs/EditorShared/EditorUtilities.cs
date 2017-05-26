@@ -167,6 +167,7 @@ namespace RoaringFangs.Editor
             return force_first_update || is_cached;
         }
 
+        /*
         private static TValue UseCachedOrInsert<TKey, TValue>(
             Dictionary<TKey, TValue> cache,
             TKey key,
@@ -178,6 +179,7 @@ namespace RoaringFangs.Editor
             cache[key] = value;
             return value;
         }
+        */
 
         private static TSpecific UseCachedOrInsert<TKey, TValue, TSpecific>(
             Dictionary<TKey, TValue> cache,
@@ -472,6 +474,29 @@ namespace RoaringFangs.Editor
                     //Debug.Log("Cache size = " + MemberAttributeCache.Count + " rows");
                 }
             }
+#endif
+        }
+
+        /// <summary>
+        /// Adds a delayed callback function to the bubbling <see cref="EditorApplication.delayCall"/>
+        /// delegate (event) that removes itself automatically after being called just once.
+        /// </summary>
+        public static void AddDelayedOneShotCall(EditorApplication.CallbackFunction one_shot)
+        {
+#if UNITY_EDITOR
+            var callback = default(EditorApplication.CallbackFunction);
+            callback = () =>
+            {
+                try
+                {
+                    one_shot();
+                }
+                finally
+                {
+                    EditorApplication.delayCall -= callback;
+                }
+            };
+            EditorApplication.delayCall += callback;
 #endif
         }
 
