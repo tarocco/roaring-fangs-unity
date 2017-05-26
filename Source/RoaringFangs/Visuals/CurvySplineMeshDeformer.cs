@@ -53,6 +53,11 @@ namespace RoaringFangs.Visuals
                     .Select(m => m != null ? new Material(m) : null)
                     .ToArray();
                 Renderer.sharedMaterials = instanced_materials;
+                // These should be good enough
+                StretchFactor = StretchFactor;
+                SegmentScale = SegmentScale;
+                SegmentLength = SegmentLength;
+                Color = Color;
             }
         }
 
@@ -404,6 +409,12 @@ namespace RoaringFangs.Visuals
 
         public void OnBeforeSerialize()
         {
+            // Additional validation logic for materials b/c they keep unsetting on the meshes
+            if (Renderer.sharedMaterials == null ||
+                !Renderer.sharedMaterials.Any() ||
+                Renderer.sharedMaterials.All(m => m == null))
+                ReferenceMaterials = ReferenceMaterials;
+
             EditorUtilities.OnBeforeSerializeAutoProperties(this);
         }
 
