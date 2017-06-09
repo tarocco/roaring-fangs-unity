@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace RoaringFangs.Motion
 {
-    public class SoftTetherMovement : MonoBehaviour, IHasTether, IUpdatesPosition
+    public class SoftTetherMovement : MonoBehaviour, IPositionTethered, IUpdatesPosition
     {
         [SerializeField]
         private Transform _Target;
