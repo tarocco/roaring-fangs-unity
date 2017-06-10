@@ -477,13 +477,13 @@ namespace RoaringFangs.Editor
 #endif
         }
 
+#if UNITY_EDITOR
         /// <summary>
         /// Adds a delayed callback function to the bubbling <see cref="EditorApplication.delayCall"/>
         /// delegate (event) that removes itself automatically after being called just once.
         /// </summary>
-        public static void AddDelayedOneShotCall(EditorApplication.CallbackFunction one_shot)
+        public static void AddEditorDelayedOneShotCall(EditorApplication.CallbackFunction one_shot)
         {
-#if UNITY_EDITOR
             var callback = default(EditorApplication.CallbackFunction);
             callback = () =>
             {
@@ -497,8 +497,13 @@ namespace RoaringFangs.Editor
                 }
             };
             EditorApplication.delayCall += callback;
-#endif
         }
+#else
+        public static void AddEditorDelayedOneShotCall(Action one_shot)
+        {
+            // Stubbed
+        }
+#endif
 
 #if UNITY_EDITOR
 

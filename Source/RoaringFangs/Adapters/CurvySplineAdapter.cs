@@ -144,7 +144,7 @@ namespace RoaringFangs.Adapters
         {
             Self = Self ?? GetComponent<CurvySpline>();
             // Creating components needs to be done outside of ISerializationCallbackReceiver methods
-            EditorUtilities.AddDelayedOneShotCall(CreateSplineSegmentAdapters);
+            EditorUtilities.AddEditorDelayedOneShotCall(CreateSplineSegmentAdapters);
         }
 
         public void OnAfterDeserialize()
