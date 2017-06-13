@@ -30,12 +30,55 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace RoaringFangs.Editor
 {
     [InitializeOnLoad]
-    public static class EditorHelper
+    public static partial class EditorHelper
     {
+        #region Classes and Structs
+
+        private struct WeakReferenceAndPath
+        {
+            public WeakReference WeakReference;
+            public string Path;
+        }
+
+        public class HierarchyObjectPathChangedEventArgs : EventArgs
+        {
+            public readonly GameObject GameObject;
+            public readonly string OldPath;
+            public readonly string NewPath;
+
+            public HierarchyObjectPathChangedEventArgs(
+                GameObject game_object,
+                string old_path,
+                string new_path)
+            {
+                GameObject = game_object;
+                OldPath = old_path;
+                NewPath = new_path;
+            }
+        }
+
+        #endregion Classes and Structs
+
+        #region Delegates
+
+        public delegate void HierarchyObjectPathChangedHandler(
+            object sender,
+            HierarchyObjectPathChangedEventArgs args);
+
+        #endregion Delegates
+
+        #region Events
+
+        public static event HierarchyObjectPathChangedHandler
+            HierarchyObjectPathChanged;
+
+        #endregion Events
+
         // TODO: use time, not instruction count
         /// <summary>
         /// Number of parallel operations to perform per update
@@ -53,12 +96,19 @@ namespace RoaringFangs.Editor
         private static IEnumerator HierarchyChangedTask;
         private static IEnumerator _ParallelTasksForever;
 
+        private static Dictionary<int, WeakReferenceAndPath>
+            HierarchyPaths;
+
+        #region Coroutine Functions
+
         private static IEnumerator ParallelTasksForever
         {
             get
             {
+                // Lazy initialize
                 if (_ParallelTasksForever == null)
-                    _ParallelTasksForever = GetParallelTasksForever().GetEnumerator();
+                    _ParallelTasksForever =
+                        GetParallelTasksForever().GetEnumerator();
                 return _ParallelTasksForever;
             }
             set
@@ -71,22 +121,23 @@ namespace RoaringFangs.Editor
         {
             for (;;)
             {
-                object yield_value = null;
-                if (HierarchyChangedTask != null && HierarchyChangedTask.MoveNext())
-                    yield_value = true;
-
-                yield return yield_value;
+                object value_to_yield = null;
+                if (HierarchyChangedTask != null &&
+                    HierarchyChangedTask.MoveNext())
+                    value_to_yield = true;
+                yield return value_to_yield;
             }
         }
 
         private static IEnumerable<GameObject> GetEverythingInHierarchy()
         {
-            var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            var scene = SceneManager.GetActiveScene();
             var root_objects = scene.GetRootGameObjects();
             foreach (GameObject @object in root_objects)
             {
                 yield return @object;
-                var descendants = TransformUtils.GetAllDescendants(@object.transform);
+                var descendants =
+                    TransformUtils.GetAllDescendants(@object.transform);
                 foreach (Transform t in descendants)
                 {
                     if (t != null)
@@ -95,22 +146,20 @@ namespace RoaringFangs.Editor
             }
         }
 
-        private struct WeakReferenceAndPath
-        {
-            public WeakReference WeakReference;
-            public string Path;
-        }
-
-        private static Dictionary<int, WeakReferenceAndPath> HierarchyPaths;
-
         private static IEnumerable DoHierarchyWindowChanged()
         {
             var hierarchy_paths = new Dictionary<int, WeakReferenceAndPath>();
             var everything = GetEverythingInHierarchy();
             foreach (var @object in everything)
             {
-                string path = AnimationUtility.CalculateTransformPath(@object.transform, null);
-                var value = new WeakReferenceAndPath() { WeakReference = new WeakReference(@object), Path = path };
+                string path = AnimationUtility.CalculateTransformPath(
+                    @object.transform,
+                    null);
+                var value = new WeakReferenceAndPath()
+                {
+                    WeakReference = new WeakReference(@object),
+                    Path = path
+                };
                 hierarchy_paths[@object.GetHashCode()] = value;
                 yield return true;
             }
@@ -119,96 +168,103 @@ namespace RoaringFangs.Editor
                 foreach (var h in HierarchyPaths)
                 {
                     WeakReferenceAndPath wp;
-                    bool still_exists = hierarchy_paths.TryGetValue(h.Key, out wp);
-                    // if removed
-                    if (!still_exists)
-                    {
-                        GameObject @object = (GameObject)h.Value.WeakReference.Target;
-                        OnHierarchyObjectPathChange(@object, h.Value.Path ?? "", wp.Path ?? "");
-                        yield return true;
-                    }
+                    var still_exists = hierarchy_paths.TryGetValue(
+                        h.Key,
+                        out wp);
+                    // Skip if still exists
+                    if (still_exists)
+                        continue;
+                    var @object = (GameObject)h.Value.WeakReference.Target;
+                    OnHierarchyObjectPathChange(
+                        @object,
+                        h.Value.Path ?? "",
+                        wp.Path ?? "");
+                    yield return true;
                 }
                 foreach (var h in hierarchy_paths)
                 {
                     WeakReferenceAndPath wp;
-                    bool existed_before = HierarchyPaths.TryGetValue(h.Key, out wp);
-                    // if created or changed
-                    if (!existed_before || wp.Path != h.Value.Path)
-                    {
-                        GameObject @object = (GameObject)h.Value.WeakReference.Target;
-                        OnHierarchyObjectPathChange(@object, wp.Path ?? "", h.Value.Path ?? "");
-                        yield return true;
-                    }
+                    bool existed_before =
+                        HierarchyPaths.TryGetValue(h.Key, out wp);
+                    // Skip if it already existed before
+                    // or if the path did not change
+                    if (existed_before && wp.Path == h.Value.Path)
+                        continue;
+                    GameObject @object =
+                        (GameObject)h.Value.WeakReference.Target;
+                    OnHierarchyObjectPathChange(
+                        @object,
+                        wp.Path ?? "",
+                        h.Value.Path ?? "");
+                    yield return true;
                 }
             }
             HierarchyPaths = hierarchy_paths;
             yield return null;
         }
 
-        public class HierarchyObjectPathChangedEventArgs : EventArgs
-        {
-            public readonly GameObject GameObject;
-            public readonly string OldPath;
-            public readonly string NewPath;
+        #endregion Coroutine Functions
 
-            public HierarchyObjectPathChangedEventArgs(GameObject game_object, string old_path, string new_path) :
-                base()
-            {
-                GameObject = game_object;
-                OldPath = old_path;
-                NewPath = new_path;
-            }
+        private static void OnHierarchyObjectPathChange(
+            GameObject game_object,
+            string old_path, string
+            new_path)
+        {
+            // Skip if there are no event handlers subscribed to the event
+            if (HierarchyObjectPathChanged == null)
+                return;
+            var args = new HierarchyObjectPathChangedEventArgs(
+                game_object,
+                old_path,
+                new_path);
+            HierarchyObjectPathChanged(null, args);
         }
 
-        public delegate void HierarchyObjectPathChangedHandler(object sender, HierarchyObjectPathChangedEventArgs args);
-
-        public static event HierarchyObjectPathChangedHandler HierarchyObjectPathChanged;
-
-        private static void OnHierarchyObjectPathChange(GameObject game_object, string old_path, string new_path)
-        {
-            if (HierarchyObjectPathChanged != null)
-                HierarchyObjectPathChanged(null, new HierarchyObjectPathChangedEventArgs(game_object, old_path, new_path));
-        }
+        #region Event Handlers
 
         private static void HandleUpdate()
         {
             // Return early if playing and no existing tasks remain
             // Queued tasks will be ignored while playing
-            if (EditorApplication.isPlayingOrWillChangePlaymode && ParallelCounter == 0)
+            if (EditorApplication.isPlayingOrWillChangePlaymode &&
+                ParallelCounter == 0)
                 return;
             // Unwrap the parallel tasks loop
             // This is essentially a coroutine
-            // TODO: move batch loop into each task's enumerator for finer control over batch size on a task-type basis
-            if (ParallelTasksForever != null)
+            // TODO: move batch loop into each task's enumerator
+            // for finer control over batch size on a task-type basis
+            if (ParallelTasksForever == null) return;
+            for (int i = 0; i < ParallelTaskOperationsPerUpdate; i++)
             {
-                for (int i = 0; i < ParallelTaskOperationsPerUpdate; i++)
+                try
                 {
-                    try
+                    ParallelTasksForever.MoveNext();
+                }
+                catch (Exception ex)
+                {
+                    ParallelTasksForever = null;
+                    string message =
+                        "Unhandled exception thrown in parallel tasks";
+                    Debug.LogError(message);
+                    throw new InvalidOperationException(message, ex);
+                }
+                if (ParallelTasksForever.Current != null)
+                {
+                    if (ShowParallelTasksMessage)
                     {
-                        ParallelTasksForever.MoveNext();
+                        if (ParallelCounter > ParallelTaskOperationShowDialog)
+                            EditorUtility.DisplayProgressBar(
+                                "Busy",
+                                "Parallel tasks are being performed",
+                                1f);
                     }
-                    catch (Exception ex)
-                    {
-                        ParallelTasksForever = null;
-                        string message = "Unhandled exception thrown in parallel tasks";
-                        Debug.LogError(message);
-                        throw new InvalidOperationException(message, ex);
-                    }
-                    if (ParallelTasksForever.Current != null)
-                    {
-                        if (EditorHelperPreferences.ShowParallelTasksMessage)
-                        {
-                            if (ParallelCounter > ParallelTaskOperationShowDialog)
-                                EditorUtility.DisplayProgressBar("Busy", "Parallel tasks are being performed", 1f);
-                        }
-                        ParallelCounter++;
-                    }
-                    else
-                    {
-                        EditorUtility.ClearProgressBar();
-                        ParallelCounter = 0;
-                        break;
-                    }
+                    ParallelCounter++;
+                }
+                else
+                {
+                    EditorUtility.ClearProgressBar();
+                    ParallelCounter = 0;
+                    break;
                 }
             }
         }
@@ -221,26 +277,18 @@ namespace RoaringFangs.Editor
             HierarchyChangedTask = DoHierarchyWindowChanged().GetEnumerator();
         }
 
-		public static void SetHierarchyObjectPathTracking(bool enabled)
-		{
-			EditorApplication.hierarchyWindowChanged -= HandleHierarchyWindowChanged;
-			if (enabled)
-			{
-				EditorApplication.hierarchyWindowChanged += HandleHierarchyWindowChanged;
-				// Initialize by calling the handler once
-				HandleHierarchyWindowChanged ();
-			}
-		}
+        #endregion Event Handlers
 
         static EditorHelper()
         {
             EditorApplication.update += HandleUpdate;
-			if (EditorHelperPreferences.EnableHierarchyObjectPathTracking)
-			{
-				EditorApplication.hierarchyWindowChanged += HandleHierarchyWindowChanged;
-				// Initialize by calling the handler once at the start
-				HandleHierarchyWindowChanged ();
-			}
+            if (EnableHierarchyObjectPathTracking)
+            {
+                EditorApplication.hierarchyWindowChanged +=
+                    HandleHierarchyWindowChanged;
+                // Initialize by calling the handler once at the start
+                HandleHierarchyWindowChanged();
+            }
         }
     }
 }

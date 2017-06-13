@@ -29,33 +29,46 @@ using UnityEngine;
 
 namespace RoaringFangs.Editor
 {
-    public class EditorHelperPreferences
+    public static partial class EditorHelper
     {
-		private static readonly string EnableHierarchyObjectPathTrackingKey =
-			"EditorHelperPreferences.EnableHierarchyObjectTracking";
+        private const string EnableHierarchyObjectPathTrackingKey =
+            "EditorHelperPreferences.EnableHierarchyObjectTracking";
 
-		private static bool? _EnableHierarchyObjectPathTracking;
+        private static bool? _EnableHierarchyObjectPathTracking;
 
-		public static bool EnableHierarchyObjectPathTracking
-		{
-			get
-			{
-				if (!_EnableHierarchyObjectPathTracking.HasValue)
-					_EnableHierarchyObjectPathTracking = EditorPrefs.GetBool(EnableHierarchyObjectPathTrackingKey, false);
-				return _EnableHierarchyObjectPathTracking.Value;
-			}
-			set
-			{
-				if (value != _EnableHierarchyObjectPathTracking)
-				{
-					EditorPrefs.SetBool(EnableHierarchyObjectPathTrackingKey, value);
-					_EnableHierarchyObjectPathTracking = value;
-					EditorHelper.SetHierarchyObjectPathTracking (value);
-				}
-			}
-		}
+        public static bool EnableHierarchyObjectPathTracking
+        {
+            get
+            {
+                if (!_EnableHierarchyObjectPathTracking.HasValue)
+                    _EnableHierarchyObjectPathTracking =
+                        EditorPrefs.GetBool(
+                            EnableHierarchyObjectPathTrackingKey,
+                            false);
+                return _EnableHierarchyObjectPathTracking.Value;
+            }
+            set
+            {
+                if (value != _EnableHierarchyObjectPathTracking)
+                {
+                    EditorPrefs.SetBool(
+                        EnableHierarchyObjectPathTrackingKey,
+                        value);
+                    _EnableHierarchyObjectPathTracking = value;
+                    EditorApplication.hierarchyWindowChanged -=
+                        HandleHierarchyWindowChanged;
+                    if (value)
+                    {
+                        EditorApplication.hierarchyWindowChanged +=
+                            HandleHierarchyWindowChanged;
+                        // Initialize by calling the handler once
+                        HandleHierarchyWindowChanged();
+                    }
+                }
+            }
+        }
 
-        private static readonly string ShowParallelTasksMessageKey =
+        private const string ShowParallelTasksMessageKey =
             "EditorHelperPreferences.ShowParallelTasksMessage";
 
         private static bool? _ShowParallelTasksMessage;
@@ -65,39 +78,92 @@ namespace RoaringFangs.Editor
             get
             {
                 if (!_ShowParallelTasksMessage.HasValue)
-                    _ShowParallelTasksMessage = EditorPrefs.GetBool(ShowParallelTasksMessageKey, false);
+                    _ShowParallelTasksMessage =
+                        EditorPrefs.GetBool(
+                            ShowParallelTasksMessageKey,
+                            false);
                 return _ShowParallelTasksMessage.Value;
             }
             set
             {
                 if (value != _ShowParallelTasksMessage)
                 {
-                    EditorPrefs.SetBool(ShowParallelTasksMessageKey, value);
+                    EditorPrefs.SetBool(
+                        ShowParallelTasksMessageKey,
+                        value);
                     _ShowParallelTasksMessage = value;
                 }
             }
         }
 
+        private static GUISkin _DefaultSkin;
+
+        private static GUILayoutOption _DebugLabelWidth =
+            GUILayout.Width(192);
+
+        private static GUILayoutOption _DebugLabelHeight =
+            GUILayout.Height(EditorGUIUtility.singleLineHeight);
+
+        private static void DrawLabeledReadout(
+            string label_text,
+            string readout_text)
+        {
+            using (new GUILayout.HorizontalScope())
+            {
+                UnityEngine.GUI.SetNextControlName(label_text + " Label");
+                GUILayout.Label(
+                    label_text,
+                    _DebugLabelWidth);
+                UnityEngine.GUI.SetNextControlName(label_text + " Readout");
+                EditorGUILayout.SelectableLabel(
+                    readout_text,
+                    _DefaultSkin.textField,
+                    _DebugLabelHeight);
+            }
+        }
+
+        private static void DrawLabeledReadout(
+            string label_text,
+            object readout_object)
+        {
+            DrawLabeledReadout(label_text, readout_object.ToString());
+        }
+
         [PreferenceItem("RF Editor Helper")]
         public static void PreferencesGUI()
         {
-			var enabme_hierarchy_object_path_tracking_label = new GUIContent(
-				"Enable Hierarchy Object Path Tracking",
-				"Enables the EditorHelper.HierarchyObjectPathChanged event " +
-				"allowing scripts to know when an object has moved to a " +
-				"different location in the hierarchy. Path change detection " +
-				"is performed as a parallel operation.");
-			EnableHierarchyObjectPathTracking = EditorGUILayout.Toggle(
-				enabme_hierarchy_object_path_tracking_label,
-				EnableHierarchyObjectPathTracking);
-			var show_parallel_tasks_message_label = new GUIContent(
+            _DefaultSkin = _DefaultSkin ?? UnityEngine.GUI.skin;
+            var enable_hierarchy_object_path_tracking_label = new GUIContent(
+                "Enable Hierarchy Object Path Tracking",
+                "Enables the EditorHelper.HierarchyObjectPathChanged event " +
+                "allowing scripts to know when an object has moved to a " +
+                "different location in the hierarchy. Path change detection " +
+                "is performed as a parallel operation.");
+            EnableHierarchyObjectPathTracking = EditorGUILayout.Toggle(
+                enable_hierarchy_object_path_tracking_label,
+                EnableHierarchyObjectPathTracking);
+            var show_parallel_tasks_message_label = new GUIContent(
                 "Show Parallel Tasks Message",
-                "Whether to show a non-modal progress indicator when parallel " +
+                "Shows a non-modal progress indicator when parallel " +
                 "tasks are taking a noticeable amount of time to complete.");
             ShowParallelTasksMessage = EditorGUILayout.Toggle(
                 show_parallel_tasks_message_label,
                 ShowParallelTasksMessage);
-			
+
+            GUILayout.Label("Debug Values");
+
+            using (new GUILayout.VerticalScope(_DefaultSkin.box))
+            {
+                DrawLabeledReadout(
+                    "MemberAttributeCacheSize",
+                    EditorUtilities.MemberAttributeCacheSize);
+                DrawLabeledReadout(
+                    "AutoPropertyMemberValueHashCacheSize",
+                    EditorUtilities.AutoPropertyMemberValueHashCacheSize);
+                DrawLabeledReadout(
+                    "StickyPropertyMemberValueHashCacheSize",
+                    EditorUtilities.StickyPropertyMemberValueHashCacheSize);
+            }
         }
     }
 }
