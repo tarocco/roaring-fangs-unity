@@ -23,6 +23,7 @@ THE SOFTWARE.
 */
 
 using System;
+using RoaringFangs.Attributes;
 using RoaringFangs.GSR;
 using UnityEngine;
 
@@ -37,6 +38,12 @@ namespace RoaringFangs.CameraBehavior
 
         [SerializeField]
         private Camera _Source;
+
+        public Camera Source
+        {
+            get { return _Source; }
+            set { _Source = value; }
+        }
 
         [Serializable]
         public struct PreservationFlags
@@ -63,29 +70,36 @@ namespace RoaringFangs.CameraBehavior
 
         private void OnPreCull()
         {
-            var prior_texture = _Camera.targetTexture;
-            var prior_culling_mask = _Camera.cullingMask;
-            var prior_clear_flags = _Camera.clearFlags;
-            var prior_background_color = _Camera.backgroundColor;
+            if (enabled && _Source)
+            {
+                var prior_texture = _Camera.targetTexture;
+                var prior_culling_mask = _Camera.cullingMask;
+                var prior_clear_flags = _Camera.clearFlags;
+                var prior_background_color = _Camera.backgroundColor;
 
-            _Camera.CopyFrom(_Source);
+                _Camera.CopyFrom(_Source);
 
-            if (SettingsToPreserve.Texture)
-                _Camera.targetTexture = prior_texture;
-            if (SettingsToPreserve.CullingMask)
-                _Camera.cullingMask = prior_culling_mask;
-            if (SettingsToPreserve.ClearFlags)
-                _Camera.clearFlags = prior_clear_flags;
-            if (SettingsToPreserve.BackgroundColor)
-                _Camera.backgroundColor = prior_background_color;
+                if (SettingsToPreserve.Texture)
+                    _Camera.targetTexture = prior_texture;
+                if (SettingsToPreserve.CullingMask)
+                    _Camera.cullingMask = prior_culling_mask;
+                if (SettingsToPreserve.ClearFlags)
+                    _Camera.clearFlags = prior_clear_flags;
+                if (SettingsToPreserve.BackgroundColor)
+                    _Camera.backgroundColor = prior_background_color;
+            }
+        }
+
+        private void Start()
+        {
         }
 
         public void OnBeforeSerialize()
         {
             if (_Camera == null)
                 _Camera = GetComponent<Camera>();
-            if (_Source == null && transform.parent != null)
-                _Source = transform.parent.GetComponentInParent<Camera>();
+            if (Source == null && transform.parent != null)
+                Source = transform.parent.GetComponentInParent<Camera>();
             //EditorUtilities.OnBeforeSerializeAutoProperties(this);
         }
 

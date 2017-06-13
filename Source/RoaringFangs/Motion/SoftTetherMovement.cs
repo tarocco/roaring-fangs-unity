@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace RoaringFangs.Motion
 {
-    public class SoftTetherMovement : MonoBehaviour, IHasTether, IUpdatesPosition
+    public class SoftTetherMovement : MonoBehaviour, IPositionTethered, IUpdatesPosition
     {
         [SerializeField]
         private Transform _Target;
@@ -40,12 +40,12 @@ namespace RoaringFangs.Motion
         public Vector3 TargetOffset;
 
         [SerializeField]
-        private Transform _Tether;
+        private Transform _Anchor;
 
-        public Transform Tether
+        public Transform Anchor
         {
-            get { return _Tether; }
-            set { _Tether = value; }
+            get { return _Anchor; }
+            set { _Anchor = value; }
         }
 
         public float FollowDistanceMin = 0f;
@@ -77,15 +77,15 @@ namespace RoaringFangs.Motion
             if (Target != null)
             {
                 Vector3 follow_position;
-                if (Tether != null)
+                if (_Anchor != null)
                 {
-                    Vector3 tether_position = Tether.position;
+                    Vector3 tether_position = _Anchor.position;
                     Vector3 difference = Target.position - tether_position;
-                    Vector3 difference_inverse = Tether.InverseTransformVector(difference);
+                    Vector3 difference_inverse = _Anchor.InverseTransformVector(difference);
                     float alpha = Mathf.Clamp01((difference_inverse.magnitude - FollowDistanceMin) / (SmoothingFactor * FollowDistanceMax));
                     float beta = FollowDistanceMin + SoftLimitOut2(alpha) * (FollowDistanceMax - FollowDistanceMin);
                     difference_inverse = difference_inverse.normalized * beta;
-                    difference = Tether.TransformVector(difference_inverse);
+                    difference = _Anchor.TransformVector(difference_inverse);
                     follow_position = tether_position + difference;
                 }
                 else
@@ -101,9 +101,9 @@ namespace RoaringFangs.Motion
 #if UNITY_EDITOR
         void OnDrawGizmos()
         {
-            if (Tether != null)
+            if (_Anchor != null)
             {
-                Gizmos.matrix = Tether.localToWorldMatrix;
+                Gizmos.matrix = _Anchor.localToWorldMatrix;
                 Gizmos.color = Color.magenta;
                 Gizmos.DrawWireSphere(Vector3.zero, FollowDistanceMin);
                 Gizmos.color = Color.yellow;

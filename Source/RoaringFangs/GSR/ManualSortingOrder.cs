@@ -27,31 +27,26 @@ using UnityEngine;
 namespace RoaringFangs.GSR
 {
     [ExecuteInEditMode]
-    public class ManualSortingOrder : MonoBehaviour
+    public class ManualSortingOrder : MonoBehaviour, ISerializationCallbackReceiver
     {
+        private Renderer _Renderer;
+
         public string SortingLayerName = "Default";
         public int SortingOrder = 0;
 
-        private void Start()
-        {
-            Renderer renderer = GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                renderer.sortingLayerName = SortingLayerName;
-                renderer.sortingOrder = SortingOrder;
-            }
-        }
-
         private void Update()
         {
-            Renderer renderer = GetComponent<Renderer>();
-            if (renderer != null &&
-               (renderer.sortingOrder != SortingOrder ||
-                renderer.sortingLayerName != SortingLayerName))
-            {
-                renderer.sortingLayerName = SortingLayerName;
-                renderer.sortingOrder = SortingOrder;
-            }
+            _Renderer.sortingLayerName = SortingLayerName;
+            _Renderer.sortingOrder = SortingOrder;
+        }
+
+        public void OnBeforeSerialize()
+        {
+            _Renderer = GetComponent<Renderer>();
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }

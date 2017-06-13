@@ -23,6 +23,7 @@ THE SOFTWARE.
 */
 
 using System.Collections.Generic;
+using RoaringFangs.Attributes;
 using UnityEngine;
 
 namespace RoaringFangs.GSR
@@ -32,28 +33,28 @@ namespace RoaringFangs.GSR
     {
         #region Updaters
 
-        [SerializeField]
-        private BlitFxManagerBase.UpdateDirectiveTexture[] _UpdateTextures;
+        [SerializeField, AutoProperty]
+        private UpdateDirectiveTexture[] _UpdateTextures = {};
 
-        public BlitFxManagerBase.UpdateDirectiveTexture[] UpdateTextures
+        public UpdateDirectiveTexture[] UpdateTextures
         {
             get { return _UpdateTextures; }
             private set { _UpdateTextures = value; }
         }
 
-        [SerializeField]
-        private BlitFxManagerBase.UpdateDirectiveColor[] _UpdateColors;
+        [SerializeField, AutoProperty]
+        private UpdateDirectiveColor[] _UpdateColors = {};
 
-        public BlitFxManagerBase.UpdateDirectiveColor[] UpdateColors
+        public UpdateDirectiveColor[] UpdateColors
         {
             get { return _UpdateColors; }
             private set { _UpdateColors = value; }
         }
 
-        [SerializeField]
-        private BlitFxManagerBase.UpdateDirectiveFloat[] _UpdateFloats;
+        [SerializeField, AutoProperty]
+        private UpdateDirectiveFloat[] _UpdateFloats = {};
 
-        public BlitFxManagerBase.UpdateDirectiveFloat[] UpdateFloats
+        public UpdateDirectiveFloat[] UpdateFloats
         {
             get { return _UpdateFloats; }
             private set { _UpdateFloats = value; }

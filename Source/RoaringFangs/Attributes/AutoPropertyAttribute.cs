@@ -23,20 +23,28 @@ THE SOFTWARE.
 */
 
 using System;
-using System.Collections.Generic;
-using System.Reflection;
-using UnityEngine;
 
 namespace RoaringFangs.Attributes
 {
+    /// <summary>
+    /// Attribute for marking backing fields of properties so that their
+    /// get/set accessors are invoked during in-editor serialization by calling
+    /// <see cref="Editor.EditorUtilities.OnBeforeSerializeAutoProperties{TSelf}(TSelf)"/>
+    /// </summary>
+    /// <remarks>
+    /// Only handles fields...for now...
+    /// </remarks>
+    [AttributeUsage(AttributeTargets.Field)]
     public class AutoPropertyAttribute : Attribute
     {
         public readonly string CorrespondingMemberName;
         public int _MemberValueHash;
+
         public AutoPropertyAttribute() :
             base()
         {
         }
+
         public AutoPropertyAttribute(string corresponding_member_name) :
             this()
         {

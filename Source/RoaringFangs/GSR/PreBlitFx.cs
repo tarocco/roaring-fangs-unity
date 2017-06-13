@@ -23,13 +23,14 @@ THE SOFTWARE.
 */
 
 using RoaringFangs.Attributes;
+using RoaringFangs.Editor;
 using UnityEngine;
 
 namespace RoaringFangs.GSR
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(BlitFx))]
-    public class PreBlitFx : BlitFxBase, ITexturable<RenderTexture>
+    public class PreBlitFx : BlitFxBase, ITexturable<RenderTexture>, ISerializationCallbackReceiver
     {
         [SerializeField, AutoProperty]
         private RenderTexture _Texture;
@@ -63,7 +64,16 @@ namespace RoaringFangs.GSR
             return _BufferTexture;
         }
 
-        void Start()
+        private void Start()
+        {
+        }
+
+        public void OnBeforeSerialize()
+        {
+            EditorUtilities.OnBeforeSerializeAutoProperties(this);
+        }
+
+        public void OnAfterDeserialize()
         {
         }
     }

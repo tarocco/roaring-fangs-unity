@@ -275,7 +275,10 @@ namespace RoaringFangs.Animation.Editor
             if (type == typeof(RegExTargetGroup))
                 RegExTargetGroup.Create();
             else if (type == typeof(MutexHelper))
-                MutexHelper.Create();
+            {
+                //MutexHelper.Create();
+                RoaringFangs.Editor.MenuItems.CreateMutexHelper();
+            }
             _Include = null;
         }
 

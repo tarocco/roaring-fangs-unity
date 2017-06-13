@@ -143,7 +143,7 @@ namespace RoaringFangs.ASM
         public Transform ConfigurationObjectCache
         {
             get { return _ConfigurationObjectCache; }
-            private set { _ConfigurationObjectCache = value; }
+            set { _ConfigurationObjectCache = value; }
         }
 
         /// <summary>

@@ -54,5 +54,20 @@ namespace RoaringFangs.GSR
             if (ConfigurableTexture.AutoResize)
                 ConfigurableTexture.Resize(Screen.width, Screen.height);
         }
+#if UNITY_EDITOR
+        [UnityEditor.MenuItem("Roaring Fangs/GSR/PostFX Texture Manager")]
+        [UnityEditor.MenuItem("GameObject/Roaring Fangs/GSR/PostFX Texture Manager")]
+        private static PostFxTextureManager Create()
+        {
+            var created_game_object = new GameObject("New PostFX Texture Manager");
+            var selected_game_object = UnityEditor.Selection.activeObject as GameObject;
+            if (selected_game_object)
+                created_game_object.transform.SetParent(selected_game_object.transform);
+            var self = created_game_object.AddComponent<PostFxTextureManager>();
+            UnityEditor.Selection.activeObject = created_game_object;
+            UnityEditor.Undo.RegisterCreatedObjectUndo(created_game_object, "New PostFX Texture Manager");
+            return self;
+        }
+#endif
     }
 }

@@ -35,29 +35,20 @@ namespace RoaringFangs.GSR
     {
         public abstract IEnumerable<UpdateDirectiveBase> Directives();
 
-        public void OnBeforeSerialize()
-        {
-            EditorUtilities.OnBeforeSerializeAutoProperties(this);
-        }
-
-        public void OnAfterDeserialize()
-        {
-        }
-
         [Serializable]
-        public class UpdateDirectiveBase : ISerializationCallbackReceiver
+        public abstract class UpdateDirectiveBase : ISerializationCallbackReceiver
         {
-            [SerializeField]
-            private String _FieldName;
+            [SerializeField, AutoProperty]
+            private string _FieldName;
 
-            public String FieldName
+            public string FieldName
             {
                 get { return _FieldName; }
                 set { _FieldName = value; }
             }
 
             [SerializeField]
-            private BlitFxBase[] _Effects;
+            private BlitFxBase[] _Effects = {};
 
             public BlitFxBase[] Effects
             {
@@ -76,9 +67,7 @@ namespace RoaringFangs.GSR
                 }
             }
 
-            protected virtual void Apply(BlitFxBase effect)
-            {
-            }
+            protected abstract void Apply(BlitFxBase effect);
 
             public virtual void OnBeforeSerialize()
             {
@@ -102,7 +91,9 @@ namespace RoaringFangs.GSR
 
             protected override void Apply(BlitFxBase effect)
             {
-                effect.Material.SetFloat(FieldName, Value);
+                var material = effect.Material;
+                if(material)
+                    material.SetFloat(FieldName, Value);
             }
         }
 
@@ -118,7 +109,9 @@ namespace RoaringFangs.GSR
 
             protected override void Apply(BlitFxBase effect)
             {
-                effect.Material.SetColor(FieldName, Value);
+                var material = effect.Material;
+                if(material)
+                    material.SetColor(FieldName, Value);
             }
         }
 
@@ -130,11 +123,11 @@ namespace RoaringFangs.GSR
 
             public ITexturable<RenderTexture> Source
             {
-                get { return _Source as ITexturable<RenderTexture>; }
+                get { return (ITexturable<RenderTexture>)_Source; }
                 set
                 {
                     //_Texture = null;
-                    _Source = value as MonoBehaviour;
+                    _Source = (MonoBehaviour)value;
                 }
             }
 
@@ -189,16 +182,18 @@ namespace RoaringFangs.GSR
 
             protected override void Apply(BlitFxBase effect)
             {
-                if (effect.Material.HasProperty(FieldName))
+                var material = effect.Material;
+                if (material == null)
+                    return;
+                if (!material.HasProperty(FieldName))
+                    return;
+                var current_texture = material.GetTexture(FieldName);
+                if (current_texture != ActiveTexture)
                 {
-                    var current_texture = effect.Material.GetTexture(FieldName);
-                    if (current_texture != ActiveTexture)
-                    {
-                        effect.Material.SetTexture(FieldName, ActiveTexture);
-                    }
-                    //effect.Material.SetTextureScale(FieldName, Scale);
-                    //effect.Material.SetTextureOffset(FieldName, Offset);
+                    material.SetTexture(FieldName, ActiveTexture);
                 }
+                //effect.Material.SetTextureScale(FieldName, Scale);
+                //effect.Material.SetTextureOffset(FieldName, Offset);
             }
 
             protected void Apply(ITexturable<RenderTexture> texturable)
@@ -216,6 +211,15 @@ namespace RoaringFangs.GSR
                     Apply(texturable);
                 }
             }
+        }
+
+        public virtual void OnBeforeSerialize()
+        {
+            EditorUtilities.OnBeforeSerializeAutoProperties(this);
+        }
+
+        public virtual void OnAfterDeserialize()
+        {
         }
     }
 }

@@ -27,9 +27,8 @@ using UnityEngine;
 namespace RoaringFangs.GSR
 {
     [ExecuteInEditMode]
-    //[RequireComponent(typeof(Camera))]
-    public class BlitFxBase : MonoBehaviour
+    public abstract class BlitFxBase : MonoBehaviour
     {
-        public Material Material;
+        public Material Material = default(Material);
     }
 }

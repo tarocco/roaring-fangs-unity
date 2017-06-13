@@ -28,29 +28,33 @@ using UnityEngine;
 namespace RoaringFangs.GSR
 {
     [ExecuteInEditMode]
-    //[RequireComponent(typeof(Camera))]
+    [RequireComponent(typeof(Camera))]
     public class BlitFx : BlitFxBase, ISerializationCallbackReceiver
     {
-        [SerializeField, HideInInspector]
+        [SerializeField]
+        //[HideInInspector]
         private PreBlitFx[] _PreBlitFx;
 
         private void OnRenderImage(RenderTexture src, RenderTexture dest)
         {
             foreach (var fx in _PreBlitFx)
             {
-                if (fx.Material != null)
+                if (fx.enabled && fx.Material != null)
                 { 
                     Graphics.Blit(fx.GetBufferedCopyOfTexture(), fx.Texture, fx.Material);
                 }
             }
-            Graphics.Blit(src, dest, Material);
+            if(Material != null)
+                Graphics.Blit(src, dest, Material);
         }
 
         public void OnBeforeSerialize()
         {
+            // Get all of the PreBlitFx components before this component
             var components = GetComponents<MonoBehaviour>();
             var components_before_this = components.TakeWhile(c => this != c);
-            var pre_blit_fx = components_before_this.OfType<PreBlitFx>();
+            var components_between_previous_blitfx = components_before_this.Reverse().TakeWhile(c => !(c is BlitFx));
+            var pre_blit_fx = components_between_previous_blitfx.OfType<PreBlitFx>();
             _PreBlitFx = pre_blit_fx.ToArray();
         }
 
