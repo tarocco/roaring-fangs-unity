@@ -24,69 +24,61 @@ THE SOFTWARE.
 
 
 using UnityEngine;
+using System.Linq;
 
 namespace RoaringFangs.ASM
 {
+    /// <summary>
+    /// TODO: agnosticize *State and *StateMachine behaviors
+    /// </summary>
     public class SceneStateMachine : SceneStateBase
     {
-        public override void OnManagedStateMachineVerifyEnter(
-            ControlledStateManager manager,
-            ManagedStateMachineEventArgs args)
+        [SerializeField]
+        [Tooltip("If enabled, OnStateMachineEnter will be raised on parent " +
+                 "state machines for the layer default state when the " +
+                 "animator starts.")]
+        private bool _EnterAtStart = true;
+
+        public bool EnterAtStart
         {
-            DoVerifyEnter();
+            get { return _EnterAtStart; }
+            set { _EnterAtStart = value; }
+        }
+        private bool _IsActive;
+        public override void OnStateEnter(
+            Animator animator,
+            AnimatorStateInfo state_info,
+            int layer_index)
+        {
+            // Do this here because normally OnStateMachineEnter is not
+            // raised if we started inside this state machine.
+            if (EnterAtStart && !_IsActive)
+                OnStateMachineEnter(animator, state_info.fullPathHash);
+            _IsActive = true;
         }
 
-        public override void OnManagedStateMachineEnter(
-            ControlledStateManager manager,
-            ManagedStateMachineEventArgs args)
+        public override void OnStateExit(
+            Animator animator,
+            AnimatorStateInfo state_info,
+            int layer_index)
         {
-            DoEnter(manager);
+            // Don't set _IsActive to false here because
+            // OnStateExit is called after OnStateEnter.
+
+            // Changing sub-states would incorrectly leave
+            // _IsActive set to false.
         }
 
-        public override void OnManagedStateMachineVerifyExit(
-            ControlledStateManager manager,
-            ManagedStateMachineEventArgs args)
+        public override void OnStateMachineEnter(Animator animator, int state_machine_path_hash)
         {
-            DoVerifyExit();
+            base.OnStateMachineEnter(animator, state_machine_path_hash);
+            _IsActive = true;
         }
 
-        public override void OnManagedStateMachineExit(
-            ControlledStateManager manager,
-            ManagedStateMachineEventArgs args)
+        public override void OnStateMachineExit(Animator animator, int state_machine_path_hash)
         {
-            DoExit(manager);
-        }
-
-        public override void OnManagedStateVerifyEnter(
-            ControlledStateManager manager,
-            ManagedStateEventArgs args)
-        {
-            if(manager.AcceptStateMachineStateEvents)
-                DoVerifyEnter();
-        }
-
-        public override void OnManagedStateEnter(
-            ControlledStateManager manager,
-            ManagedStateEventArgs args)
-        {
-            if (manager.AcceptStateMachineStateEvents)
-                DoEnter(manager);
-        }
-
-        public override void OnManagedStateVerifyExit(
-            ControlledStateManager manager,
-            ManagedStateEventArgs args)
-        {
-            if (manager.AcceptStateMachineStateEvents)
-                DoVerifyExit();
-        }
-
-        public override void OnManagedStateExit(
-            ControlledStateManager manager,
-            ManagedStateEventArgs args)
-        {
-            if (manager.AcceptStateMachineStateEvents)
-                DoExit(manager);
+            base.OnStateMachineExit(animator, state_machine_path_hash);
+            _IsActive = false;
         }
     }
 }

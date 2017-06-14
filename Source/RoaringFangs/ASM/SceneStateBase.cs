@@ -145,5 +145,61 @@ namespace RoaringFangs.ASM
             }
             ConfigurationObjects = instances;
         }
+
+        public override void OnManagedStateVerifyEnter(
+            ControlledStateManager manager,
+            ManagedStateEventArgs args)
+        {
+            DoVerifyEnter();
+        }
+
+        public override void OnManagedStateEnter(
+            ControlledStateManager manager,
+            ManagedStateEventArgs args)
+        {
+            DoEnter(manager);
+        }
+
+        public override void OnManagedStateVerifyExit(
+            ControlledStateManager manager,
+            ManagedStateEventArgs args)
+        {
+            DoVerifyExit();
+        }
+
+        public override void OnManagedStateExit(
+            ControlledStateManager manager,
+            ManagedStateEventArgs args)
+        {
+            DoExit(manager);
+        }
+
+        public override void OnManagedStateMachineVerifyEnter(
+            ControlledStateManager manager,
+            ManagedStateMachineEventArgs args)
+        {
+            DoVerifyEnter();
+        }
+
+        public override void OnManagedStateMachineEnter(
+            ControlledStateManager manager,
+            ManagedStateMachineEventArgs args)
+        {
+            DoEnter(manager);
+        }
+
+        public override void OnManagedStateMachineVerifyExit(
+            ControlledStateManager manager,
+            ManagedStateMachineEventArgs args)
+        {
+            DoVerifyExit();
+        }
+
+        public override void OnManagedStateMachineExit(
+            ControlledStateManager manager,
+            ManagedStateMachineEventArgs args)
+        {
+            DoExit(manager);
+        }
     }
 }

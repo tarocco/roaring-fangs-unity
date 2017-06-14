@@ -111,8 +111,6 @@ namespace RoaringFangs.ASM
 
         private int _LastGoodStatePathHash;
 
-        private Queue<Action> _PreEventActionsQueue = new Queue<Action>();
-
         private Queue<IManagedStateEventInfo> _StateEventQueue = new Queue<IManagedStateEventInfo>();
 
         [SerializeField, HideInInspector]
@@ -120,8 +118,6 @@ namespace RoaringFangs.ASM
 
         [SerializeField]
         private bool _UnloadScenesAtStart;
-
-        private bool _AcceptStateMachineStateEvents;
 
         #endregion Backing Fields
 
@@ -185,7 +181,7 @@ namespace RoaringFangs.ASM
         protected HashSet<IStateController> ActiveStateControllersSet
         {
             get { return _ActiveStateControllersSet; }
-            private set { _ActiveStateControllersSet = value; }
+            //private set { _ActiveStateControllersSet = value; }
         }
 
         /// <summary>
@@ -200,14 +196,6 @@ namespace RoaringFangs.ASM
         protected Queue<IEnumerator> CoroutineQueue
         {
             get { return _CoroutineQueue; }
-        }
-
-        /// <summary>
-        /// Queue of actions performed just before managed state events afer verification passes
-        /// </summary>
-        protected Queue<Action> PreEventActionsQueue
-        {
-            get { return _PreEventActionsQueue; }
         }
 
         protected Queue<IManagedStateEventInfo> StateEventQueue
@@ -264,12 +252,6 @@ namespace RoaringFangs.ASM
             private set { _AnyStateMachineExit = value; }
         }
 
-        public bool AcceptStateMachineStateEvents
-        {
-            get { return _AcceptStateMachineStateEvents; }
-            protected set { _AcceptStateMachineStateEvents = value; }
-        }
-
         #endregion Events
 
         /// <summary>
@@ -314,16 +296,8 @@ namespace RoaringFangs.ASM
 
         public void OnStateControllerEntry(object sender, StateControllerEventArgs args)
         {
-            var state_controller = sender as IStateController;
+            var state_controller = (IStateController)sender;
             ActiveStateControllersSet.Add(state_controller);
-            // TODO
-            /*
-            var info = args.AnimatorStateInfo;
-            var state_handlers = StateHandlersNameHashLookup[info.shortNameHash];
-            foreach (var state_handler in state_handlers)
-                state_handler.OnManagedStateEnter(this, args.Animator, args.AnimatorStateInfo, args.LayerIndex);
-            AnyStateEntry.Invoke(this, args);
-            */
 
             var info = new ManagedStateEventInfo<ManagedStateEventArgs>(
                 state_controller.OnManagedStateVerifyEnter,
@@ -335,17 +309,8 @@ namespace RoaringFangs.ASM
 
         public void OnStateControllerExit(object sender, StateControllerEventArgs args)
         {
-            var state_controller = sender as IStateController;
+            var state_controller = (IStateController)sender;
             ActiveStateControllersSet.Remove(state_controller);
-            // TODO
-            /*
-            var info = args.AnimatorStateInfo;
-            var state_handlers = StateHandlersNameHashLookup[info.shortNameHash];
-            foreach (var state_handler in state_handlers)
-            {
-                state_handler.OnManagedStateExit(this, args.Animator, args.AnimatorStateInfo, args.LayerIndex);
-            }
-            */
 
             var info = new ManagedStateEventInfo<ManagedStateEventArgs>(
                 state_controller.OnManagedStateVerifyExit,
@@ -357,14 +322,7 @@ namespace RoaringFangs.ASM
 
         public void OnStateControllerUpdate(object sender, StateControllerEventArgs args)
         {
-            var state_controller = sender as IStateController;
-            // TODO
-            /*
-            var info = args.AnimatorStateInfo;
-            var state_handlers = StateHandlersNameHashLookup[info.shortNameHash];
-            foreach (var state_handler in state_handlers)
-                state_handler.OnManagedStateUpdate(this, args.Animator, args.AnimatorStateInfo, args.LayerIndex);
-            */
+            var state_controller = (IStateController)sender;
 
             var info = new ManagedStateEventInfo<ManagedStateEventArgs>(
                 state_controller.OnManagedStateVerifyUpdate,
@@ -376,8 +334,8 @@ namespace RoaringFangs.ASM
 
         public void OnStateMachineControllerEntry(object sender, StateMachineControllerEventArgs args)
         {
-            var state_controller = sender as IStateController;
-
+            var state_controller = (IStateController)sender;
+            ActiveStateControllersSet.Add(state_controller);
             var info = new ManagedStateEventInfo<ManagedStateMachineEventArgs>(
                 state_controller.OnManagedStateMachineVerifyEnter,
                 state_controller.OnManagedStateMachineEnter,
@@ -388,14 +346,24 @@ namespace RoaringFangs.ASM
 
         public void OnStateMachineControllerExit(object sender, StateMachineControllerEventArgs args)
         {
-            var state_controller = sender as IStateController;
-
+            var state_controller = (IStateController)sender;
+            ActiveStateControllersSet.Remove(state_controller);
             var info = new ManagedStateEventInfo<ManagedStateMachineEventArgs>(
                 state_controller.OnManagedStateMachineVerifyExit,
                 state_controller.OnManagedStateMachineExit,
                 AnyStateMachineExit.Invoke,
                 new ManagedStateMachineEventArgs(state_controller, args.Animator, args.StateMachinePathHash));
             StateEventQueue.Enqueue(info);
+        }
+
+        public void OnStateMachineControllerStateEntry(object sender, StateControllerEventArgs args)
+        {
+            
+        }
+
+        public void OnStateMachineControllerStateExit(object sender, StateControllerEventArgs args)
+        {
+            
         }
 
         /// <summary>
@@ -429,7 +397,6 @@ namespace RoaringFangs.ASM
         /// </summary>
         protected void ClearStateEventInfoQueues()
         {
-            PreEventActionsQueue.Clear();
             StateEventQueue.Clear();
         }
 
@@ -438,8 +405,6 @@ namespace RoaringFangs.ASM
         /// </summary>
         protected void ProcessAllStateEventQueue()
         {
-            //var all_event_queues = StateExitEventQueue.Concat(StateEnterEventQueue).Concat(StateUpdateEventQueue);
-            ProcessActionQueue(PreEventActionsQueue);
             VerifyStateEventInfo(StateEventQueue);
             ProcessStateEventInfoQueue(StateEventQueue);
         }
@@ -462,16 +427,6 @@ namespace RoaringFangs.ASM
             // TODO: specify layer index?
             var animator_state_info = Animator.GetCurrentAnimatorStateInfo(0);
             LastGoodStatePathHash = animator_state_info.fullPathHash;
-        }
-
-        /// <summary>
-        /// Dequeues and invokes all of the <see cref="Actions"/> in <paramref name="queue"/>.
-        /// </summary>
-        /// <param name="queue"></param>
-        private void ProcessActionQueue(Queue<Action> queue)
-        {
-            while (queue.Count > 0)
-                queue.Dequeue()();
         }
 
         private IEnumerable ProcessCoroutineQueue()
@@ -516,16 +471,11 @@ namespace RoaringFangs.ASM
             }
 
             StartCoroutine(ProcessCoroutineQueue().GetEnumerator());
-
-            // HACK: Enable this here in order to capture StateMachineController OnStateEnter/Exit events only once at the start
-            AcceptStateMachineStateEvents = true;
         }
 
         private void Update()
         {
             SafelyProcessEventQueue();
-            // HACK: Disable this here in order to stop capturing StateMachineController OnStateEnter/Exit events -- only the first set of calls from the animator should include these
-            AcceptStateMachineStateEvents &= !ActiveStateControllers.Any();
         }
 
         /// <summary>

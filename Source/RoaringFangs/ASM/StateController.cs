@@ -22,9 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-
-using RoaringFangs.Editor;
 #if LIGHTSTRIKE_ADVANCED_INSPECTOR
+
 using AdvancedInspector;
 
 #endif
@@ -34,6 +33,7 @@ using UnityEngine;
 namespace RoaringFangs.ASM
 {
 #if LIGHTSTRIKE_ADVANCED_INSPECTOR
+
     public abstract class StateController : AIStateMachineBehaviour, IStateController
 #else
     public abstract class StateController : StateMachineBehaviour, IStateController
@@ -41,13 +41,7 @@ namespace RoaringFangs.ASM
     {
         public abstract string Tag { get; set; }
 
-        private ControlledStateManager _CachedControlledStateManager;
-
-        protected ControlledStateManager CachedControlledStateManager
-        {
-            get { return _CachedControlledStateManager; }
-            set { _CachedControlledStateManager = value; }
-        }
+        protected ControlledStateManager CachedControlledStateManager { get; set; }
 
         protected ControlledStateManager FindControlledStateManager(GameObject game_object)
         {
@@ -68,17 +62,12 @@ namespace RoaringFangs.ASM
             CachedControlledStateManager = manager;
         }
 
-        
         public override void OnStateEnter(Animator animator, AnimatorStateInfo state_info, int layer_index)
         {
             var args = new StateControllerEventArgs(animator, state_info, layer_index);
             if (CachedControlledStateManager == null)
                 CachedControlledStateManager = FindControlledStateManager(animator.gameObject);
             CachedControlledStateManager.OnStateControllerEntry(this, args);
-        }
-
-        public virtual void OnManagedStateEnter(ControlledStateManager manager, ManagedStateEventArgs args)
-        {
         }
 
         public override void OnStateUpdate(Animator animator, AnimatorStateInfo state_info, int layer_index)
@@ -89,20 +78,12 @@ namespace RoaringFangs.ASM
             CachedControlledStateManager.OnStateControllerUpdate(this, args);
         }
 
-        public virtual void OnManagedStateUpdate(ControlledStateManager manager, ManagedStateEventArgs args)
-        {
-        }
-
         public override void OnStateExit(Animator animator, AnimatorStateInfo state_info, int layer_index)
         {
             var args = new StateControllerEventArgs(animator, state_info, layer_index);
             if (CachedControlledStateManager == null)
                 CachedControlledStateManager = FindControlledStateManager(animator.gameObject);
             CachedControlledStateManager.OnStateControllerExit(this, args);
-        }
-
-        public virtual void OnManagedStateExit(ControlledStateManager manager, ManagedStateEventArgs args)
-        {
         }
 
         public override void OnStateMachineEnter(Animator animator, int state_machine_path_hash)
@@ -112,9 +93,6 @@ namespace RoaringFangs.ASM
                 CachedControlledStateManager = FindControlledStateManager(animator.gameObject);
             CachedControlledStateManager.OnStateMachineControllerEntry(this, args);
         }
-        public virtual void OnManagedStateMachineEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args)
-        {
-        }
 
         public override void OnStateMachineExit(Animator animator, int state_machine_path_hash)
         {
@@ -122,6 +100,24 @@ namespace RoaringFangs.ASM
             if (CachedControlledStateManager == null)
                 CachedControlledStateManager = FindControlledStateManager(animator.gameObject);
             CachedControlledStateManager.OnStateMachineControllerExit(this, args);
+        }
+
+        #region Boilerplate
+
+        public virtual void OnManagedStateEnter(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
+        }
+
+        public virtual void OnManagedStateUpdate(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
+        }
+
+        public virtual void OnManagedStateExit(ControlledStateManager manager, ManagedStateEventArgs args)
+        {
+        }
+
+        public virtual void OnManagedStateMachineEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args)
+        {
         }
 
         public virtual void OnManagedStateMachineExit(ControlledStateManager manager, ManagedStateMachineEventArgs args)
@@ -140,7 +136,6 @@ namespace RoaringFangs.ASM
         {
         }
 
-
         public virtual void OnManagedStateMachineVerifyEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args)
         {
         }
@@ -148,5 +143,7 @@ namespace RoaringFangs.ASM
         public virtual void OnManagedStateMachineVerifyExit(ControlledStateManager manager, ManagedStateMachineEventArgs args)
         {
         }
+
+        #endregion Boilerplate
     }
 }

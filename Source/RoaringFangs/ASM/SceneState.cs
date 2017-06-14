@@ -33,32 +33,6 @@ namespace RoaringFangs.ASM
 {
     public class SceneState : SceneStateBase
     {
-        public override void OnManagedStateVerifyEnter(
-            ControlledStateManager manager,
-            ManagedStateEventArgs args)
-        {
-            DoVerifyEnter();
-        }
-
-        public override void OnManagedStateEnter(
-            ControlledStateManager manager,
-            ManagedStateEventArgs args)
-        {
-            DoEnter(manager);
-        }
-
-        public override void OnManagedStateVerifyExit(
-            ControlledStateManager manager,
-            ManagedStateEventArgs args)
-        {
-            DoVerifyExit();
-        }
-
-        public override void OnManagedStateExit(
-            ControlledStateManager manager,
-            ManagedStateEventArgs args)
-        {
-            DoExit(manager);
-        }
+        // There ain't nobody here but us chickens...
     }
 }
