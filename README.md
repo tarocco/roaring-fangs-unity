@@ -35,14 +35,20 @@ Installing
 -----
 You can download this repository and copy it into your Unity project manually or use this repository as a git subproject.
 
-### As a Git Subtree
+### Through Git
 Optionally fork your own copy before you start.
 
 1. Commit or stash any changes before adding.
-2. Add roaring-fangs-unity as a subtree
+2. Add roaring-fangs-unity either
+   1. as a submodule
+     ```
+        git submodule add git@github.com:Tarocco/roaring-fangs-unity.git Assets/Packages/RoaringFangs
+     ```
+   2. or as a subtree
+     ```
+        git subtree add --prefix Assets/Packages/RoaringFangs git@github.com:Tarocco/roaring-fangs-unity.git master
+     ```
 
-  `git subtree add --prefix Assets/Packages/RoaringFangs git@github.com:Tarocco/roaring-fangs-unity.git master`
-  
 3. Add `ROARING_FANGS_UNITY` to the Scripting Define Symbols in your Unity project. Separate define symbols with semicolons.
 
   Select
