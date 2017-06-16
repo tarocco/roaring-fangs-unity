@@ -37,6 +37,18 @@ namespace RoaringFangs.ASM
 {
     public abstract class SceneStateBase : StateController
     {
+        public enum SceneLoadDirectiveType
+        {
+            Name,
+            Parameter
+        }
+        [Serializable]
+        public struct SceneLoadDirective
+        {
+            public string Value;
+            public SceneLoadDirectiveType Type;
+        }
+
         [SerializeField]
         private string _Tag;
 
@@ -48,11 +60,47 @@ namespace RoaringFangs.ASM
 
         public string ActiveSceneName;
 
-        public List<string> FirstScenesEntryLoad;
-        public List<string> SecondScenesEntryLoad;
+        [SerializeField]
+        private SceneLoadDirective[] _FirstScenesEntryLoad;
 
-        public List<string> FirstScenesExitUnload;
-        public List<string> SecondScenesExitUnload;
+        [SerializeField]
+        private SceneLoadDirective[] _SecondScenesEntryLoad;
+
+        [SerializeField]
+        private SceneLoadDirective[] _FirstScenesExitUnload;
+
+        [SerializeField]
+        private SceneLoadDirective[] _SecondScenesExitUnload;
+
+        private string ResolveSceneName(SceneLoadDirective directive)
+        {
+            switch (directive.Type)
+            {
+                default:
+                case SceneLoadDirectiveType.Name:
+                    return directive.Value;
+                case SceneLoadDirectiveType.Parameter:
+                    return CachedControlledStateManager.ParameterEntriesLookup[directive.Value].First();
+            }
+        }
+
+        public IEnumerable<string> FirstScenesEntryLoad
+        {
+            get { return _FirstScenesEntryLoad.Select(ResolveSceneName); }
+        }
+        public IEnumerable<string> SecondScenesEntryLoad
+        {
+            get { return _SecondScenesEntryLoad.Select(ResolveSceneName); }
+        }
+
+        public IEnumerable<string> FirstScenesExitUnload
+        {
+            get { return _FirstScenesExitUnload.Select(ResolveSceneName); }
+        }
+        public IEnumerable<string> SecondScenesExitUnload
+        {
+            get { return _SecondScenesExitUnload.Select(ResolveSceneName); }
+        }
 
         public List<GameObject> ConfigurationObjects;
 

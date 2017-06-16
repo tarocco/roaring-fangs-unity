@@ -50,6 +50,19 @@ namespace RoaringFangs.ASM
 
         #region Classes / Structs / Interfaces
 
+        [Serializable]
+        public struct ParameterEntry
+        {
+            public string Key;
+            public string Value;
+
+            public ParameterEntry(string key, string value)
+            {
+                Key = key;
+                Value = value;
+            }
+        }
+
         protected interface IManagedStateEventInfo
         {
             void Process(ControlledStateManager manager);
@@ -113,9 +126,6 @@ namespace RoaringFangs.ASM
 
         private Queue<IManagedStateEventInfo> _StateEventQueue = new Queue<IManagedStateEventInfo>();
 
-        [SerializeField, HideInInspector]
-        private List<MonoBehaviour> _StateHandlers;
-
         [SerializeField]
         private bool _UnloadScenesAtStart;
 
@@ -151,26 +161,28 @@ namespace RoaringFangs.ASM
             private set { _LastGoodStatePathHash = value; }
         }
 
-        public IEnumerable<IStateHandler> StateHandlers
+        [SerializeField]
+        private ParameterEntry[] _ParameterEntries;
+
+        private ILookup<string, string> _ParameterEntriesLookup;
+
+        public ILookup<string, string> ParameterEntriesLookup
         {
-            get { return _StateHandlers.Cast<IStateHandler>(); }
-            set
+            get
             {
-                _StateHandlers = value.Cast<MonoBehaviour>().ToList();
-                StateHandlersNameHashLookup = value.ToLookup(h => h.NameHash);
-                StateHandlersTagHashLookup = value.ToLookup(h => h.TagHash);
-                StateHandlersNameLookup = value.ToLookup(h => h.Name);
-                StateHandlersTagLookup = value.ToLookup(h => h.Tag);
+                if (_ParameterEntriesLookup == null)
+                    ParameterEntriesLookup = _ParameterEntries
+                        .ToLookup(e => e.Key, e=> e.Value);
+                return _ParameterEntriesLookup;
+            }
+            private set
+            {
+                _ParameterEntriesLookup = value;
+                _ParameterEntries = ParameterEntriesLookup
+                    .SelectMany(g => g, (g, e) => new ParameterEntry(g.Key, e))
+                    .ToArray();
             }
         }
-
-        public ILookup<int, IStateHandler> StateHandlersNameHashLookup { get; private set; }
-
-        public ILookup<string, IStateHandler> StateHandlersNameLookup { get; private set; }
-
-        public ILookup<int, IStateHandler> StateHandlersTagHashLookup { get; private set; }
-
-        public ILookup<string, IStateHandler> StateHandlersTagLookup { get; private set; }
 
         public bool UnloadScenesAtStart
         {
@@ -283,15 +295,16 @@ namespace RoaringFangs.ASM
             return Animator.IsInTransition(layer_index);
         }
 
-        public void OnAfterDeserialize()
-        {
-            StateHandlers = StateHandlers;
-        }
-
         public void OnBeforeSerialize()
         {
             Animator = GetComponent<Animator>();
-            StateHandlers = GetComponents<IStateHandler>();
+
+            // Force round-trip update for validation
+            ParameterEntriesLookup = null;
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
 
         public void OnStateControllerEntry(object sender, StateControllerEventArgs args)
@@ -434,10 +447,9 @@ namespace RoaringFangs.ASM
             for (;;)
             {
                 // TODO: don't assume layer 0?
-                IEnumerator coroutine;
                 if (CoroutineQueue.Count > 0)
                 {
-                    coroutine = CoroutineQueue.Dequeue().GetSafeCoroutine();
+                    var coroutine = CoroutineQueue.Dequeue().GetSafeCoroutine();
                     while (coroutine.MoveNext() && coroutine.Current != null)
                         yield return coroutine.Current;
                 }
