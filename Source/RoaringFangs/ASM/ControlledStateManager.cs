@@ -31,6 +31,12 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
+#if ODIN_INSPECTOR
+
+using Sirenix.OdinInspector;
+
+#endif
+
 namespace RoaringFangs.ASM
 {
     [RequireComponent(typeof(Animator))]
@@ -53,7 +59,16 @@ namespace RoaringFangs.ASM
         [Serializable]
         public struct ParameterEntry
         {
+#if ODIN_INSPECTOR
+
+            [HorizontalGroup]
+#endif
             public string Key;
+
+#if ODIN_INSPECTOR
+
+            [HorizontalGroup]
+#endif
             public string Value;
 
             public ParameterEntry(string key, string value)
@@ -172,7 +187,7 @@ namespace RoaringFangs.ASM
             {
                 if (_ParameterEntriesLookup == null)
                     ParameterEntriesLookup = _ParameterEntries
-                        .ToLookup(e => e.Key, e=> e.Value);
+                        .ToLookup(e => e.Key, e => e.Value);
                 return _ParameterEntriesLookup;
             }
             private set
@@ -295,6 +310,26 @@ namespace RoaringFangs.ASM
             return Animator.IsInTransition(layer_index);
         }
 
+        public void SetParameter(string key, string value)
+        {
+            var entry = new ParameterEntry(key, value);
+            var updated = false;
+            var entries = _ParameterEntries
+                .Select((p) =>
+                    {
+                        if (p.Key != key || updated)
+                            return p;
+                        updated = true;
+                        return entry;
+                    });
+            // Force calculation of updated flag
+            entries = entries.ToArray();
+            if (!updated)
+                entries = entries.Concat(new[] {entry});
+            _ParameterEntries = entries.ToArray();
+            ParameterEntriesLookup = null;
+        }
+
         public void OnBeforeSerialize()
         {
             Animator = GetComponent<Animator>();
@@ -371,12 +406,10 @@ namespace RoaringFangs.ASM
 
         public void OnStateMachineControllerStateEntry(object sender, StateControllerEventArgs args)
         {
-            
         }
 
         public void OnStateMachineControllerStateExit(object sender, StateControllerEventArgs args)
         {
-            
         }
 
         /// <summary>
@@ -385,8 +418,13 @@ namespace RoaringFangs.ASM
         /// <param name="delta_time">Used for <see cref="Animator.Update"/></param>
         public void Process(float delta_time)
         {
+            // Animator.Update needs to be called twice because otherwise
+            // Unity will, for whatever reason, make duplicate calls on OnState*
+            // methods of StateMachineBehaviors 
             Animator.Update(delta_time);
             SafelyProcessEventQueue();
+            SafelyProcessEventQueue();
+            Animator.Update(0.0f);
         }
 
         public void ResetAnimatorTrigger(string name)
