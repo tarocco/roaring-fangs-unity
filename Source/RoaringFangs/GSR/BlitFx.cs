@@ -39,8 +39,8 @@ namespace RoaringFangs.GSR
         {
             foreach (var fx in _PreBlitFx)
             {
-                if (fx.enabled && fx.Material != null)
-                { 
+                if (fx.enabled && fx.Texture != null && fx.Material != null)
+                {
                     Graphics.Blit(fx.GetBufferedCopyOfTexture(), fx.Texture, fx.Material);
                 }
             }
@@ -53,7 +53,10 @@ namespace RoaringFangs.GSR
             // Get all of the PreBlitFx components before this component
             var components = GetComponents<MonoBehaviour>();
             var components_before_this = components.TakeWhile(c => this != c);
-            var components_between_previous_blitfx = components_before_this.Reverse().TakeWhile(c => !(c is BlitFx));
+            var components_between_previous_blitfx = components_before_this
+                .Reverse()
+                .TakeWhile(c => !(c is BlitFx))
+                .Reverse();
             var pre_blit_fx = components_between_previous_blitfx.OfType<PreBlitFx>();
             _PreBlitFx = pre_blit_fx.ToArray();
         }

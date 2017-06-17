@@ -31,6 +31,12 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 
+#if ODIN_INSPECTOR
+
+using Sirenix.OdinInspector;
+
+#endif
+
 namespace RoaringFangs.ASM
 {
     [RequireComponent(typeof(Animator))]
@@ -49,6 +55,28 @@ namespace RoaringFangs.ASM
         #endregion Delegates
 
         #region Classes / Structs / Interfaces
+
+        [Serializable]
+        public struct ParameterEntry
+        {
+#if ODIN_INSPECTOR
+
+            [HorizontalGroup]
+#endif
+            public string Key;
+
+#if ODIN_INSPECTOR
+
+            [HorizontalGroup]
+#endif
+            public string Value;
+
+            public ParameterEntry(string key, string value)
+            {
+                Key = key;
+                Value = value;
+            }
+        }
 
         protected interface IManagedStateEventInfo
         {
@@ -113,9 +141,6 @@ namespace RoaringFangs.ASM
 
         private Queue<IManagedStateEventInfo> _StateEventQueue = new Queue<IManagedStateEventInfo>();
 
-        [SerializeField, HideInInspector]
-        private List<MonoBehaviour> _StateHandlers;
-
         [SerializeField]
         private bool _UnloadScenesAtStart;
 
@@ -151,26 +176,28 @@ namespace RoaringFangs.ASM
             private set { _LastGoodStatePathHash = value; }
         }
 
-        public IEnumerable<IStateHandler> StateHandlers
+        [SerializeField]
+        private ParameterEntry[] _ParameterEntries;
+
+        private ILookup<string, string> _ParameterEntriesLookup;
+
+        public ILookup<string, string> ParameterEntriesLookup
         {
-            get { return _StateHandlers.Cast<IStateHandler>(); }
-            set
+            get
             {
-                _StateHandlers = value.Cast<MonoBehaviour>().ToList();
-                StateHandlersNameHashLookup = value.ToLookup(h => h.NameHash);
-                StateHandlersTagHashLookup = value.ToLookup(h => h.TagHash);
-                StateHandlersNameLookup = value.ToLookup(h => h.Name);
-                StateHandlersTagLookup = value.ToLookup(h => h.Tag);
+                if (_ParameterEntriesLookup == null)
+                    ParameterEntriesLookup = _ParameterEntries
+                        .ToLookup(e => e.Key, e => e.Value);
+                return _ParameterEntriesLookup;
+            }
+            private set
+            {
+                _ParameterEntriesLookup = value;
+                _ParameterEntries = ParameterEntriesLookup
+                    .SelectMany(g => g, (g, e) => new ParameterEntry(g.Key, e))
+                    .ToArray();
             }
         }
-
-        public ILookup<int, IStateHandler> StateHandlersNameHashLookup { get; private set; }
-
-        public ILookup<string, IStateHandler> StateHandlersNameLookup { get; private set; }
-
-        public ILookup<int, IStateHandler> StateHandlersTagHashLookup { get; private set; }
-
-        public ILookup<string, IStateHandler> StateHandlersTagLookup { get; private set; }
 
         public bool UnloadScenesAtStart
         {
@@ -283,15 +310,36 @@ namespace RoaringFangs.ASM
             return Animator.IsInTransition(layer_index);
         }
 
-        public void OnAfterDeserialize()
+        public void SetParameter(string key, string value)
         {
-            StateHandlers = StateHandlers;
+            var entry = new ParameterEntry(key, value);
+            var updated = false;
+            var entries = _ParameterEntries
+                .Select((p) =>
+                    {
+                        if (p.Key != key || updated)
+                            return p;
+                        updated = true;
+                        return entry;
+                    });
+            // Force calculation of updated flag
+            entries = entries.ToArray();
+            if (!updated)
+                entries = entries.Concat(new[] {entry});
+            _ParameterEntries = entries.ToArray();
+            ParameterEntriesLookup = null;
         }
 
         public void OnBeforeSerialize()
         {
             Animator = GetComponent<Animator>();
-            StateHandlers = GetComponents<IStateHandler>();
+
+            // Force round-trip update for validation
+            ParameterEntriesLookup = null;
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
 
         public void OnStateControllerEntry(object sender, StateControllerEventArgs args)
@@ -358,12 +406,10 @@ namespace RoaringFangs.ASM
 
         public void OnStateMachineControllerStateEntry(object sender, StateControllerEventArgs args)
         {
-            
         }
 
         public void OnStateMachineControllerStateExit(object sender, StateControllerEventArgs args)
         {
-            
         }
 
         /// <summary>
@@ -372,8 +418,13 @@ namespace RoaringFangs.ASM
         /// <param name="delta_time">Used for <see cref="Animator.Update"/></param>
         public void Process(float delta_time)
         {
+            // Animator.Update needs to be called twice because otherwise
+            // Unity will, for whatever reason, make duplicate calls on OnState*
+            // methods of StateMachineBehaviors 
             Animator.Update(delta_time);
             SafelyProcessEventQueue();
+            SafelyProcessEventQueue();
+            Animator.Update(0.0f);
         }
 
         public void ResetAnimatorTrigger(string name)
@@ -434,10 +485,9 @@ namespace RoaringFangs.ASM
             for (;;)
             {
                 // TODO: don't assume layer 0?
-                IEnumerator coroutine;
                 if (CoroutineQueue.Count > 0)
                 {
-                    coroutine = CoroutineQueue.Dequeue().GetSafeCoroutine();
+                    var coroutine = CoroutineQueue.Dequeue().GetSafeCoroutine();
                     while (coroutine.MoveNext() && coroutine.Current != null)
                         yield return coroutine.Current;
                 }

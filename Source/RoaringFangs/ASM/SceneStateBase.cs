@@ -29,7 +29,9 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-#if LIGHTSTRIKE_ADVANCED_INSPECTOR
+#if ODIN_INSPECTOR
+
+using Sirenix.OdinInspector;
 
 #endif
 
@@ -37,6 +39,28 @@ namespace RoaringFangs.ASM
 {
     public abstract class SceneStateBase : StateController
     {
+        public enum SceneLoadDirectiveType
+        {
+            Name,
+            Parameter
+        }
+
+        [Serializable]
+        public struct SceneLoadDirective
+        {
+#if ODIN_INSPECTOR
+
+            [HorizontalGroup]
+#endif
+            public string Value;
+
+#if ODIN_INSPECTOR
+
+            [HorizontalGroup]
+#endif
+            public SceneLoadDirectiveType Type;
+        }
+
         [SerializeField]
         private string _Tag;
 
@@ -46,13 +70,89 @@ namespace RoaringFangs.ASM
             set { _Tag = value; }
         }
 
-        public string ActiveSceneName;
+#if ODIN_INSPECTOR
+        [HideLabel]
+        [Header("Active Scene")]
+#endif
+        public SceneLoadDirective ActiveScene;
 
-        public List<string> FirstScenesEntryLoad;
-        public List<string> SecondScenesEntryLoad;
+        /// <summary>
+        /// The name of the scene to be set active after entering this state
+        /// </summary>
+        public string ActiveSceneName
+        {
+            get { return ResolveSceneName(ActiveScene); }
+        }
 
-        public List<string> FirstScenesExitUnload;
-        public List<string> SecondScenesExitUnload;
+        [SerializeField]
+        private SceneLoadDirective[] _FirstScenesEntryLoad;
+
+        [SerializeField]
+        private SceneLoadDirective[] _SecondScenesEntryLoad;
+
+        [SerializeField]
+        private SceneLoadDirective[] _FirstScenesExitUnload;
+
+        [SerializeField]
+        private SceneLoadDirective[] _SecondScenesExitUnload;
+
+        private string ResolveSceneName(string value, SceneLoadDirectiveType type)
+        {
+            switch (type)
+            {
+                default:
+                case SceneLoadDirectiveType.Name:
+                    return value;
+
+                case SceneLoadDirectiveType.Parameter:
+                    return CachedControlledStateManager.ParameterEntriesLookup[value].First();
+            }
+        }
+
+        private string ResolveSceneName(SceneLoadDirective directive)
+        {
+            return ResolveSceneName(directive.Value, directive.Type);
+        }
+
+        public IEnumerable<string> FirstScenesEntryLoad
+        {
+            get
+            {
+                return _FirstScenesEntryLoad
+                  .Select(ResolveSceneName)
+                  .ToArray();
+            }
+        }
+
+        public IEnumerable<string> SecondScenesEntryLoad
+        {
+            get
+            {
+                return _SecondScenesEntryLoad
+                  .Select(ResolveSceneName)
+                  .ToArray();
+            }
+        }
+
+        public IEnumerable<string> FirstScenesExitUnload
+        {
+            get
+            {
+                return _FirstScenesExitUnload
+                  .Select(ResolveSceneName)
+                  .ToArray();
+            }
+        }
+
+        public IEnumerable<string> SecondScenesExitUnload
+        {
+            get
+            {
+                return _SecondScenesExitUnload
+                  .Select(ResolveSceneName)
+                  .ToArray();
+            }
+        }
 
         public List<GameObject> ConfigurationObjects;
 
@@ -62,17 +162,18 @@ namespace RoaringFangs.ASM
                 yield return o;
             foreach (object o in Scenes.LoadTogether(SecondScenesEntryLoad))
                 yield return o;
-            if (String.IsNullOrEmpty(ActiveSceneName))
+            string active_scene_name = ActiveSceneName;
+            if (String.IsNullOrEmpty(active_scene_name))
             {
                 Debug.LogWarning("No active scene name specified");
             }
             else
             {
-                Scene active_scene = SceneManager.GetSceneByName(ActiveSceneName);
+                Scene active_scene = SceneManager.GetSceneByName(active_scene_name);
                 if (!active_scene.IsValid())
-                    Debug.LogWarning("Specified active scene is invalid\nScene name: \"" + ActiveSceneName + "\"");
+                    Debug.LogWarning("Specified active scene is invalid\nScene name: \"" + active_scene_name + "\"");
                 else if (!active_scene.isLoaded)
-                    Debug.LogWarning("Specified active scene is valid but not yet loaded\nScene name:\"" + ActiveSceneName + "\"");
+                    Debug.LogWarning("Specified active scene is valid but not yet loaded\nScene name:\"" + active_scene_name + "\"");
                 else
                     SceneManager.SetActiveScene(active_scene);
             }
