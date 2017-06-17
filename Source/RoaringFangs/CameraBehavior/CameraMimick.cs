@@ -52,6 +52,7 @@ namespace RoaringFangs.CameraBehavior
             public bool CullingMask;
             public bool ClearFlags;
             public bool BackgroundColor;
+            public bool Depth;
         }
 
         public PreservationFlags SettingsToPreserve;
@@ -76,6 +77,7 @@ namespace RoaringFangs.CameraBehavior
                 var prior_culling_mask = _Camera.cullingMask;
                 var prior_clear_flags = _Camera.clearFlags;
                 var prior_background_color = _Camera.backgroundColor;
+                var prior_depth = _Camera.depth;
 
                 _Camera.CopyFrom(_Source);
 
@@ -87,6 +89,8 @@ namespace RoaringFangs.CameraBehavior
                     _Camera.clearFlags = prior_clear_flags;
                 if (SettingsToPreserve.BackgroundColor)
                     _Camera.backgroundColor = prior_background_color;
+                if (SettingsToPreserve.Depth)
+                    _Camera.depth = prior_depth;
             }
         }
 
