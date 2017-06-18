@@ -26,23 +26,10 @@ using UnityEngine;
 
 namespace RoaringFangs.Motion
 {
-    // Using InControl seems reaaallly overkill for this...
-    //public class MouseActionSet : PlayerActionSet
-    //{
-    //    public PlayerAction Up, Down, Left, Right;
-    //    public PlayerTwoAxisAction MouseAction;
-
-    //    public MouseActionSet()
-    //    {
-    //        Up = CreatePlayerAction("Up");
-    //        Down = CreatePlayerAction("Down");
-    //        Left = CreatePlayerAction("Left");
-    //        Right = CreatePlayerAction("Right");
-    //        MouseAction = CreateTwoAxisPlayerAction(Left, Right, Down, Up);
-    //    }
-    //}
     public class MouseFollower : MonoBehaviour
     {
+        public Camera Camera;
+
         public float RayDistance = 100f;
 
         private void Start()
@@ -52,7 +39,7 @@ namespace RoaringFangs.Motion
         // Update is called once per frame
         private void Update()
         {
-            var camera = Camera.main;
+            var camera = Camera ?? Camera.main;
             if (camera != null)
             {
                 var xy = new Plane(Vector3.back, Vector3.zero);
