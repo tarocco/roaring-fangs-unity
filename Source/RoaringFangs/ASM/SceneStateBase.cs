@@ -71,6 +71,7 @@ namespace RoaringFangs.ASM
         }
 
 #if ODIN_INSPECTOR
+
         [HideLabel]
         [Header("Active Scene")]
 #endif
@@ -114,13 +115,19 @@ namespace RoaringFangs.ASM
             return ResolveSceneName(directive.Value, directive.Type);
         }
 
+        private static bool StringIsNotNullOrEmpty(string str)
+        {
+            return !string.IsNullOrEmpty(str);
+        }
+
         public IEnumerable<string> FirstScenesEntryLoad
         {
             get
             {
                 return _FirstScenesEntryLoad
-                  .Select(ResolveSceneName)
-                  .ToArray();
+                    .Select(ResolveSceneName)
+                    .Where(StringIsNotNullOrEmpty)
+                    .ToArray();
             }
         }
 
@@ -129,8 +136,9 @@ namespace RoaringFangs.ASM
             get
             {
                 return _SecondScenesEntryLoad
-                  .Select(ResolveSceneName)
-                  .ToArray();
+                    .Select(ResolveSceneName)
+                    .Where(StringIsNotNullOrEmpty)
+                    .ToArray();
             }
         }
 
@@ -139,8 +147,9 @@ namespace RoaringFangs.ASM
             get
             {
                 return _FirstScenesExitUnload
-                  .Select(ResolveSceneName)
-                  .ToArray();
+                    .Select(ResolveSceneName)
+                    .Where(StringIsNotNullOrEmpty)
+                    .ToArray();
             }
         }
 
@@ -149,8 +158,9 @@ namespace RoaringFangs.ASM
             get
             {
                 return _SecondScenesExitUnload
-                  .Select(ResolveSceneName)
-                  .ToArray();
+                    .Select(ResolveSceneName)
+                    .Where(StringIsNotNullOrEmpty)
+                    .ToArray();
             }
         }
 
