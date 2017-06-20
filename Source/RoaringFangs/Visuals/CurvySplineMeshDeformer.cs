@@ -38,35 +38,45 @@ namespace RoaringFangs.Visuals
         }
 
         [SerializeField, AutoProperty]
-        private Material[] _ReferenceMaterials;
+        private Material[] _Materials;
 
-        public Material[] ReferenceMaterials
-        {
-            get
-            {
-                return _ReferenceMaterials;
-            }
-            set
-            {
-                _ReferenceMaterials = value;
-                var instanced_materials = value
-                    .Select(m => m != null ? new Material(m) : null)
-                    .ToArray();
-                Renderer.sharedMaterials = instanced_materials;
-                // These should be good enough
-                StretchFactor = StretchFactor;
-                SegmentScale = SegmentScale;
-                SegmentLength = SegmentLength;
-                Color = Color;
-            }
-        }
+        [SerializeField, HideInInspector]
+        private SynchronizedMaterial[] _SyncedMaterials;
 
         public Material[] Materials
         {
             get
             {
-                return Renderer.sharedMaterials;
+                return _Materials;
             }
+            set
+            {
+                _Materials = value;
+                _SyncedMaterials = value
+                    .Select(m => m != null ? new SynchronizedMaterial(m, new Material(m)) : new SynchronizedMaterial())
+                    .ToArray();
+                SyncMaterials();
+                RefreshProperties();
+            }
+        }
+
+        // TODO: abstract this into a static helper function
+        private void SyncMaterials()
+        {
+            foreach(var m in _SyncedMaterials)
+                m.SyncProperties();
+            Renderer.sharedMaterials = _SyncedMaterials
+                .Select(m => m.Destination)
+                .ToArray();
+        }
+
+        private void RefreshProperties()
+        {
+            // These should be good enough
+            StretchFactor = StretchFactor;
+            SegmentScale = SegmentScale;
+            SegmentLength = SegmentLength;
+            Color = Color;
         }
 
         [SerializeField, AutoProperty]
@@ -78,7 +88,7 @@ namespace RoaringFangs.Visuals
             set
             {
                 _Color = value;
-                foreach (var material in Materials.Where(m => m != null))
+                foreach (var material in Renderer.sharedMaterials.Where(m => m != null))
                     material.color = value;
             }
         }
@@ -91,7 +101,7 @@ namespace RoaringFangs.Visuals
             get { return _StretchFactor; }
             set
             {
-                var valid_materials = Materials.Where(m => m != null);
+                var valid_materials = Renderer.sharedMaterials.Where(m => m != null);
                 foreach (var material in valid_materials)
                 {
                     material.SetFloat("_StretchX", value.x);
@@ -149,7 +159,7 @@ namespace RoaringFangs.Visuals
             get { return _SegmentLength; }
             set
             {
-                var valid_materials = Materials.Where(m => m != null);
+                var valid_materials = Renderer.sharedMaterials.Where(m => m != null);
                 foreach (var material in valid_materials)
                 {
                     material.SetFloat("_StretchY", _StretchFactor.y * value);
@@ -286,11 +296,11 @@ namespace RoaringFangs.Visuals
         private void Start()
         {
             // Necessary
-            TargetPathSpline.Refresh();
-            // Lazy initialization for properties that need it
-            ReferenceMaterials = ReferenceMaterials; // Instantiates materials
-            Color = Color; // Applies colors to material instances
-            SegmentLength = SegmentLength; // Affects material instance stretch parameters
+            if(TargetPathSpline != null)
+                TargetPathSpline.Refresh();
+
+            // Round-trip update and instantiate runtime materials
+            Materials = Materials;
         }
 
         private int _SplinePointsChecksum;
@@ -299,13 +309,16 @@ namespace RoaringFangs.Visuals
         {
             if (TargetPathSpline != null)
             {
-                int spline_points_checksum = CurvyControlPointsHash((ICurvySpline)TargetPathSpline);
+                int spline_points_checksum = CurvyControlPointsHash(TargetPathSpline);
                 if (TargetPathSpline.Dirty || _SplinePointsChecksum != spline_points_checksum || _WeightsDirty)
                 {
                     UpdateMeshWeights(true, true, _WeightsDirty);
                     _SplinePointsChecksum = spline_points_checksum;
                 }
             }
+
+            SyncMaterials();
+            RefreshProperties();
         }
 
         private static int CurvySplineSegmentHash(ICurvySplineSegment s)
@@ -409,12 +422,13 @@ namespace RoaringFangs.Visuals
 
         public void OnBeforeSerialize()
         {
+            /*
             // Additional validation logic for materials b/c they keep unsetting on the meshes
             if (Renderer.sharedMaterials == null ||
                 !Renderer.sharedMaterials.Any() ||
                 Renderer.sharedMaterials.All(m => m == null))
                 ReferenceMaterials = ReferenceMaterials;
-
+            */
             EditorUtilities.OnBeforeSerializeAutoProperties(this);
         }
 
