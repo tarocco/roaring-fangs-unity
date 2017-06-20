@@ -24,10 +24,10 @@ THE SOFTWARE.
 
 using RoaringFangs.Attributes;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-
 using UnityEngine;
 using UnityObject = UnityEngine.Object; // Useful
 
@@ -249,8 +249,8 @@ namespace RoaringFangs.Editor
         }
 
         /// <summary>
-        /// Gets a hash code of an object or an aggregated hash code of an
-        /// array of objects.
+        /// Recursively gets a hash code of an object or an aggregated
+        /// hash code of an array of objects.
         /// </summary>
         /// <param name="object"></param>
         /// <returns></returns>
@@ -263,31 +263,38 @@ namespace RoaringFangs.Editor
             if (unity_object != null)
                 return unity_object.GetInstanceID();
 
-            // If the object is actually an array of objects
-            var object_array = @object as object[];
-            if (object_array != null)
-            {
-                if (!object_array.Any())
-                    return object_array.GetHashCode();
-                // Invert the bits on array types to avoid collisions between
-                // single values and arrays with only one element
-                return ~object_array
-                    .Select(o => o is UnityObject ? ((UnityObject)o).GetInstanceID() : o.GetHashCode())
-                    .Aggregate((a, b) => a ^ b);
-            }
+            // If it's really null, return 0
+            if (@object == null)
+                return 0;
 
-            // If it's not null, just return the object's hash code
-            if (@object != null)
+            // Use GetHashCode for non-enumerable objects
+            var type = @object.GetType();
+            if (!type.IsArray)
+                return @object.GetHashCode();
+            var enumerable = @object as IEnumerable;
+            if (enumerable == null)
                 return @object.GetHashCode();
 
-            // Default to return 0 if all else fails
-            return 0;
+            // If the object is actually an array of objects/structs
+            int hash_code;
+            var object_enumerable = enumerable
+                .Cast<object>()
+                .ToArray();
+            if (object_enumerable.Any())
+                hash_code = object_enumerable
+                    .Select(GetDeepHashCode)
+                    .Aggregate((a, b) => a ^ b);
+            else
+                hash_code = @object.GetHashCode();
+            // Invert the bits on array types to avoid collisions between
+            // single values and arrays with only one element
+            return ~hash_code;
         }
 
         /// <summary>
         /// Lookup for cached attributes on instance-bound members infos of
         /// declaring class instances. Inserts instance-bound member infos into
-        /// the cache 
+        /// the cache
         /// </summary>
         /// <typeparam name="TAttribute"></typeparam>
         /// <typeparam name="TDeclaring"></typeparam>
