@@ -214,7 +214,7 @@ namespace RoaringFangs.ASM
         /// <summary>
         /// Animator used by this manager
         /// </summary>
-        protected Animator Animator
+        public Animator Animator
         {
             get { return _Animator; }
             private set { _Animator = value; }

@@ -37,7 +37,7 @@ using Sirenix.OdinInspector;
 
 namespace RoaringFangs.ASM
 {
-    public abstract class SceneStateBase : StateController
+    public abstract class SceneStateBase : StateControllerBase
     {
         public enum SceneLoadDirectiveType
         {

@@ -11,7 +11,7 @@ using RoaringFangs.ASM;
 
 namespace RoaringFangs
 {
-    public class NavigationBreadcrumbInfo : StateController
+    public class NavigationBreadcrumbInfo : StateControllerBase
     {
         [SerializeField]
         private string _Tag;

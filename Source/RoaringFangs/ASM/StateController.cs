@@ -22,128 +22,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-#if LIGHTSTRIKE_ADVANCED_INSPECTOR
-
-using AdvancedInspector;
-
-#endif
 
 using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-#if LIGHTSTRIKE_ADVANCED_INSPECTOR
-
-    public abstract class StateController : AIStateMachineBehaviour, IStateController
-#else
-    public abstract class StateController : StateMachineBehaviour, IStateController
-#endif
+    public class StateController : StateControllerBase
     {
-        public abstract string Tag { get; set; }
+        [SerializeField]
+        private string _Tag;
 
-        protected ControlledStateManager CachedControlledStateManager { get; set; }
-
-        protected ControlledStateManager FindControlledStateManager(GameObject game_object)
+        public override string Tag
         {
-            return game_object.GetComponent<ControlledStateManager>();
+            get { return _Tag; }
+            set { _Tag = value; }
         }
-
-        public static bool GetSceneController(Animator animator, out ControlledStateManager aggregator)
-        {
-            aggregator = animator.GetComponent<ControlledStateManager>();
-            if (aggregator != null)
-                return true;
-            Debug.LogWarning("ControlledStateManager not found on Animator GameObject");
-            return false;
-        }
-
-        public virtual void Initialize(ControlledStateManager manager)
-        {
-            CachedControlledStateManager = manager;
-        }
-
-        public override void OnStateEnter(Animator animator, AnimatorStateInfo state_info, int layer_index)
-        {
-            var args = new StateControllerEventArgs(animator, state_info, layer_index);
-            if (CachedControlledStateManager == null)
-                CachedControlledStateManager = FindControlledStateManager(animator.gameObject);
-            CachedControlledStateManager.OnStateControllerEntry(this, args);
-        }
-
-        public override void OnStateUpdate(Animator animator, AnimatorStateInfo state_info, int layer_index)
-        {
-            var args = new StateControllerEventArgs(animator, state_info, layer_index);
-            if (CachedControlledStateManager == null)
-                CachedControlledStateManager = FindControlledStateManager(animator.gameObject);
-            CachedControlledStateManager.OnStateControllerUpdate(this, args);
-        }
-
-        public override void OnStateExit(Animator animator, AnimatorStateInfo state_info, int layer_index)
-        {
-            var args = new StateControllerEventArgs(animator, state_info, layer_index);
-            if (CachedControlledStateManager == null)
-                CachedControlledStateManager = FindControlledStateManager(animator.gameObject);
-            CachedControlledStateManager.OnStateControllerExit(this, args);
-        }
-
-        public override void OnStateMachineEnter(Animator animator, int state_machine_path_hash)
-        {
-            var args = new StateMachineControllerEventArgs(animator, state_machine_path_hash);
-            if (CachedControlledStateManager == null)
-                CachedControlledStateManager = FindControlledStateManager(animator.gameObject);
-            CachedControlledStateManager.OnStateMachineControllerEntry(this, args);
-        }
-
-        public override void OnStateMachineExit(Animator animator, int state_machine_path_hash)
-        {
-            var args = new StateMachineControllerEventArgs(animator, state_machine_path_hash);
-            if (CachedControlledStateManager == null)
-                CachedControlledStateManager = FindControlledStateManager(animator.gameObject);
-            CachedControlledStateManager.OnStateMachineControllerExit(this, args);
-        }
-
-        #region Boilerplate
-
-        public virtual void OnManagedStateEnter(ControlledStateManager manager, ManagedStateEventArgs args)
-        {
-        }
-
-        public virtual void OnManagedStateUpdate(ControlledStateManager manager, ManagedStateEventArgs args)
-        {
-        }
-
-        public virtual void OnManagedStateExit(ControlledStateManager manager, ManagedStateEventArgs args)
-        {
-        }
-
-        public virtual void OnManagedStateMachineEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args)
-        {
-        }
-
-        public virtual void OnManagedStateMachineExit(ControlledStateManager manager, ManagedStateMachineEventArgs args)
-        {
-        }
-
-        public virtual void OnManagedStateVerifyEnter(ControlledStateManager manager, ManagedStateEventArgs args)
-        {
-        }
-
-        public virtual void OnManagedStateVerifyUpdate(ControlledStateManager manager, ManagedStateEventArgs args)
-        {
-        }
-
-        public virtual void OnManagedStateVerifyExit(ControlledStateManager manager, ManagedStateEventArgs args)
-        {
-        }
-
-        public virtual void OnManagedStateMachineVerifyEnter(ControlledStateManager manager, ManagedStateMachineEventArgs args)
-        {
-        }
-
-        public virtual void OnManagedStateMachineVerifyExit(ControlledStateManager manager, ManagedStateMachineEventArgs args)
-        {
-        }
-
-        #endregion Boilerplate
     }
 }
