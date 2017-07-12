@@ -46,4 +46,7 @@ namespace RoaringFangs.Utility
 
     [Serializable]
     public class IntPropertyChangedEvent : UnityEvent<object, PropertyChangedEventArgs<int>> { }
+
+    [Serializable]
+    public class BoolPropertyChangedEvent : UnityEvent<object, PropertyChangedEventArgs<bool>> { }
 }
