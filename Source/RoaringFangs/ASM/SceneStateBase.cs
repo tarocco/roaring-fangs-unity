@@ -50,15 +50,36 @@ namespace RoaringFangs.ASM
         {
 #if ODIN_INSPECTOR
 
-            [HorizontalGroup]
+            [HorizontalGroup("Value")]
 #endif
             public string Value;
 
 #if ODIN_INSPECTOR
 
-            [HorizontalGroup]
+            [HorizontalGroup("Value")]
 #endif
             public SceneLoadDirectiveType Type;
+
+#if ODIN_INSPECTOR
+
+            [HorizontalGroup("Condition")]
+#endif
+            public string ConditionParameter;
+        }
+
+        [Serializable]
+        public struct ConfigurationObjectDirective
+        {
+#if ODIN_INSPECTOR
+            [HorizontalGroup("Object")]
+            [HideLabel]
+#endif
+            public GameObject Object;
+
+#if ODIN_INSPECTOR
+            [HorizontalGroup("Object")]
+#endif
+            public string ConditionParameter;
         }
 
         [SerializeField]
@@ -97,6 +118,27 @@ namespace RoaringFangs.ASM
         [SerializeField]
         private SceneLoadDirective[] _SecondScenesExitUnload;
 
+        private string GetParameterValueByName(string parameter_name)
+        {
+            return CachedControlledStateManager
+                .ParameterEntriesLookup[parameter_name]
+                .FirstOrDefault();
+        }
+
+        private bool GetConditionValueByName(
+            string parameter_name)
+        {
+            // TODO: encapsulate ControlledStateManager.Animator
+            return string.IsNullOrEmpty(parameter_name) ||
+                CachedControlledStateManager.Animator.GetBool(parameter_name);
+        }
+
+        private bool GetSceneDirectiveConditionValue(
+            SceneLoadDirective directive)
+        {
+            return GetConditionValueByName(directive.ConditionParameter);
+        }
+
         private string ResolveSceneName(string value, SceneLoadDirectiveType type)
         {
             switch (type)
@@ -106,7 +148,8 @@ namespace RoaringFangs.ASM
                     return value;
 
                 case SceneLoadDirectiveType.Parameter:
-                    return CachedControlledStateManager.ParameterEntriesLookup[value].First();
+                    // value is the parameter name in this case
+                    return GetParameterValueByName(value);
             }
         }
 
@@ -125,6 +168,7 @@ namespace RoaringFangs.ASM
             get
             {
                 return _FirstScenesEntryLoad
+                    .Where(GetSceneDirectiveConditionValue)
                     .Select(ResolveSceneName)
                     .Where(StringIsNotNullOrEmpty)
                     .ToArray();
@@ -136,6 +180,7 @@ namespace RoaringFangs.ASM
             get
             {
                 return _SecondScenesEntryLoad
+                    .Where(GetSceneDirectiveConditionValue)
                     .Select(ResolveSceneName)
                     .Where(StringIsNotNullOrEmpty)
                     .ToArray();
@@ -147,6 +192,7 @@ namespace RoaringFangs.ASM
             get
             {
                 return _FirstScenesExitUnload
+                    .Where(GetSceneDirectiveConditionValue)
                     .Select(ResolveSceneName)
                     .Where(StringIsNotNullOrEmpty)
                     .ToArray();
@@ -158,13 +204,15 @@ namespace RoaringFangs.ASM
             get
             {
                 return _SecondScenesExitUnload
+                    .Where(GetSceneDirectiveConditionValue)
                     .Select(ResolveSceneName)
                     .Where(StringIsNotNullOrEmpty)
                     .ToArray();
             }
         }
 
-        public List<GameObject> ConfigurationObjects;
+        public List<ConfigurationObjectDirective> ConfigurationObjects =
+            new List<ConfigurationObjectDirective>();
 
         private IEnumerable OnStateEnterCoroutine(IEnumerable<string> scene_names)
         {
@@ -187,8 +235,11 @@ namespace RoaringFangs.ASM
                 else
                     SceneManager.SetActiveScene(active_scene);
             }
-            foreach (var config_object in ConfigurationObjects)
-                Instantiate(config_object);
+            foreach (var directive in ConfigurationObjects)
+            {
+                if (GetConditionValueByName(directive.ConditionParameter))
+                    Instantiate(directive.Object);
+            }
         }
 
         private IEnumerable OnStateExitCoroutine(IEnumerable<string> scene_names)
@@ -247,12 +298,26 @@ namespace RoaringFangs.ASM
         {
             base.Initialize(manager);
             // Replace configuration objects with instances (don't work directly on prefabs!)
-            var instances = new List<GameObject>();
-            foreach (var configuration_object in ConfigurationObjects)
+            var instances = new List<ConfigurationObjectDirective>();
+            foreach (var directive in ConfigurationObjects)
             {
+                var configuration_object = directive.Object;
+                if (configuration_object == null)
+                {
+                    Debug.LogWarning("Configuration object is null");
+                    continue;
+                }
+                // Parent the instance to the Configuration Object Cache
                 var instance = Instantiate(configuration_object, manager.ConfigurationObjectCache);
-                instance.name = configuration_object.name; // Remove "(Clone)" suffix
-                instances.Add(instance);
+                // Remove "(Clone)" suffix
+                instance.name = configuration_object.name;
+                // Add it to the list
+                var directive_but_stronger = new ConfigurationObjectDirective()
+                {
+                    Object = instance,
+                    ConditionParameter = directive.ConditionParameter
+                };
+                instances.Add(directive_but_stronger);
             }
             ConfigurationObjects = instances;
         }

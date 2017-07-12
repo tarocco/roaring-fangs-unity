@@ -290,16 +290,6 @@ namespace RoaringFangs.ASM
             CoroutineQueue.Enqueue(coroutine);
         }
 
-        /// <summary>
-        /// Calls Animator.Update and clears state event queues
-        /// </summary>
-        /// <param name="delta_time"></param>
-        public void FlushAnimator(float delta_time)
-        {
-            Animator.Update(delta_time);
-            ClearStateEventInfoQueues();
-        }
-
         public AnimatorTransitionInfo GetAnimatorTransitionInfo(int layer_index)
         {
             return Animator.GetAnimatorTransitionInfo(layer_index);
@@ -421,10 +411,13 @@ namespace RoaringFangs.ASM
             // Animator.Update needs to be called twice because otherwise
             // Unity will, for whatever reason, make duplicate calls on OnState*
             // methods of StateMachineBehaviors 
+            var update_mode = Animator.updateMode;
+            Animator.updateMode = AnimatorUpdateMode.Normal;
             Animator.Update(delta_time);
             SafelyProcessEventQueue();
-            SafelyProcessEventQueue();
+            //SafelyProcessEventQueue();
             Animator.Update(0.0f);
+            Animator.updateMode = update_mode;
         }
 
         public void ResetAnimatorTrigger(string name)
@@ -433,9 +426,7 @@ namespace RoaringFangs.ASM
         }
 
         /// <summary>
-        /// Sets the trigger <paramref name="name"/> on the animator component,
-        /// updates the animator with a zero time update, verifies the
-        /// resulting state event queue, and processes it if it verifies.
+        /// Sets the trigger <paramref name="name"/> on the animator component.
         /// </summary>
         /// <param name="name">The name of the trigger to set on the animator.</param>
         public void SetAnimatorTrigger(string name)
@@ -469,7 +460,7 @@ namespace RoaringFangs.ASM
             catch (Exception ex)
             {
                 Animator.Play(LastGoodStatePathHash);
-                Animator.Update(0.0f);
+                //Animator.Update(0.0f);
                 ClearStateEventInfoQueues();
                 throw ex;
             }
