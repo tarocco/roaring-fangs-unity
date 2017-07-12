@@ -42,7 +42,7 @@ namespace RoaringFangs.Utility
             {
                 if (remove_existing_handlers)
                     button.onClick.RemoveAllListeners();
-                Events.RemAddListenerAuto(button.onClick, handler);
+                button.onClick.RemAddListenerAuto(handler);
             }
         }
     }
