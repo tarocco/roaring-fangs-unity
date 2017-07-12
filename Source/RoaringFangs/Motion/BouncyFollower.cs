@@ -38,7 +38,7 @@ namespace RoaringFangs.Motion
         public Transform Target
         {
             get { return _Target; }
-            protected set { _Target = value; }
+            set { _Target = value; }
         }
 
         public void OnAfterDeserialize()
