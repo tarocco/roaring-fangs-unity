@@ -19,34 +19,14 @@ namespace RoaringFangs.Utility
         }
     }
 
-    /*
-    public class FloatPropertyChangedEventArgs : PropertyChangedEventArgs<float>
-    {
-        public FloatPropertyChangedEventArgs(
-            float previous_value,
-            float current_value) :
-        base(previous_value, current_value)
-        {
-        }
-    }
-
-    public class IntPropertyChangedEventArgs : PropertyChangedEventArgs<int>
-    {
-        IntPropertyChangedEventArgs(
-            int previous_value,
-            int current_value) :
-        base(previous_value, current_value)
-        {
-        }
-    }
-    */
+    public class PropertyChangedEvent<T> : UnityEvent<object, PropertyChangedEventArgs<T>> { }
 
     [Serializable]
-    public class FloatPropertyChangedEvent : UnityEvent<object, PropertyChangedEventArgs<float>> { }
+    public class FloatPropertyChangedEvent : PropertyChangedEvent<float> { }
 
     [Serializable]
-    public class IntPropertyChangedEvent : UnityEvent<object, PropertyChangedEventArgs<int>> { }
+    public class IntPropertyChangedEvent : PropertyChangedEvent<int> { }
 
     [Serializable]
-    public class BoolPropertyChangedEvent : UnityEvent<object, PropertyChangedEventArgs<bool>> { }
+    public class BoolPropertyChangedEvent : PropertyChangedEvent<bool> { }
 }
