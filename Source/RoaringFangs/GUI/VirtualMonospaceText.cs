@@ -22,33 +22,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System.Linq;
 using UnityEngine;
 
 namespace RoaringFangs.GUI
 {
     [ExecuteInEditMode]
     [RequireComponent(typeof(UnityEngine.UI.Text))]
-    public class VirtualMonospaceText : MonoBehaviour
+    public class VirtualMonospaceText :
+        MonoBehaviour,
+        ISerializationCallbackReceiver
     {
-        private UnityEngine.UI.Text Self;
-        public UnityEngine.UI.Text[] Digits;
+        [SerializeField]
+        private UnityEngine.UI.Text _Self;
 
-        private void Awake()
-        {
-            Self = GetComponent<UnityEngine.UI.Text>();
-            Self.enabled = false;
-        }
+        [SerializeField]
+        private UnityEngine.UI.Text[] _Digits;
 
         private void Update()
         {
-            string padded = Self.text.PadRight(Digits.Length);
-            Color self_color = Self.color;
-            for (int i = 0; i < Digits.Length; i++)
+            var padded = _Self.text.PadLeft(_Digits.Length);
+            var self_color = _Self.color;
+            for (var i = 0; i < _Digits.Length; i++)
             {
-                var digit = Digits[i];
+                var digit = _Digits[i];
                 digit.text = padded[i].ToString();
                 digit.color = self_color;
             }
+        }
+
+        public void OnBeforeSerialize()
+        {
+            _Self = GetComponent<UnityEngine.UI.Text>();
+            _Self.enabled = false;
+            _Digits = GetComponentsInChildren<UnityEngine.UI.Text>()
+                .Where(t => t != _Self)
+                .ToArray();
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }
