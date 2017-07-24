@@ -37,7 +37,7 @@ namespace RoaringFangs.GUI
         private UnityEngine.UI.Text _Self;
 
         [SerializeField]
-        private UnityEngine.UI.Text[] _Digits;
+        private UnityEngine.UI.Text[] _Digits = {};
 
         private void Update()
         {
@@ -53,7 +53,7 @@ namespace RoaringFangs.GUI
 
         public void OnBeforeSerialize()
         {
-            _Self = GetComponent<UnityEngine.UI.Text>();
+            _Self = GetComponent<UnityEngine.UI.Text>() ?? _Self;
             _Self.enabled = false;
             _Digits = GetComponentsInChildren<UnityEngine.UI.Text>()
                 .Where(t => t != _Self)
