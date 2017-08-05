@@ -24,20 +24,21 @@ THE SOFTWARE.
 
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace RoaringFangs.GUI
 {
     [ExecuteInEditMode]
-    [RequireComponent(typeof(UnityEngine.UI.Text))]
+    [RequireComponent(typeof(Text))]
     public class VirtualMonospaceText :
         MonoBehaviour,
         ISerializationCallbackReceiver
     {
         [SerializeField]
-        private UnityEngine.UI.Text _Self;
+        private Text _Self;
 
         [SerializeField]
-        private UnityEngine.UI.Text[] _Digits = {};
+        private Text[] _Digits = { };
 
         private void Update()
         {
@@ -53,15 +54,20 @@ namespace RoaringFangs.GUI
 
         public void OnBeforeSerialize()
         {
-            _Self = GetComponent<UnityEngine.UI.Text>() ?? _Self;
-            _Self.enabled = false;
-            _Digits = GetComponentsInChildren<UnityEngine.UI.Text>()
+            // TODO: find out why this double-check is necessary
+            if (_Self == null)
+                _Self = GetComponent<Text>();
+            if (_Self != null)
+                _Self.enabled = false;
+
+            _Digits = GetComponentsInChildren<Text>()
                 .Where(t => t != _Self)
                 .ToArray();
         }
 
         public void OnAfterDeserialize()
         {
+
         }
     }
 }
