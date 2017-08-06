@@ -23,7 +23,6 @@ THE SOFTWARE.
 */
 
 using System;
-using UnityEngine.Events;
 
 namespace RoaringFangs.ASM
 {

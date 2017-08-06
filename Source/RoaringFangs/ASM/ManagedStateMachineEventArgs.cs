@@ -26,22 +26,16 @@ using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-    public class ManagedStateMachineEventArgs : StateMachineControllerEventArgsBase
+    public class ManagedStateMachineEventArgs : StateMachineControllerEventArgs
     {
-        //public readonly ControlledStateManager Manager;
-        /// <summary>
-        ///  Having this in here is just breaking the rules all over the place BUT ALRIGHT
-        /// </summary>
         public readonly IStateController StateController;
 
         public ManagedStateMachineEventArgs(
-            //ControlledStateManager manager,
             IStateController state_controller,
             Animator animator,
             int state_machine_path_hash) :
             base(animator, state_machine_path_hash)
         {
-            //Manager = manager;
             StateController = state_controller;
         }
     }

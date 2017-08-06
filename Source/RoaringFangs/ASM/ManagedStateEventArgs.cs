@@ -26,11 +26,8 @@ using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-    public class ManagedStateEventArgs : StateControllerEventArgsBase
+    public class ManagedStateEventArgs : StateControllerEventArgs
     {
-        /// <summary>
-        ///  Having this in here is just breaking the rules all over the place BUT ALRIGHT
-        /// </summary>
         public readonly IStateController StateController;
 
         public ManagedStateEventArgs(

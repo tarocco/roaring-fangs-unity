@@ -35,7 +35,7 @@ namespace RoaringFangs.ASM
     /// <summary>
     /// TODO: agnosticize *State and *StateMachine behaviors
     /// </summary>
-    public class SceneStateMachine : SceneStateBase
+    public class SceneStateMachine : SceneState
     {
         [SerializeField]
         [Tooltip("If enabled, OnStateMachineEnter will be raised on parent " +

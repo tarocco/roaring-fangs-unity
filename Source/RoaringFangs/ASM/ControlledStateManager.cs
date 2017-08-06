@@ -56,7 +56,7 @@ namespace RoaringFangs.ASM
         #region Classes / Structs / Interfaces
 
         [Serializable]
-        public struct ParameterEntry
+        protected struct ParameterEntry
         {
 #if ODIN_INSPECTOR
 
@@ -129,12 +129,17 @@ namespace RoaringFangs.ASM
         /// <summary>
         /// Path hash of the last animator state this manager was able to successfully enter.
         /// </summary>
-        public int LastGoodStatePathHash
+        protected int LastGoodStatePathHash
         {
             get { return _LastGoodStatePathHash; }
             private set { _LastGoodStatePathHash = value; }
         }
 
+#if ODIN_INSPECTOR
+
+        [TitleGroup("Settings", indent: false)]
+        [PropertyOrder(100)]
+#endif
         [SerializeField]
         private ParameterEntry[] _ParameterEntries;
 
@@ -187,18 +192,38 @@ namespace RoaringFangs.ASM
 
         #region Events
 
+#if ODIN_INSPECTOR
+
+        [TitleGroup("Events", indent: false, order: 100)]
+#endif
         [SerializeField]
         private ManagedStateEvent _AnyStateEntry;
 
+#if ODIN_INSPECTOR
+
+        [TitleGroup("Events")]
+#endif
         [SerializeField]
         private ManagedStateEvent _AnyStateExit;
 
+#if ODIN_INSPECTOR
+
+        [TitleGroup("Events")]
+#endif
         [SerializeField]
         private ManagedStateEvent _AnyStateUpdate;
 
+#if ODIN_INSPECTOR
+
+        [TitleGroup("Events")]
+#endif
         [SerializeField]
         private ManagedStateMachineEvent _AnyStateMachineEntry;
 
+#if ODIN_INSPECTOR
+
+        [TitleGroup("Events")]
+#endif
         [SerializeField]
         private ManagedStateMachineEvent _AnyStateMachineExit;
 

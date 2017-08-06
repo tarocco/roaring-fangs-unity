@@ -24,12 +24,15 @@ THE SOFTWARE.
 
 namespace RoaringFangs.ASM
 {
-    public enum ManagedStateEventType
+    public partial class ControlledStateManager
     {
-        StateEntry,
-        StateUpdate,
-        StateExit,
-        StateMachineEntry,
-        StateMachineExit
+        protected enum ManagedStateEventType
+        {
+            StateEntry,
+            StateUpdate,
+            StateExit,
+            StateMachineEntry,
+            StateMachineExit
+        }
     }
 }

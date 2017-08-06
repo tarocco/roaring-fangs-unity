@@ -22,21 +22,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
 using UnityEngine;
 
 namespace RoaringFangs.ASM
 {
-    public class StateControllerEventArgs : StateControllerEventArgsBase
+    /// <summary>
+    /// Note that these are not used with any "real" event type but are used
+    /// with direct calls from <see cref="StateController"/> to
+    /// <see cref="ControlledStateManager"/>
+    /// </summary>
+    public class StateControllerEventArgs : EventArgs
     {
-        //public readonly IStateController StateController;
+        public readonly Animator Animator;
+        public readonly AnimatorStateInfo AnimatorStateInfo;
+        public readonly int LayerIndex;
+
         public StateControllerEventArgs(
-            //IStateController state_controller,
             Animator animator,
             AnimatorStateInfo animator_state_info,
-            int layer_index) :
-            base(animator, animator_state_info, layer_index)
+            int layer_index)
         {
-            //StateController = state_controller;
+            Animator = animator;
+            AnimatorStateInfo = animator_state_info;
+            LayerIndex = layer_index;
         }
     }
 }
