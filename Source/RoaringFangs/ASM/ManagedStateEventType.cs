@@ -22,25 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using UnityEngine;
-
 namespace RoaringFangs.ASM
 {
-    public class ManagedStateEventArgs : StateControllerEventArgsBase
+    public enum ManagedStateEventType
     {
-        /// <summary>
-        ///  Having this in here is just breaking the rules all over the place BUT ALRIGHT
-        /// </summary>
-        public readonly IStateController StateController;
-
-        public ManagedStateEventArgs(
-            IStateController state_controller,
-            Animator animator,
-            AnimatorStateInfo animator_state_info,
-            int layer_index) :
-            base(animator, animator_state_info, layer_index)
-        {
-            StateController = state_controller;
-        }
+        StateEntry,
+        StateUpdate,
+        StateExit,
+        StateMachineEntry,
+        StateMachineExit
     }
 }

@@ -214,11 +214,9 @@ namespace RoaringFangs.ASM
         public List<ConfigurationObjectDirective> ConfigurationObjects =
             new List<ConfigurationObjectDirective>();
 
-        private IEnumerable OnStateEnterCoroutine(IEnumerable<string> scene_names)
+        private IEnumerable OnStateEnterCoroutine(IEnumerable<string> scene_names, bool skip_if_already_loaded)
         {
-            foreach (object o in Scenes.LoadTogether(FirstScenesEntryLoad))
-                yield return o;
-            foreach (object o in Scenes.LoadTogether(SecondScenesEntryLoad))
+            foreach (object o in Scenes.LoadTogether(scene_names, skip_if_already_loaded))
                 yield return o;
             string active_scene_name = ActiveSceneName;
             if (String.IsNullOrEmpty(active_scene_name))
@@ -253,8 +251,10 @@ namespace RoaringFangs.ASM
             var scene_names_to_load = FirstScenesEntryLoad
                 .Concat(SecondScenesEntryLoad)
                 .ToArray();
+            var inner_exceptions = new List<Exception>();
             foreach (var scene_name in scene_names_to_load)
             {
+                Debug.Log("Verifying " + scene_name);
                 // Verify that the scenes to be loaded are valid before enqueing the loader coroutine
                 if (!Application.CanStreamedLevelBeLoaded(scene_name))
                     throw new ArgumentException("Scene cannot not be loaded: \"" + scene_name + "\"");
@@ -262,8 +262,11 @@ namespace RoaringFangs.ASM
                 // This limitation is caused by SceneManager.SetActiveScene being really BAD
                 var scene = SceneManager.GetSceneByName(scene_name);
                 if (scene.isLoaded)
-                    throw new InvalidOperationException("Scene cannot be loaded more than once: \"" + scene_name + "\"");
+                    inner_exceptions.Add(new RedundantSceneException(
+                        "Scene cannot be loaded more than once: \"" + scene_name + "\"", scene_name));
             }
+            if(inner_exceptions.Any())
+                throw new AggregateException("Could not verify enter", inner_exceptions.ToArray());
         }
 
         protected void DoVerifyExit()
@@ -272,18 +275,22 @@ namespace RoaringFangs.ASM
                 .Concat(SecondScenesExitUnload)
                 .ToArray();
             // Verify that the scenes to be unloaded are valid before enqueing the unloader coroutine
+            var inner_exceptions = new List<Exception>();
             foreach (var scene_name in scene_names_to_unload)
                 if (!Application.CanStreamedLevelBeLoaded(scene_name))
-                    throw new ArgumentException("Scene cannot not be unloaded: \"" + scene_name + "\"");
+                    inner_exceptions.Add(new ArgumentException(
+                        "Scene cannot not be unloaded: \"" + scene_name + "\""));
+            if (inner_exceptions.Any())
+                throw new AggregateException("Could not verify exit", inner_exceptions.ToArray());
         }
 
-        protected void DoEnter(ControlledStateManager manager)
+        protected void DoEnter(ControlledStateManager manager, bool skip_if_already_loaded)
         {
             var scene_names_to_load = FirstScenesEntryLoad
                 .Concat(SecondScenesEntryLoad)
                 .ToArray();
             //manager.EnqueueDeferredCoroutine(OnStateEnterCoroutine(scene_names_to_load).GetEnumerator());
-            manager.EnqueueCoroutine(OnStateEnterCoroutine(scene_names_to_load).GetEnumerator());
+            manager.EnqueueCoroutine(OnStateEnterCoroutine(scene_names_to_load, skip_if_already_loaded).GetEnumerator());
         }
 
         protected void DoExit(ControlledStateManager manager)
@@ -333,7 +340,8 @@ namespace RoaringFangs.ASM
             ControlledStateManager manager,
             ManagedStateEventArgs args)
         {
-            DoEnter(manager);
+            var scene_manager = manager as SceneStateManager;
+            DoEnter(scene_manager, scene_manager && scene_manager.SkipAlreadyLoadedScenes);
         }
 
         public override void OnManagedStateVerifyExit(
@@ -361,7 +369,8 @@ namespace RoaringFangs.ASM
             ControlledStateManager manager,
             ManagedStateMachineEventArgs args)
         {
-            DoEnter(manager);
+            var scene_manager = manager as SceneStateManager;
+            DoEnter(scene_manager, scene_manager && scene_manager.SkipAlreadyLoadedScenes);
         }
 
         public override void OnManagedStateMachineVerifyExit(

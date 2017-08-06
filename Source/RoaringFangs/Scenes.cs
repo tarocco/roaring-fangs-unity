@@ -31,12 +31,15 @@ namespace RoaringFangs
 {
     public static class Scenes
     {
-        public static IEnumerable LoadTogether(IEnumerable<string> scene_names)
+        public static IEnumerable LoadTogether(IEnumerable<string> scene_names, bool skip_if_already_loaded = false)
         {
             var operations_remaining = new List<AsyncOperation>();
             // Asynchronously load the scenes
             foreach (var scene_name in scene_names)
             {
+                var scene = SceneManager.GetSceneByName(scene_name);
+                if (skip_if_already_loaded && scene.isLoaded)
+                    continue;
                 Debug.Log("Async loading scene \"" + scene_name + "\"");
                 var load = SceneManager.LoadSceneAsync(scene_name, LoadSceneMode.Additive);
                 operations_remaining.Add(load);
