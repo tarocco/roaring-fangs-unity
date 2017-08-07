@@ -37,13 +37,27 @@ namespace RoaringFangs.GUI
         [SerializeField]
         private Text _Self;
 
+        private Text Self
+        {
+            get
+            {
+                // TODO: find out why this causes problems in OnBeforeSerialize
+                if (_Self == null)
+                    _Self = GetComponent<Text>();
+                if (_Self != null)
+                    _Self.enabled = false;
+                return _Self;
+            }
+            set { _Self = value; }
+        }
+
         [SerializeField]
         private Text[] _Digits = { };
 
         private void Update()
         {
-            var padded = _Self.text.PadLeft(_Digits.Length);
-            var self_color = _Self.color;
+            var padded = Self.text.PadLeft(_Digits.Length);
+            var self_color = Self.color;
             for (var i = 0; i < _Digits.Length; i++)
             {
                 var digit = _Digits[i];
@@ -54,12 +68,6 @@ namespace RoaringFangs.GUI
 
         public void OnBeforeSerialize()
         {
-            // TODO: find out why this double-check is necessary
-            if (_Self == null)
-                _Self = GetComponent<Text>();
-            if (_Self != null)
-                _Self.enabled = false;
-
             _Digits = GetComponentsInChildren<Text>()
                 .Where(t => t != _Self)
                 .ToArray();
