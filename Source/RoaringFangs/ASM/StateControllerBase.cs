@@ -27,7 +27,7 @@ using UnityEngine;
 namespace RoaringFangs.ASM
 {
 #if LIGHTSTRIKE_ADVANCED_INSPECTOR
-    public abstract class StateController :
+    public abstract class StateControllerBase :
         AdvancedInspector.AIStateMachineBehaviour, IStateController
 #else
 
