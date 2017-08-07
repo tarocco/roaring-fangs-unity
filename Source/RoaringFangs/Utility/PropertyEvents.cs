@@ -5,12 +5,12 @@ using UnityEngine.Events;
 
 namespace RoaringFangs.Utility
 {
-    public class PropertyChangedEventArgs<T> : EventArgs
+    public class PropertyEventArgs<T> : EventArgs
     {
         public readonly T PreviousValue;
         public readonly T CurrentValue;
 
-        public PropertyChangedEventArgs(
+        public PropertyEventArgs(
             T previous_value,
             T current_value)
         {
@@ -19,14 +19,14 @@ namespace RoaringFangs.Utility
         }
     }
 
-    public class PropertyChangedEvent<T> : UnityEvent<object, PropertyChangedEventArgs<T>> { }
+    public class PropertyEvent<T> : UnityEvent<object, PropertyEventArgs<T>> { }
 
     [Serializable]
-    public class FloatPropertyChangedEvent : PropertyChangedEvent<float> { }
+    public class FloatPropertyEvent : PropertyEvent<float> { }
 
     [Serializable]
-    public class IntPropertyChangedEvent : PropertyChangedEvent<int> { }
+    public class IntPropertyEvent : PropertyEvent<int> { }
 
     [Serializable]
-    public class BoolPropertyChangedEvent : PropertyChangedEvent<bool> { }
+    public class BoolPropertyEvent : PropertyEvent<bool> { }
 }
