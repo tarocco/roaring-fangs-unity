@@ -75,7 +75,6 @@ namespace RoaringFangs.GUI
 
         public void OnAfterDeserialize()
         {
-
         }
     }
 }
