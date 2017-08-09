@@ -136,6 +136,14 @@ namespace RoaringFangs.Visuals
             }
         }
 
+        public bool IsInitialized
+        {
+            get
+            {
+                return Splines.All(s => s.IsInitialized);
+            }
+        }
+
         public float Length
         {
             get

@@ -51,6 +51,14 @@ namespace RoaringFangs.Adapters
             }
         }
 
+        public bool IsInitialized
+        {
+            get
+            {
+                return Self.IsInitialized;
+            }
+        }
+
         public float Length
         {
             get

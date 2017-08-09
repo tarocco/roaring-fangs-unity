@@ -21,7 +21,7 @@ namespace RoaringFangs.Adapters.FluffyUnderware.Curvy
         float Length { get; }
         List<ICurvySplineSegment> ControlPoints { get; }
         bool Dirty { get; }
-
+        bool IsInitialized { get; }
         Quaternion GetOrientationFast(float tf);
 
         void Refresh();
