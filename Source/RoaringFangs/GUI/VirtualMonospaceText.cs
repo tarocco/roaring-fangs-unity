@@ -58,11 +58,13 @@ namespace RoaringFangs.GUI
         {
             var padded = Self.text.PadLeft(_Digits.Length);
             var self_color = Self.color;
+            var self_size = Self.fontSize;
             for (var i = 0; i < _Digits.Length; i++)
             {
                 var digit = _Digits[i];
                 digit.text = padded[i].ToString();
                 digit.color = self_color;
+                digit.fontSize = self_size;
             }
         }
 
