@@ -22,13 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
 using RoaringFangs.Attributes;
 using UnityEngine;
+using System.Linq;
 
 namespace RoaringFangs.Animation
 {
-    [RequireComponent(typeof(Animator))]
-    public class AnimatorHelper : MonoBehaviour
+    public class AnimatorHelper : MonoBehaviour, ISerializationCallbackReceiver
     {
         [SerializeField, AutoProperty]
         private Animator _Animator;
@@ -44,9 +45,82 @@ namespace RoaringFangs.Animation
             protected set { _Animator = value; }
         }
 
-        private void Start()
+        [SerializeField]
+        private string _FloatParameterName;
+
+        public string FloatParameterName
         {
-            Animator = GetComponent<Animator>();
+            get { return _FloatParameterName; }
+            set
+            {
+                _FloatParameterName = value;
+                FloatParameter = null;
+            }
+        }
+
+        private AnimatorControllerParameter _FloatParameter;
+
+        public AnimatorControllerParameter FloatParameter
+        {
+            get
+            {
+                if (Animator != null && _FloatParameter == null)
+                {
+                    if (string.IsNullOrEmpty(FloatParameterName))
+                        _FloatParameter = null;
+                    else
+                        _FloatParameter = Animator.parameters
+                            .FirstOrDefault(p => p.name == FloatParameterName);
+                }
+                return _FloatParameter;
+            }
+            private set
+            {
+                _FloatParameter = value;
+            }
+        }
+
+        [SerializeField]
+        private float _FloatValue;
+
+        public float FloatValue
+        {
+            get { return _FloatValue; }
+            set
+            {
+                _FloatValue = value;
+                if (Animator != null && FloatParameter != null)
+                {
+                    var fx = Evaluate(value);
+                    Animator.SetFloat(FloatParameterName, fx);
+                }
+            }
+        }
+
+        [SerializeField]
+        private bool _UseFloatValueCurve;
+
+        public bool UseFloatValueCurve
+        {
+            get { return _UseFloatValueCurve; }
+            set { _UseFloatValueCurve = value; }
+        }
+
+        [SerializeField]
+        private AnimationCurve _FloatValueCurve =
+            AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
+
+        public AnimationCurve FloatValueCurve
+        {
+            get { return _FloatValueCurve; }
+            private set { _FloatValueCurve = value; }
+        }
+
+        private float Evaluate(float x)
+        {
+            if (UseFloatValueCurve)
+                return FloatValueCurve.Evaluate(x);
+            return x;
         }
 
         public void SetTrigger(string name)
@@ -57,6 +131,26 @@ namespace RoaringFangs.Animation
         public void ResetTrigger(string name)
         {
             Animator.ResetTrigger(name);
+        }
+
+        public void OnBeforeSerialize()
+        {
+            if (Animator == null)
+                Animator = GetComponent<Animator>();
+            FloatParameterName = FloatParameterName;
+        }
+
+        public void OnAfterDeserialize()
+        {
+        }
+
+        private void Start()
+        {
+        }
+
+        private void Update()
+        {
+            FloatValue = FloatValue;
         }
     }
 }
