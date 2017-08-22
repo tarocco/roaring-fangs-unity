@@ -23,10 +23,16 @@ THE SOFTWARE.
 */
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
+
+#if ODIN_INSPECTOR
+
+using Sirenix.OdinInspector;
+
+#endif
 
 namespace RoaringFangs.Utility
 {
@@ -35,20 +41,42 @@ namespace RoaringFangs.Utility
     /// Necessary for performance reasons when aggressive
     /// garbage collection is a serious problem.
     /// </summary>
-    public class CBPool : MonoBehaviour
+    [DefaultExecutionOrder(-10000)]
+    public class CBPool :
+        MonoBehaviour,
+        IGameObjectPool,
+        ISerializationCallbackReceiver
     {
+        [Serializable]
+        public class ConfigureObjectEvent : UnityEvent<GameObject> { }
+
+#if ODIN_INSPECTOR
+
+        [DisableInPlayMode]
+#endif
+        [SerializeField]
+        private Transform _PoolTransform;
+
+        public Transform PoolTransform
+        {
+            get { return _PoolTransform; }
+            set { _PoolTransform = value; }
+        }
+
         /// <summary>
         /// Structure containing information about objects
         /// that are currently active in the object pool
         /// </summary>
         [Serializable]
-        public struct ElementData
+        private struct ElementInfo
         {
             /// <summary>
             /// Time relative to game start at which the
             /// element will expire and be deactivated
             /// </summary>
             public float Expiry;
+
+            public int BufferIndex;
         }
 
         /// <summary>
@@ -57,135 +85,123 @@ namespace RoaringFangs.Utility
         /// </summary>
         public float ElementTTL = 2.0f;
 
+        private GameObject[] _AvailableObjects;
+
+        //private GameObject[] _ActiveObjects;
+
+        private int _AvailableObjectIndex = 0;
+
         /// <summary>
         /// Dictionary containing objects in the pool and their
         /// respective data
         /// </summary>
-        protected Dictionary<GameObject, ElementData> PoolData;
+        private Dictionary<GameObject, ElementInfo> PoolData =
+            new Dictionary<GameObject, ElementInfo>();
 
-        public void SetElementData(GameObject o, ElementData data)
-        {
-            PoolData[o] = data;
-        }
+        protected uint _CycleCounter = uint.MinValue;
 
-        public ElementData GetElementData(GameObject o)
-        {
-            return PoolData[o];
-        }
+        protected uint _ReturnCounter = uint.MinValue;
+
+        [SerializeField]
+        private ConfigureObjectEvent _InitializeObject;
 
         /// <summary>
-        /// Enumerable for GameObjects associated with child
-        /// transforms of this component's transform
+        /// Event raised for each pool element in Awake()
         /// </summary>
-        /// <returns>Enumerable over a given child GameObject</returns>
-        protected IEnumerable<GameObject> GetPoolElements()
+        public ConfigureObjectEvent InitializeObject
         {
-            foreach (Transform t in transform)
-            {
-                yield return t.gameObject;
-            }
+            get { return _InitializeObject; }
+            private set { _InitializeObject = value; }
         }
 
-        public IEnumerable<GameObject> ActiveElements()
+        private void BufferPoolObjects()
         {
-            foreach (GameObject pool_object in PoolData.Keys)
-                yield return pool_object;
+            var objects = PoolTransform
+                .Cast<Transform>()
+                .Select(t => t.gameObject);
+            _AvailableObjects = objects.ToArray();
+            //_ActiveObjects = new GameObject[_AvailableObjects.Length];
         }
 
-        protected virtual void Start()
+        protected virtual void Awake()
         {
-            _Cycle = _Cycle ?? CycleGenerator().GetEnumerator();
-            _UpdateCoroutine = _UpdateCoroutine ?? UpdateCoroutine().GetEnumerator();
-            PoolData = new Dictionary<GameObject, ElementData>();
+            BufferPoolObjects();
+            foreach (var game_object in _AvailableObjects)
+                InitializeObject.Invoke(game_object);
         }
 
         protected void Update()
         {
-            _UpdateCoroutine.MoveNext();
-        }
-
-        /// <summary>
-        /// Enumerator instance from UpdateCoroutine for this component
-        /// </summary>
-        protected IEnumerator _UpdateCoroutine;
-
-        /// <summary>
-        /// Enumerable for updating each element in the PoolData,
-        /// namely expiry (deactivation and entry removal)
-        /// </summary>
-        /// <returns>Cyclic enumerable</returns>
-        protected IEnumerable UpdateCoroutine()
-        {
-            for (;;)
+            foreach (var key in PoolData.Keys.ToArray())
             {
-                if (PoolData.Count == 0)
-                    yield return null;
-                else
+                if (Time.time > PoolData[key].Expiry)
                 {
-                    GameObject[] PoolKeys = PoolData.Keys.ToArray();
-                    foreach (var key in PoolKeys)
-                    {
-                        if (Time.time > PoolData[key].Expiry)
-                        {
-                            key.SetActive(false);
-                            PoolData.Remove(key);
-                        }
-                        yield return null;
-                    }
+                    Return(key);
                 }
             }
+            //Debug.Log(
+            //    "Cycles:  " + _CycleCounter + "\n" +
+            //    "Returns: " + _ReturnCounter);
         }
-
-        /// <summary>
-        /// Enumerable for retrieving an object from the pool
-        /// Object will be activated before it is returned
-        /// </summary>
-        /// <returns>
-        /// Cyclic enumerable with GameObject that
-        /// has just been activated
-        /// </returns>
-        protected IEnumerable<GameObject> CycleGenerator()
-        {
-            for (;;)
-            {
-                var elements = GetPoolElements().ToArray();
-                if (elements.Count() > 0)
-                {
-                    foreach (GameObject game_object in elements)
-                    {
-                        game_object.SetActive(true);
-                        PoolData[game_object] = new ElementData() { Expiry = Time.time + ElementTTL };
-                        yield return game_object;
-                    }
-                }
-                else
-                    yield return null;
-            }
-        }
-
-        /// <summary>
-        /// Enumerator instance from CycleGenerator for this component
-        /// </summary>
-        protected IEnumerator<GameObject> _Cycle;
 
         /// <summary>
         /// Cyclically retrieve an object from the pool and set it active
         /// </summary>
         public GameObject Cycle()
         {
-            _Cycle.MoveNext();
-            return _Cycle.Current;
+            var number_of_available_objects = _AvailableObjects.Length;
+            for (int i = 0; i < number_of_available_objects; i++)
+            {
+                int index = (_AvailableObjectIndex + i) % number_of_available_objects;
+                var @object = _AvailableObjects[index];
+                if(@object != null)
+                {
+                    @object.SetActive(true);
+                    PoolData[@object] = new ElementInfo()
+                    {
+                        Expiry = Time.time + ElementTTL,
+                        BufferIndex = index
+                    };
+                    _AvailableObjects[index] = null;
+                    //_ActiveObjects[index] = @object;
+                    _AvailableObjectIndex = (index + 1) % number_of_available_objects;
+                    _CycleCounter++;
+                    return @object; 
+                }
+            }
+            throw new Exception("No available objects in pool");
         }
 
-        public void Return(GameObject element)
+        /// <summary>
+        /// Cyclically retrieve an object from the pool and set it active
+        /// </summary>
+        public GameObject Cycle(out uint number)
         {
-            if (PoolData.ContainsKey(element))
-            {
-                element.SetActive(false);
-                ElementData e = PoolData[element];
-                e.Expiry = float.NegativeInfinity;
-                PoolData[element] = e;
-            }
+            number = _CycleCounter;
+            return Cycle();
+        }
+
+        public void Return(GameObject @object)
+        {
+            if (!PoolData.ContainsKey(@object))
+                throw new InvalidOperationException(
+                    "Cannot return an object to the pool that was not cycled from it");
+            @object.SetActive(false);
+            var info = PoolData[@object];
+            //_ActiveObjects[info.BufferIndex] = null;
+            _AvailableObjects[info.BufferIndex] = @object;
+            PoolData.Remove(@object);
+            _ReturnCounter++;
+        }
+
+        public void OnBeforeSerialize()
+        {
+            if (PoolTransform == null)
+                PoolTransform = transform;
+        }
+
+        public void OnAfterDeserialize()
+        {
         }
     }
 }
