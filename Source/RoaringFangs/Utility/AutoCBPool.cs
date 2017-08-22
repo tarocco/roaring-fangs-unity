@@ -22,10 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
+using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace RoaringFangs.Utility
 {
+    [DefaultExecutionOrder(-10000)]
     public class AutoCBPool : CBPool
     {
         [SerializeField]
@@ -55,24 +58,28 @@ namespace RoaringFangs.Utility
             set { _PoolSize = value; }
         }
 
-        protected override void Start()
+        protected override void Awake()
         {
             // How many objects will we need to make?
             // Use the difference between the pool size and objects remaining in the pool
-            int pool_size_current = transform.childCount;
+            int pool_size_current = PoolTransform.childCount;
             // TODO: debug build assert pool_size_current >= 0 && pool_size_current <= 1
             int number_of_objects_to_instantiate = PoolSize - pool_size_current;
+            // Store active state of the reference
+            var reference_was_active = Reference.activeSelf;
+            // Set the reference to inactive
+            Reference.SetActive(false);
             // Create objects as necessary
             for (int i = 0; i < number_of_objects_to_instantiate; i++)
             {
-                var o = GameObject.Instantiate(Reference);
-                // Turn off the new object
-                o.SetActive(false);
+                var instance = Instantiate(Reference);
                 // Parent objects to the pool
                 // Don't restore world matrix and zero locally at pool transform
-                o.transform.SetParent(transform, false);
+                instance.transform.SetParent(PoolTransform, false);
             }
-            base.Start();
+            // Restore the reference active state
+            Reference.SetActive(reference_was_active);
+            base.Awake();
         }
     }
 }
