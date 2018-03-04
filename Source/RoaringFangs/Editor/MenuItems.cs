@@ -34,24 +34,6 @@ namespace RoaringFangs.Editor
 {
     public static class MenuItems
     {
-        [MenuItem("Roaring Fangs/ASM/Controlled State Manager")]
-        [MenuItem("GameObject/Roaring Fangs/ASM/Controlled State Manager")]
-        //[UnityEditor.MenuItem("CONTEXT/Animator/Controlled State Manager")]
-        public static ControlledStateManager CreateControlledStateManager()
-        {
-            var created_game_object = new GameObject("New Controlled State Manager");
-            var selected_game_object = Selection.activeObject as GameObject;
-            if (selected_game_object)
-                created_game_object.transform.SetParent(selected_game_object.transform);
-            var configurator_cache = new GameObject("Configuration Object Cache");
-            configurator_cache.transform.SetParent(created_game_object.transform);
-            var self = created_game_object.AddComponent<ControlledStateManager>();
-            self.ConfigurationObjectCache = configurator_cache.transform;
-            Selection.activeObject = created_game_object;
-            Undo.RegisterCreatedObjectUndo(created_game_object, "New Controlled State Manager");
-            return self;
-        }
-
         [MenuItem("Roaring Fangs/Animation/Mutex Helper", false, 0)]
         [MenuItem("GameObject/Roaring Fangs/Animation/Mutex Helper", false, 0)]
         [MenuItem("CONTEXT/ControlManager/Mutex Helper", false, 25)]

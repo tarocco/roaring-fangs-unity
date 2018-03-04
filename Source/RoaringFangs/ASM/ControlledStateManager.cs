@@ -22,13 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-using RoaringFangs.Utility;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using RoaringFangs.Utility;
 
 #if ODIN_INSPECTOR
 
@@ -448,7 +448,9 @@ namespace RoaringFangs.ASM
                 // Last ditch efforts
                 Debug.LogError("CRITICAL ERROR");
                 for (var i = 0; i < SceneManager.sceneCount; i++)
+#pragma warning disable CS0618 // Type or member is obsolete
                     SceneManager.UnloadScene(i);
+#pragma warning restore CS0618 // Type or member is obsolete
                 throw ex;
             }
         }

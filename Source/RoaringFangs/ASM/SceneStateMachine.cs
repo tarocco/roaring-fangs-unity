@@ -50,10 +50,10 @@ namespace RoaringFangs.ASM
         }
 
 #if ODIN_INSPECTOR
-
-        private static int[] _LayerIndices =
+#pragma warning disable 414 // The private field '_LayerIndices' is assigned but its value is never used
+        private static readonly int[] _LayerIndices =
             { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-
+#pragma warning restore 414 // The private field '_LayerIndices' is assigned but its value is never used
 #endif
 
         [SerializeField]
@@ -79,9 +79,7 @@ namespace RoaringFangs.ASM
 
         private bool _IsActive;
 
-        private int
-            _PreviousStateEnterLayerIndex = -1,
-            _PreviousStateExitLayerIndex = -1;
+        private int _PreviousStateEnterLayerIndex = -1;
 
         public override void OnStateEnter(
             Animator animator,
@@ -101,8 +99,6 @@ namespace RoaringFangs.ASM
             AnimatorStateInfo state_info,
             int layer_index)
         {
-            _PreviousStateExitLayerIndex = layer_index;
-
             // Don't set _IsActive to false here because
             // OnStateExit is called after OnStateEnter.
 
